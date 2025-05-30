@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Documentos Completo - V6 (Com Índice)</title>
+
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
+
+        #initialScreen { text-align: center; padding: 40px 20px; }
+        #initialScreen h1 { margin-bottom: 30px; color: #333; }
+        .initial-actions button { padding: 12px 25px; font-size: 1.1em; cursor: pointer; border: 1px solid #007bff; background-color: #007bff; color: white; border-radius: 5px; margin: 0 10px 20px 10px; }
+        .initial-actions button:hover { background-color: #0056b3; }
+        #recentDocumentsSection { margin-top: 30px; text-align: left; max-width: 700px; margin-left: auto; margin-right: auto;}
+        #recentDocumentsSection h2 { font-size: 1.3em; margin-bottom: 15px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        #recentDocumentsList { list-style: none; padding: 0; }
+        #recentDocumentsList li { background: #fff; border: 1px solid #e9ecef; padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        #recentDocumentsList li .doc-info { flex-grow: 1; }
+        #recentDocumentsList li .doc-title { font-weight: bold; color: #0056b3; }
+        #recentDocumentsList li .doc-date { font-size: 0.85em; color: #6c757d; display: block; margin-top: 3px;}
+        #recentDocumentsList li button { padding: 6px 12px; font-size: 0.9em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        #recentDocumentsList li button:hover { background-color: #218838; }
+        #recentDocumentsMsg { color: #6c757d; }
+
+        .doc-actions { margin-bottom: 20px; display: flex; gap: 10px; }
+        .doc-actions button { padding: 10px 15px; font-size: 1em; cursor: pointer; border: 1px solid #ccc; background-color: #f0f0f0; border-radius: 4px; }
+        .doc-actions button:hover { background-color: #e0e0e0; }
+        .doc-actions button.archive-btn { background-color: #dc3545; color: white; border-color: #c82333; }
+        .doc-actions button.archive-btn:hover { background-color: #c82333; }
+        #docTitle { width: calc(100% - 22px); padding: 10px; font-size: 1.5em; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+
+        .editor-toolbar-container { display: flex; align-items: center; margin-bottom: 10px; position: -webkit-sticky; position: sticky; top: 0; background-color: white; z-index: 900; padding-top: 10px; padding-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .editor-toolbar { padding: 5px; background-color: #eee; border-radius: 4px; border: 1px solid #ccc; display: flex; align-items: center; flex-grow: 1; }
+        .editor-toolbar button, .editor-toolbar select, .editor-toolbar input[type="number"] { margin-right: 8px; padding: 5px 8px; cursor: pointer; height: 30px; background-color: white; border: 1px solid #ccc; box-sizing: border-box; }
+        .editor-toolbar input[type="number"] { padding: 4px 6px; border-radius: 3px; width: 60px; text-align: right; }
+        .editor-toolbar button.entity-btn { display: none; } /* Inicialmente escondidos */
+        .editor-toolbar label { margin-right: 5px; font-size: 0.9em; }
+
+        #viewPageBtn { margin-left: 10px; padding: 5px 10px; height: 30px; cursor: pointer; background-color: #007bff; color: white; border: 1px solid #0056b3; border-radius: 4px; font-size: 0.9em; }
+        #viewPageBtn:hover { background-color: #0056b3; }
+
+        #editorsContainer .text-editor-chapter { min-height: 150px; border: 1px solid #ddd; padding: 10px; border-radius: 4px; margin-bottom: 20px; outline: none; line-height: 1.6; }
+        #editorsContainer .text-editor-chapter:focus { border-color: #007bff; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); }
+        #editorsContainer .text-editor-chapter p,
+        #editorsContainer .text-editor-chapter div { margin-bottom: 0.5em; }
+        #editorsContainer .text-editor-chapter .referenced-text { background-color: #e6f2ff; padding: 1px 2px; border-radius: 3px; cursor: default; }
+        #editorsContainer .text-editor-chapter .person-text { background-color: #e2ffe2; border-bottom: 1px dotted green; padding: 1px 2px; border-radius: 3px; cursor: pointer; }
+        #editorsContainer .text-editor-chapter .person-text:hover { background-color: #c1f0c1; }
+        #editorsContainer .text-editor-chapter .event-text { background-color: #fff0e2; border-bottom: 1px dotted orange; padding: 1px 2px; border-radius: 3px; cursor: pointer; }
+        #editorsContainer .text-editor-chapter .event-text:hover { background-color: #ffe0c1; }
+        #editorsContainer .text-editor-chapter .location-text { background-color: #d4eaff; border-bottom: 1px dotted #58708d; padding: 1px 2px; border-radius: 3px; cursor: pointer; }
+        #editorsContainer .text-editor-chapter .location-text:hover { background-color: #baccde; }
+
+        .highlight-scroll { background-color: #aedcff !important; transition: background-color 0.3s ease-out; }
+        .reference-item.highlight-scroll { background-color: #ffeeba !important; }
+
+        .toolbar { position: absolute; background: #333; color: white; padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; display: flex; gap: 5px;}
+        .toolbar button { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; padding: 5px; }
+        .toolbar button:hover { background-color: #555; }
+
+        .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1001; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
+        .popup-content { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.3); width: 450px; max-height: 80vh; display: flex; flex-direction: column; }
+        .popup-content h3 { margin-top: 0; margin-bottom: 15px; }
+        .popup-content input[type="text"], .popup-content input[type="url"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; }
+        .popup-content button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .popup-content .popup-actions { margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; text-align: right; }
+        .popup-content .popup-actions button { background-color: #6c757d; color: white; }
+        .popup-content .popup-actions button:hover { background-color: #5a6268; }
+        .popup-content .popup-actions button.danger-btn { background-color: #dc3545; }
+        .popup-content .popup-actions button.danger-btn:hover { background-color: #c82333; }
+        .popup-content .popup-actions button.save-btn { background-color: #28a745; }
+        .popup-content .popup-actions button.save-btn:hover { background-color: #218838; }
+
+        .entity-list-popup .popup-content { width: 600px; }
+        .entity-list-container { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; border: 1px solid #eee; padding: 10px; min-height: 150px; }
+        .entity-list-container ul { list-style: none; padding: 0; margin: 0; }
+        .entity-list-container > ul > li { padding: 8px 5px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-weight: bold; }
+        .entity-list-container > ul > li:hover { background-color: #f0f8ff; }
+        .entity-list-container > ul > li:last-child { border-bottom: none; }
+
+        /* Estilos para o popup do índice */
+        #indexPopup .popup-content {
+            width: 500px; /* Ajuste a largura conforme necessário */
+            max-height: 70vh;
+        }
+        #indexChapterList li {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        #indexChapterList li:hover {
+            background-color: #f0f8ff;
+        }
+        #indexChapterList li .chapter-title-index {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+        #indexChapterList li .chapter-preview-index {
+            font-size: 0.9em;
+            color: #555;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+        }
+
+
+        #referencesSection { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        #referencesList { list-style: none; padding: 0; }
+        #referencesList li { background: #f8f9fa; padding: 10px 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #e9ecef; position: relative; }
+        #referencesList li .ref-content { padding-right: 30px; }
+        #referencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 3px; cursor: pointer; }
+        #referencesList li .ref-title:hover { color: #0056b3; text-decoration: underline; }
+        #referencesList li a { text-decoration: none; color: #007bff; word-break: break-all; }
+        #referencesList li a:hover { text-decoration: underline; }
+        .edit-ref-btn { position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 1em; cursor: pointer; padding: 5px; color: #6c757d; }
+        .edit-ref-btn:hover { color: #343a40; }
+
+        #loadDocumentPopup .popup-content { background: white; }
+        #documentsListContainer ul li button { background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 10px; }
+        #documentsListContainer ul li button:hover { background-color: #0056b3; }
+        #documentsListContainer ul li { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; }
+        #documentsListContainer ul li:last-child { border-bottom: none; }
+        #documentsListContainer ul li span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        #entityContextSidebar { position: fixed; top: 80px; right: 20px; width: 350px; max-height: calc(100vh - 100px); background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); z-index: 1002; padding: 15px; display: none; flex-direction: column; transition: width 0.3s ease, padding 0.3s ease; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        #entityContextSidebar h3 { margin-top: 0; font-size: 1.2em; margin-bottom: 0; flex-grow: 1; }
+        #sidebarEntityName { font-weight: bold; color: #0056b3; }
+        #minimizeSidebarBtn { background: none; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 2px 8px; line-height: 1; font-size: 1.1em; margin-left: 10px; }
+        #minimizeSidebarBtn:hover { background-color: #e9ecef; }
+        .sidebar-content-wrapper { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        #sidebarContextList { flex-grow: 1; font-size: 0.9em; }
+        #entityContextSidebar.minimized-sidebar-state { width: 50px; padding: 10px; overflow: hidden; }
+        #entityContextSidebar.minimized-sidebar-state .sidebar-header h3,
+        #entityContextSidebar.minimized-sidebar-state .sidebar-header #sidebarEntityName { display: none; }
+        #entityContextSidebar.minimized-sidebar-state .sidebar-content-wrapper,
+        #entityContextSidebar.minimized-sidebar-state #closeSidebarBtn { display: none; }
+        #entityContextSidebar.minimized-sidebar-state #minimizeSidebarBtn { width: 100%; text-align: center; }
+        #sidebarContextList .document-context-block { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dotted #ddd; }
+        #sidebarContextList .document-context-block:last-child { border-bottom: none; }
+        #sidebarContextList .document-context-block h4 { font-size: 1em; margin-top: 0; margin-bottom: 8px; color: #333; cursor: pointer; padding: 5px; border-radius: 3px; background-color: #e9ecef; display: flex; justify-content: space-between; align-items: center; }
+        #sidebarContextList .document-context-block h4:hover { background-color: #dde2e6; }
+        #sidebarContextList .document-context-block h4 .toggle-icon::before { content: '▼'; display: inline-block; margin-left: 8px; font-size: 0.8em; }
+        #sidebarContextList .document-context-block.collapsed-context > ul { display: none; }
+        #sidebarContextList .document-context-block.collapsed-context h4 .toggle-icon::before { content: '►'; }
+        #sidebarContextList h4 .matched-term-title { color: #dc3545; }
+        #sidebarContextList h4 .doc-title { color: #6c757d; font-weight: normal; }
+        #sidebarContextList ul { list-style-type: none; padding-left: 0; margin-left: 0; }
+        #sidebarContextList li { padding: 4px 0; color: #555; line-height: 1.4; cursor: pointer; }
+        #sidebarContextList li:hover { background-color: #e9ecef; }
+        #sidebarContextList li strong { background-color: #fff3cd; padding: 0 2px; border-radius: 2px; }
+        #closeSidebarBtn { margin-top: 15px; padding: 8px 12px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; align-self: flex-end; }
+        #closeSidebarBtn:hover { background-color: #5a6268; }
+
+        #documentContextViewPopup .popup-content { width: 80%; max-width: 1000px; height: 80vh; }
+        #contextViewBody { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; background-color: #fff; line-height: 1.6; }
+        #contextViewBody .highlighted-term-in-view { background-color: yellow; font-weight: bold; }
+        hr.chapter-divider-in-view { margin: 20px 0; border: 0; border-top: 1px dashed #ccc; }
+
+        #confirmArchivePopup .popup-content { width: 400px; }
+        #confirmArchivePopup .popup-content p { margin-bottom: 20px; line-height: 1.5; }
+    </style>
+
+    <script type="module">
+        // ATENÇÃO: Substitua pelas suas credenciais reais do Firebase!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // EXEMPLO - SUBSTITUA
+            authDomain: "bibliacontexto.firebaseapp.com", // EXEMPLO - SUBSTITUA
+            projectId: "bibliacontexto", // EXEMPLO - SUBSTITUA
+            storageBucket: "bibliacontexto.firebasestorage.app", // EXEMPLO - SUBSTITUA
+            messagingSenderId: "266293600679", // EXEMPLO - SUBSTITUA
+            appId: "1:266293600679:web:3b7c264f0b5e35ebea1682" // EXEMPLO - SUBSTITUA
+        };
+        window.firebaseConfigGlobal = firebaseConfig;
+    </script>
+</head>
+<body>
+    <!-- Initial Screen -->
+    <div id="initialScreen">
+        <h1>Meu Editor de Documentos</h1>
+        <div class="initial-actions">
+            <button id="initNewDocBtn">Novo Documento</button>
+            <button id="initLoadDocBtn">Carregar Documento</button>
+        </div>
+        <div id="recentDocumentsSection">
+            <h2>Documentos Recentes</h2>
+            <ul id="recentDocumentsList"></ul>
+            <p id="recentDocumentsMsg">Carregando...</p>
+        </div>
+    </div>
+
+    <!-- Main Editor Interface (initially hidden) -->
+    <div id="editorInterface" style="display: none;">
+        <div class="container">
+            <div class="doc-actions">
+                <button id="newDocBtn">Novo Documento (Atual)</button>
+                <button id="openLoadDocPopupBtn">Carregar Outro Documento</button>
+                <button id="archiveCurrentDocBtn" class="archive-btn">Arquivar Documento</button>
+            </div>
+            <input type="text" id="docTitle" placeholder="Título do Documento">
+
+            <div class="editor-toolbar-container">
+                <div class="editor-toolbar">
+                    <label for="fontSizeInput">Fonte:</label>
+                    <input type="number" id="fontSizeInput" min="8" max="72" step="1" value="14" title="Tamanho da Fonte (px)" list="fontSizeSuggestions">
+                    <datalist id="fontSizeSuggestions">
+                        <option value="10"></option><option value="12"></option><option value="14"></option>
+                        <option value="16"></option><option value="18"></option><option value="20"></option>
+                        <option value="24"></option><option value="28"></option><option value="32"></option>
+                    </datalist>
+                    <!-- Botões de espaçamento removidos -->
+                    <button id="showIndexBtn" title="Mostrar Índice dos Capítulos">Index</button> <!-- NOVO BOTÃO INDEX -->
+
+                    <button id="showFoundPersonsBtn" class="entity-btn" title="Pessoas Encontradas">👤</button>
+                    <button id="showFoundEventsBtn" class="entity-btn" title="Datas/Eventos Encontrados">📅</button>
+                    <button id="showFoundLocationsBtn" class="entity-btn" title="Locais Encontrados">🏙️</button>
+                </div>
+                <button id="viewPageBtn" title="Ver Página (Modo Visualização)">👁️ Ver Página</button>
+            </div>
+
+            <div id="editorsContainer">
+                <!-- Capítulos (divs editáveis) serão inseridos aqui -->
+            </div>
+            <button id="addChapterBtn" style="margin-top: 15px; padding: 8px 15px; font-size: 0.9em; cursor: pointer;">
+                + Adicionar Novo Capítulo
+            </button>
+
+            <div id="floatingToolbar" class="toolbar" style="display: none;">
+                <button id="attachLinkBtn" title="Anexar Link">🔗</button>
+                <button id="addPersonBtn" title="Adicionar Pessoa">👤</button>
+                <button id="addEventBtn" title="Adicionar Data/Evento">📅</button>
+                <button id="addLocationBtn" title="Adicionar Local">🏙️</button>
+            </div>
+            <div id="referencesSection"> <h2>Referências</h2> <ul id="referencesList"></ul> </div>
+        </div>
+    </div>
+
+    <!-- Popups -->
+    <div id="addPersonPopup" class="popup"> <div class="popup-content"> <h3>Adicionar Pessoa</h3> <input type="text" id="personNameInput" placeholder="Nome da Pessoa"> <div class="popup-actions"> <button id="saveNewPersonBtn" class="save-btn">Salvar Pessoa</button> <button class="close-popup-btn">Cancelar</button> </div> </div> </div>
+    <div id="addEventPopup" class="popup"> <div class="popup-content"> <h3>Adicionar Data/Evento</h3> <input type="text" id="eventDescriptionInput" placeholder="Descrição do Evento"> <input type="text" id="eventYearInput" placeholder="Ano (ex: 70 d.C., c. 1500 a.C.)"> <div class="popup-actions"> <button id="saveNewEventBtn" class="save-btn">Salvar Evento</button> <button class="close-popup-btn">Cancelar</button> </div> </div> </div>
+    <div id="addLocationPopup" class="popup"> <div class="popup-content"> <h3>Adicionar Local</h3> <input type="text" id="locationNameInput" placeholder="Nome do Local"> <div class="popup-actions"> <button id="saveNewLocationBtn" class="save-btn">Salvar Local</button> <button class="close-popup-btn">Cancelar</button> </div> </div> </div>
+
+    <div id="foundPersonsPopup" class="popup entity-list-popup"> <div class="popup-content"> <h3>Pessoas Encontradas</h3> <div class="entity-list-container" id="foundPersonsListContainer"><p>Nenhuma pessoa detectada...</p><ul></ul></div> <div class="popup-actions"><button class="close-popup-btn">Fechar</button></div> </div> </div>
+    <div id="foundEventsPopup" class="popup entity-list-popup"> <div class="popup-content"> <h3>Datas/Eventos Encontrados</h3> <div class="entity-list-container" id="foundEventsListContainer"><p>Nenhuma data/evento detectado...</p><ul></ul></div> <div class="popup-actions"><button class="close-popup-btn">Fechar</button></div> </div> </div>
+    <div id="foundLocationsPopup" class="popup entity-list-popup"> <div class="popup-content"> <h3>Locais Encontrados</h3> <div class="entity-list-container" id="foundLocationsListContainer"><p>Nenhum local detectado...</p><ul></ul></div> <div class="popup-actions"><button class="close-popup-btn">Fechar</button></div> </div> </div>
+
+    <div id="addReferencePopup" class="popup"> <div class="popup-content"> <h3>Adicionar Referência</h3> <input type="text" id="refTitleInput" placeholder="Título da Referência"> <input type="url" id="refUrlInput" placeholder="URL do Link"> <div class="popup-actions"> <button id="saveNewRefBtnElement" class="save-btn">Salvar Referência</button> <button id="cancelNewRefBtn" class="close-popup-btn">Cancelar</button> </div> </div> </div>
+    <div id="editReferencePopup" class="popup"> <div class="popup-content"> <h3>Editar Referência</h3> <input type="text" id="editRefTitleInput" placeholder="Título da Referência"> <input type="url" id="editRefUrlInput" placeholder="URL do Link"> <input type="hidden" id="editingRefIdInput"> <div class="popup-actions"> <button id="saveEditedRefBtn" class="save-btn">Salvar Alterações</button> <button id="deleteRefBtn" class="danger-btn">Excluir Referência</button> <button id="cancelEditRefBtn" class="close-popup-btn">Cancelar</button> </div> </div> </div>
+    <div id="loadDocumentPopup" class="popup"> <div class="popup-content"> <h3>Carregar Documento Existente</h3> <div id="documentsListContainer"> <p>Carregando lista de documentos...</p> <ul></ul> </div> <div class="popup-actions"> <button id="closeLoadDocPopupBtn" class="close-popup-btn">Fechar</button> </div> </div> </div>
+
+    <!-- POPUP DO ÍNDICE -->
+    <div id="indexPopup" class="popup">
+        <div class="popup-content">
+            <h3>Índice dos Capítulos</h3>
+            <div class="entity-list-container" id="indexChapterListContainer">
+                <ul id="indexChapterList">
+                    <!-- Itens do índice serão inseridos aqui pelo JavaScript -->
+                </ul>
+                <p id="indexChapterMsg" style="display:none;">Nenhum capítulo para exibir.</p>
+            </div>
+            <div class="popup-actions">
+                <button class="close-popup-btn">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entity Context Sidebar -->
+    <div id="entityContextSidebar" style="display: none;">
+        <div class="sidebar-header">
+            <h3>Contexto para: <span id="sidebarEntityName"></span></h3>
+            <button id="minimizeSidebarBtn" title="Minimizar/Restaurar Sidebar">_</button>
+        </div>
+        <div class="sidebar-content-wrapper">
+            <div id="sidebarContextList"></div>
+        </div>
+        <button id="closeSidebarBtn">Fechar Sidebar</button>
+    </div>
+
+    <!-- Document Context View Popup (from sidebar click) -->
+    <div id="documentContextViewPopup" class="popup">
+        <div class="popup-content">
+            <h3 id="contextViewTitle">Visualizar Documento</h3>
+            <div id="contextViewBody"></div>
+            <div class="popup-actions">
+                <button class="close-popup-btn">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup de Confirmação de Arquivamento -->
+    <div id="confirmArchivePopup" class="popup">
+        <div class="popup-content">
+            <h3>Confirmar Arquivamento</h3>
+            <p>Tem certeza de que deseja arquivar este documento? Ele não será excluído permanentemente, mas não aparecerá mais na lista de documentos para carregar.</p>
+            <div class="popup-actions">
+                <button id="confirmArchiveYesBtn" class="danger-btn">Sim, Arquivar</button>
+                <button class="close-popup-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        console.log("VERSÃO DO SCRIPT: ", Date.now()); // Log para verificar a versão do script
+        // ATENÇÃO: Substitua pelas suas credenciais reais do Firebase!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // EXEMPLO - SUBSTITUA
+            authDomain: "bibliacontexto.firebaseapp.com", // EXEMPLO - SUBSTITUA
+            projectId: "bibliacontexto", // EXEMPLO - SUBSTITUA
+            storageBucket: "bibliacontexto.firebasestorage.app", // EXEMPLO - SUBSTITUA
+            messagingSenderId: "266293600679", // EXEMPLO - SUBSTITUA
+            appId: "1:266293600679:web:3b7c264f0b5e35ebea1682" // EXEMPLO - SUBSTITUA
+        };
+        window.firebaseConfigGlobal = firebaseConfig; // Embora já esteja no escopo global do módulo, pode ser útil se referenciado externamente
+    
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import {
+            getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, where, orderBy, serverTimestamp,
+            arrayUnion, arrayRemove, writeBatch, limit
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    
+        if (!firebaseConfig || !firebaseConfig.projectId) {
+            console.error("CONFIGURAÇÃO DO FIREBASE INVÁLIDA OU AUSENTE!");
+            alert("ERRO CRÍTICO: Configuração do Firebase não encontrada.");
+            throw new Error("Firebase config error: projectId is missing or firebaseConfig is not defined.");
+        }
+    
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+    
+        // DOM Elements (copiados do seu HTML original)
+        const initialScreenDiv = document.getElementById('initialScreen');
+        const editorInterfaceDiv = document.getElementById('editorInterface');
+        const initNewDocBtn = document.getElementById('initNewDocBtn');
+        const initLoadDocBtn = document.getElementById('initLoadDocBtn');
+        const recentDocumentsListUl = document.getElementById('recentDocumentsList');
+        const recentDocumentsMsgP = document.getElementById('recentDocumentsMsg');
+    
+        const editorsContainer = document.getElementById('editorsContainer');
+        const addChapterBtn = document.getElementById('addChapterBtn');
+        const floatingToolbar = document.getElementById('floatingToolbar');
+        const attachLinkBtn = document.getElementById('attachLinkBtn');
+        const addPersonBtn = document.getElementById('addPersonBtn');
+        const addEventBtn = document.getElementById('addEventBtn');
+        const addLocationBtn = document.getElementById('addLocationBtn');
+    
+        const addPersonPopup = document.getElementById('addPersonPopup');
+        const personNameInput = document.getElementById('personNameInput');
+        const saveNewPersonBtn = document.getElementById('saveNewPersonBtn');
+        const addEventPopup = document.getElementById('addEventPopup');
+        const eventDescriptionInput = document.getElementById('eventDescriptionInput');
+        const eventYearInput = document.getElementById('eventYearInput');
+        const saveNewEventBtn = document.getElementById('saveNewEventBtn');
+        const addLocationPopup = document.getElementById('addLocationPopup');
+        const locationNameInput = document.getElementById('locationNameInput');
+        const saveNewLocationBtn = document.getElementById('saveNewLocationBtn');
+    
+        const showFoundPersonsBtn = document.getElementById('showFoundPersonsBtn');
+        const showFoundEventsBtn = document.getElementById('showFoundEventsBtn');
+        const showFoundLocationsBtn = document.getElementById('showFoundLocationsBtn');
+        const foundPersonsPopup = document.getElementById('foundPersonsPopup');
+        const foundPersonsListContainerUl = document.querySelector('#foundPersonsListContainer ul');
+        const foundPersonsListContainerMsg = document.querySelector('#foundPersonsListContainer p');
+        const foundEventsPopup = document.getElementById('foundEventsPopup');
+        const foundEventsListContainerUl = document.querySelector('#foundEventsListContainer ul');
+        const foundEventsListContainerMsg = document.querySelector('#foundEventsListContainer p');
+        const foundLocationsPopup = document.getElementById('foundLocationsPopup');
+        const foundLocationsListContainerUl = document.querySelector('#foundLocationsListContainer ul');
+        const foundLocationsListContainerMsg = document.querySelector('#foundLocationsListContainer p');
+    
+        const fontSizeInput = document.getElementById('fontSizeInput');
+    
+        const newDocBtn = document.getElementById('newDocBtn');
+        const openLoadDocPopupBtn = document.getElementById('openLoadDocPopupBtn');
+        const docTitleInput = document.getElementById('docTitle');
+        const referencesListUl = document.getElementById('referencesList');
+        const addReferencePopup = document.getElementById('addReferencePopup');
+        const refTitleInput = document.getElementById('refTitleInput');
+        const refUrlInput = document.getElementById('refUrlInput');
+        const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
+        const editReferencePopup = document.getElementById('editReferencePopup');
+        const editRefTitleInput = document.getElementById('editRefTitleInput');
+        const editRefUrlInput = document.getElementById('editRefUrlInput');
+        const editingRefIdInput = document.getElementById('editingRefIdInput');
+        const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
+        const deleteRefBtn = document.getElementById('deleteRefBtn');
+        const loadDocumentPopup = document.getElementById('loadDocumentPopup');
+        const documentsListContainerUl = document.querySelector('#documentsListContainer ul');
+        const documentsListContainerMsg = document.querySelector('#documentsListContainer p');
+        const showIndexBtn = document.getElementById('showIndexBtn');
+        const indexPopup = document.getElementById('indexPopup');
+        const indexChapterListUl = document.getElementById('indexChapterList');
+        const indexChapterMsgP = document.getElementById('indexChapterMsg');
+    
+        const entityContextSidebar = document.getElementById('entityContextSidebar');
+        const sidebarEntityNameSpan = document.getElementById('sidebarEntityName');
+        const sidebarContextListDiv = document.getElementById('sidebarContextList');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const minimizeSidebarBtn = document.getElementById('minimizeSidebarBtn');
+    
+        const documentContextViewPopup = document.getElementById('documentContextViewPopup');
+        const contextViewTitleH3 = document.getElementById('contextViewTitle');
+        const contextViewBodyDiv = document.getElementById('contextViewBody');
+    
+        const viewPageBtn = document.getElementById('viewPageBtn');
+    
+        const archiveCurrentDocBtn = document.getElementById('archiveCurrentDocBtn');
+        const confirmArchivePopup = document.getElementById('confirmArchivePopup');
+        const confirmArchiveYesBtn = document.getElementById('confirmArchiveYesBtn');
+    
+        // --- Global State Variables ---
+        let currentDocId = null;
+        let currentDocumentData = null;
+        let debounceTimer;
+        let currentSelectionRange = null;
+        let activeEditorElement = null;
+        let knownPersons = []; // Será populado por loadKnownEntities
+        let knownEvents = [];  // Será populado por loadKnownEntities
+        let knownLocations = [];// Será populado por loadKnownEntities
+        let fontSizeDebounceTimer;
+    
+        const DEFAULT_FONT_SIZE = '14px';
+        const DEFAULT_LINE_HEIGHT = '1.6';
+        const CHAPTER_DELIMITER_HTML = '<hr class="chapter-break-for-storage" style="display:none;">';
+    
+        // --- Helper Functions ---
+        function generateId(prefix = 'entity-') { return prefix + Date.now() + '-' + Math.random().toString(36).substring(2, 7); }
+        function showPopup(popupElement) { if (popupElement) popupElement.classList.add('active'); }
+        function hidePopup(popupElement) { if (popupElement) popupElement.classList.remove('active'); }
+    
+        function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) {
+            if (!container) return;
+            container.querySelectorAll('p, div').forEach(el => {
+                if (!el.style.fontSize) el.style.fontSize = targetFontSizeCSS;
+                if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
+            });
+        }
+        function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+    
+        function escapeHTML(str) {
+    if (typeof str !== 'string') return ''; // Retorna string vazia se a entrada não for uma string
+
+    // Mapa de caracteres para suas respectivas entidades HTML
+    const map = {
+        '&': '&',  // E comercial
+        '<': '<',   // Menor que
+        '>': '>',   // Maior que
+        '"': '"', // Aspas duplas
+        '`': '`'   // Crase (usando entidade numérica HTML)
+    };
+
+    // Usa a expressão regular para encontrar os caracteres a serem substituídos
+    // e a função de callback para buscar a entidade correspondente no mapa.
+    // Se um caractere não estiver no mapa (o que não deve acontecer com esta regex),
+    // ele é retornado como está (fallback `|| tag`).
+    return str.replace(/[&<>"'`]/g, function(tag) {
+        return map[tag] || tag;
+    });
+}
+    
+        function getFirstSentence(htmlString) {
+            if (!htmlString) return "";
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+            let textContent = tempDiv.textContent || "";
+            textContent = textContent.trim();
+    
+            const firstPeriodIndex = textContent.indexOf('.');
+            if (firstPeriodIndex !== -1) {
+                return textContent.substring(0, firstPeriodIndex + 1);
+            }
+            return textContent.substring(0, 100) + (textContent.length > 100 ? "..." : "");
+        }
+    
+        // Helper para autoHighlightEntitiesInHTML
+        // Recebe 'node', 'tempDivDestino', e 'replacementsArray' como parâmetros
+        function findAndMark(currentTextValue, entityArray, className, dataAttributePrefix, idField, nameField, node, tempDivDestino, replacementsArray) {
+            // console.log(`[DEBUG][findAndMark] Para classe "${className}", campo termo: "${nameField}" no texto: "${currentTextValue.substring(0, 30)}..."`);
+            if (typeof entityArray === 'undefined' || !entityArray) {
+                console.warn(`[DEBUG][findAndMark] entityArray para ${className} está indefinido ou nulo.`);
+                return;
+            }
+    
+            entityArray.forEach(entity => {
+                const entityTerm = entity[nameField];
+                if (!entityTerm || String(entityTerm).trim() === '') return;
+    
+                const entityTermStr = String(entityTerm);
+                // console.log(`[DEBUG][findAndMark]   Procurando por termo: "${entityTermStr}"`);
+                const regex = new RegExp(escapeRegExp(entityTermStr), 'gi');
+                let match;
+                while ((match = regex.exec(currentTextValue)) !== null) {
+                    // console.log(`[DEBUG][findAndMark]     Match para "${entityTermStr}": Encontrado "${match[0]}" no índice ${match.index}`);
+    
+                    let parent = node.parentNode;
+                    let alreadyTagged = false;
+                    while (parent && parent !== tempDivDestino && parent.nodeType === Node.ELEMENT_NODE) {
+                        if (parent.classList.contains('person-text') || parent.classList.contains('event-text') || parent.classList.contains('location-text')) {
+                            alreadyTagged = true;
+                            break;
+                        }
+                        parent = parent.parentNode;
+                    }
+    
+                    if (alreadyTagged) {
+                        // console.log(`[DEBUG][findAndMark]       Pulando este match para "${entityTermStr}" porque o pai já está marcado.`);
+                        continue;
+                    }
+    
+                    const span = document.createElement('span');
+                    span.className = className;
+                    span.setAttribute(`data-${dataAttributePrefix}-id`, entity[idField]);
+                    span.textContent = match[0];
+                    replacementsArray.push({ index: match.index, length: match[0].length, replacementNode: span, term: entityTermStr });
+                }
+            });
+        }
+    
+    
+        // --- Auto-Highlight Entities ---
+        // Esta é a versão atualizada da função
+        function autoHighlightEntitiesInHTML(htmlContent) {
+            console.log("[DEBUG][autoHighlightEntitiesInHTML] Função chamada. Conteúdo HTML recebido (início):", htmlContent ? htmlContent.substring(0, 200) + "..." : "CONTEÚDO VAZIO OU NULO");
+            if (!htmlContent || typeof htmlContent !== 'string') {
+                console.warn("[DEBUG][autoHighlightEntitiesInHTML] Conteúdo inválido ou vazio, retornando em branco.");
+                return '';
+            }
+    
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            console.log("[DEBUG][autoHighlightEntitiesInHTML] tempDiv.childNodes logo após innerHTML (length):", tempDiv.childNodes.length);
+            if (tempDiv.childNodes.length > 0) {
+                console.log("[DEBUG][autoHighlightEntitiesInHTML] Primeiro childNode de tempDiv:", tempDiv.childNodes[0].nodeName, "Tipo:", tempDiv.childNodes[0].nodeType);
+            }
+    
+            function processNode(node) {
+                // console.log("[DEBUG][processNode] Processando nó:", node.nodeName, "Tipo:", node.nodeType, "Valor:", node.nodeValue ? node.nodeValue.substring(0, 50) + "..." : null);
+    
+                if (node.nodeType === Node.TEXT_NODE) {
+                    console.log("[DEBUG][processNode] ENCONTRADO NÓ DE TEXTO:", node.nodeValue ? `"${node.nodeValue.substring(0,100)}..."` : "NÓ DE TEXTO VAZIO");
+                    let currentText = node.nodeValue;
+                    if (!currentText.trim()) {
+                        console.log("[DEBUG][processNode] Nó de texto está vazio após trim, retornando.");
+                        return;
+                    }
+    
+                    const replacements = []; // Local para este nó de texto
+    
+                    // Chama findAndMark para Pessoas e Locais
+                    findAndMark(currentText, knownPersons, 'person-text', 'person', 'id', 'nome', node, tempDiv, replacements);
+                    findAndMark(currentText, knownLocations, 'location-text', 'location', 'id', 'nome', node, tempDiv, replacements);
+    
+                    // Lógica para Eventos (anos e descrições)
+                    if (typeof knownEvents !== 'undefined') {
+                        knownEvents.forEach(event => {
+                            const termsToSearch = [];
+                            if (event.ano && String(event.ano).trim()) termsToSearch.push(String(event.ano)); // 'ano'
+                            if (event.descricao && String(event.descricao).trim() && event.descricao.length < 70 && event.descricao.length > 1) termsToSearch.push(String(event.descricao));
+    
+                            termsToSearch.forEach(term => {
+                                if (!term) return;
+                                const regex = new RegExp(escapeRegExp(term), 'gi');
+                                let match;
+                                while ((match = regex.exec(currentText)) !== null) {
+                                    // console.log(`[DEBUG][processNode]   Match para Evento (termo "${term}"): Encontrado "${match[0]}" no índice ${match.index}`);
+                                    let parent = node.parentNode; let alreadyTagged = false;
+                                    while(parent && parent !== tempDiv && parent.nodeType === Node.ELEMENT_NODE) {
+                                        if (parent.classList.contains('person-text') || parent.classList.contains('event-text') || parent.classList.contains('location-text')) {
+                                            alreadyTagged = true; break;
+                                        } parent = parent.parentNode;
+                                    }
+                                    if (alreadyTagged) continue;
+    
+                                    const span = document.createElement('span');
+                                    span.className = 'event-text';
+                                    span.setAttribute('data-event-id', event.id);
+                                    span.textContent = match[0];
+                                    replacements.push({ index: match.index, length: match[0].length, replacementNode: span, term: term });
+                                }
+                            });
+                        });
+                    } else {
+                         console.warn("[DEBUG][processNode] knownEvents não está definido ou acessível.");
+                    }
+    
+    
+                    if (replacements.length === 0) {
+                        console.log("[DEBUG][processNode] Nenhum replacement encontrado para este nó de texto.");
+                        return;
+                    }
+    
+                    replacements.sort((a, b) => a.index === b.index ? b.length - a.length : a.index - b.index);
+                    console.log('[DEBUG][processNode] Sorted replacements para este nó de texto:', JSON.stringify(replacements.map(r => ({index: r.index, len: r.length, term: r.term}))));
+    
+                    const finalNodesForThisTextNode = [];
+                    let currentIndex = 0;
+                    const processedRangesInTextNode = [];
+    
+                    replacements.forEach(rep => {
+                        let skip = false;
+                        for (const range of processedRangesInTextNode) {
+                            if (rep.index >= range.start && (rep.index + rep.length) <= range.end &&
+                                !(rep.index === range.start && rep.length === (range.end - range.start))) {
+                                skip = true;
+                                break;
+                            }
+                        }
+                        if (skip) return;
+    
+                        if (rep.index > currentIndex) {
+                            const textPart = currentText.substring(currentIndex, rep.index);
+                            finalNodesForThisTextNode.push(document.createTextNode(textPart));
+                        }
+                        finalNodesForThisTextNode.push(rep.replacementNode.cloneNode(true));
+                        currentIndex = rep.index + rep.length;
+                        processedRangesInTextNode.push({ start: rep.index, end: currentIndex });
+                    });
+    
+                    if (currentIndex < currentText.length) {
+                        finalNodesForThisTextNode.push(document.createTextNode(currentText.substring(currentIndex)));
+                    }
+    
+                    if (finalNodesForThisTextNode.length > 0 && node.parentNode) {
+                        const fragment = document.createDocumentFragment();
+                        finalNodesForThisTextNode.forEach(fn => fragment.appendChild(fn));
+                        node.parentNode.replaceChild(fragment, node);
+                        console.log("[DEBUG][processNode] Nó de texto substituído com fragmento contendo destaques.");
+                    } else {
+                        console.log("[DEBUG][processNode] Não foi possível substituir o nó de texto (sem parentNode ou finalNodes vazio).");
+                    }
+    
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    // console.log("[DEBUG][processNode] ENCONTRADO NÓ DE ELEMENTO:", node.tagName);
+                    if (node.isContentEditable === false || (node.classList && (node.classList.contains('person-text') || node.classList.contains('event-text') || node.classList.contains('location-text'))) || node.tagName === 'SCRIPT' || node.tagName === 'STYLE' || node.classList.contains('chapter-break-for-storage')) {
+                        // console.log("[DEBUG][processNode] Pulando nó de elemento:", node.tagName);
+                        return;
+                    }
+                    const childrenCopy = Array.from(node.childNodes);
+                    // console.log(`[DEBUG][processNode] Elemento ${node.tagName} tem ${childrenCopy.length} filhos para processar recursivamente.`);
+                    for (let i = 0; i < childrenCopy.length; i++) { // Iterar na ordem pode ser ok, mas reversa é mais segura se houver muitas modificações
+                        processNode(childrenCopy[i]);
+                    }
+                }
+            }
+    
+            const topLevelChildren = Array.from(tempDiv.childNodes);
+            console.log(`[DEBUG][autoHighlightEntitiesInHTML] tempDiv tem ${topLevelChildren.length} top-level childNodes para iniciar o processamento.`);
+            topLevelChildren.forEach(child => {
+                console.log(`[DEBUG][autoHighlightEntitiesInHTML] Chamando processNode para top-level child: ${child.nodeName}`);
+                processNode(child);
+            });
+    
+            console.log("[DEBUG][autoHighlightEntitiesInHTML] tempDiv.innerHTML DEPOIS de todo processamento:", tempDiv.innerHTML);
+            return tempDiv.innerHTML;
+        }
+    
+    
+        // --- Chapter Management ---
+        function createNewChapterElement(contentHTML = '', focusAfterCreation = false) {
+            const chapterDiv = document.createElement('div');
+            chapterDiv.className = 'text-editor-chapter';
+            chapterDiv.setAttribute('contenteditable', 'true');
+            const defaultFontSizeCSS = `${fontSizeInput.value || parseInt(DEFAULT_FONT_SIZE,10)}px`;
+            // O conteúdo HTML aqui NÃO deve ser processado por autoHighlightEntitiesInHTML
+            // Ele será processado antes de ser salvo, ou virá processado do Firebase.
+            chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-size: ${defaultFontSizeCSS}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
+            applyDefaultStylesToBlocks(chapterDiv, defaultFontSizeCSS, DEFAULT_LINE_HEIGHT);
+    
+            chapterDiv.addEventListener('focus', () => {
+                activeEditorElement = chapterDiv;
+                const firstBlock = chapterDiv.querySelector('p, div');
+                let chapterFontSizeCSS = defaultFontSizeCSS;
+                if (firstBlock && firstBlock.style.fontSize) chapterFontSizeCSS = firstBlock.style.fontSize;
+                const numericSize = parseInt(chapterFontSizeCSS, 10);
+                if (!isNaN(numericSize)) fontSizeInput.value = numericSize;
+            });
+            chapterDiv.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => saveDocumentBody(), 1500);
+            });
+            editorsContainer.appendChild(chapterDiv);
+            if (focusAfterCreation && document.activeElement !== chapterDiv) {
+                const sel = window.getSelection(); const range = document.createRange();
+                if (chapterDiv.firstChild) {
+                    range.selectNodeContents(chapterDiv.firstChild); range.collapse(false);
+                } else {
+                    range.selectNodeContents(chapterDiv); range.collapse(false);
+                }
+                if(sel) { sel.removeAllRanges(); sel.addRange(range); }
+                chapterDiv.focus();
+            }
+            return chapterDiv;
+        }
+    
+        // --- UI Flow & Document Management ---
+        function showEditorInterfaceScreen() { initialScreenDiv.style.display = 'none'; editorInterfaceDiv.style.display = 'block'; }
+        function showInitialScreen() {
+            editorInterfaceDiv.style.display = 'none'; initialScreenDiv.style.display = 'block';
+            loadRecentDocuments(); currentDocId = null; currentDocumentData = null; docTitleInput.value = '';
+            editorsContainer.innerHTML = ''; activeEditorElement = null;
+            fontSizeInput.value = parseInt(DEFAULT_FONT_SIZE, 10);
+            referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
+            showFoundPersonsBtn.style.display = 'none'; showFoundEventsBtn.style.display = 'none'; showFoundLocationsBtn.style.display = 'none';
+            entityContextSidebar.style.display = 'none'; archiveCurrentDocBtn.style.display = 'none';
+            indexChapterListUl.innerHTML = ''; indexChapterMsgP.textContent = "Nenhum capítulo para exibir."; indexChapterMsgP.style.display = 'block';
+        }
+    
+        async function loadRecentDocuments() {
+            recentDocumentsListUl.innerHTML = ''; recentDocumentsMsgP.textContent = 'Carregando...'; recentDocumentsMsgP.style.display = 'block';
+            try {
+                const q = query(collection(db, "documentos"), where("ativo", "==", true), orderBy("atualizadoEm", "desc"), limit(10));
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.empty) { recentDocumentsMsgP.textContent = "Nenhum documento recente."; return; }
+                recentDocumentsMsgP.style.display = 'none';
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data(); const li = document.createElement('li');
+                    const docInfoDiv = document.createElement('div'); docInfoDiv.className = 'doc-info';
+                    const titleSpan = document.createElement('span'); titleSpan.className = 'doc-title'; titleSpan.textContent = escapeHTML(data.titulo) || "Sem Título";
+                    const dateSpan = document.createElement('span'); dateSpan.className = 'doc-date';
+                    if (data.atualizadoEm && data.atualizadoEm.toDate) dateSpan.textContent = `Atualizado: ${data.atualizadoEm.toDate().toLocaleString()}`; else dateSpan.textContent = `Data N/A`;
+                    docInfoDiv.appendChild(titleSpan); docInfoDiv.appendChild(dateSpan); li.appendChild(docInfoDiv);
+                    const editBtn = document.createElement('button'); editBtn.textContent = "Editar"; editBtn.dataset.docId = docSnap.id;
+                    editBtn.addEventListener('click', (e) => loadDocument(e.target.dataset.docId));
+                    li.appendChild(editBtn); recentDocumentsListUl.appendChild(li);
+                });
+            } catch (e) { console.error("Erro recentes:", e); recentDocumentsMsgP.textContent = "Erro ao carregar."; }
+        }
+    
+        async function createNewDocument() {
+            console.log("[DEBUG][createNewDocument] Função chamada.");
+            showEditorInterfaceScreen(); currentDocId = generateId('doc-');
+            const initialFontSizeValue = fontSizeInput.value || '14'; const initialFontSizeCSS = `${initialFontSizeValue}px`;
+            const initialChapterContent = `<p style="font-size: ${initialFontSizeCSS}; line-height: ${DEFAULT_LINE_HEIGHT};">Comece a escrever...</p>`;
+            console.log("[DEBUG][createNewDocument] Conteúdo inicial do capítulo ANTES de autoHighlight:", initialChapterContent);
+    
+            const processedInitialContent = autoHighlightEntitiesInHTML(initialChapterContent); // Processa para o primeiro save
+            console.log("[DEBUG][createNewDocument] Conteúdo inicial do capítulo DEPOIS de autoHighlight:", processedInitialContent);
+    
+    
+            currentDocumentData = {
+                titulo: "Novo Documento Sem Título", corpo: [processedInitialContent], // Salva já processado
+                referencias: [], ativo: true, criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp()
+            };
+            try {
+                await setDoc(doc(db, "documentos", currentDocId), {
+                    titulo: currentDocumentData.titulo,
+                    corpo: currentDocumentData.corpo, // Já está processado
+                    referencias: currentDocumentData.referencias,
+                    ativo: currentDocumentData.ativo,
+                    criadoEm: currentDocumentData.criadoEm,
+                    atualizadoEm: serverTimestamp()
+                });
+                fontSizeInput.value = initialFontSizeValue;
+                // Para exibição, usamos o que foi salvo (já processado)
+                displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo[0], currentDocumentData.referencias);
+                const firstChapter = editorsContainer.querySelector('.text-editor-chapter');
+                if (firstChapter) {
+                    const range = document.createRange(); const sel = window.getSelection();
+                    range.selectNodeContents(firstChapter); range.collapse(false);
+                    if(sel) {sel.removeAllRanges(); sel.addRange(range);}
+                    firstChapter.focus();
+                }
+                console.log("[DEBUG][createNewDocument] Novo documento criado:", currentDocId);
+            } catch (e) { console.error("Erro criar doc:", e); alert("Erro ao criar."); }
+        }
+    
+        async function loadDocument(id) {
+            console.log(`[DEBUG][loadDocument] Carregando documento: ${id}`);
+            if (!id) return; showEditorInterfaceScreen();
+            editorsContainer.innerHTML = "<p>Carregando capítulos...</p>"; docTitleInput.value = "Carregando..."; referencesListUl.innerHTML = "<li>Carregando...</li>";
+            currentDocId = id;
+            try {
+                const docRef = doc(db, "documentos", currentDocId); const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    currentDocumentData = docSnap.data();
+                    console.log("[DEBUG][loadDocument] Documento encontrado:", currentDocId, currentDocumentData);
+                    if (currentDocumentData.ativo === false) { alert("Documento arquivado."); showInitialScreen(); return; }
+    
+                    let singleHtmlBlockToDisplay;
+                    if (Array.isArray(currentDocumentData.corpo) && currentDocumentData.corpo.length > 0) {
+                        singleHtmlBlockToDisplay = currentDocumentData.corpo[0]; // Conteúdo já deve estar processado do Firebase
+                    } else if (typeof currentDocumentData.corpo === 'string') { // Para migração de formato antigo
+                         singleHtmlBlockToDisplay = currentDocumentData.corpo;
+                         currentDocumentData.corpo = [singleHtmlBlockToDisplay];
+                    }
+                    else {
+                        singleHtmlBlockToDisplay = `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`;
+                        currentDocumentData.corpo = [singleHtmlBlockToDisplay];
+                    }
+                    // O conteúdo já vem processado do Firebase, não precisa chamar autoHighlightEntitiesInHTML aqui para display
+                    displayDocumentContent(currentDocumentData.titulo, singleHtmlBlockToDisplay, currentDocumentData.referencias);
+                } else { alert("Documento não encontrado."); showInitialScreen(); }
+            } catch (e) { console.error("Erro carregar doc:", e); alert("Erro ao carregar."); }
+        }
+    
+        function displayDocumentContent(title, singleBodyHtml, references = []) {
+            console.log("[DEBUG][displayDocumentContent] Exibindo. singleBodyHtml recebido (início):", singleBodyHtml ? singleBodyHtml.substring(0, 200) + "..." : "HTML VAZIO");
+            docTitleInput.value = title || "";
+            editorsContainer.innerHTML = ''; activeEditorElement = null;
+            const chapterHTMLs = singleBodyHtml.split(CHAPTER_DELIMITER_HTML);
+            if (chapterHTMLs.length > 0) {
+                chapterHTMLs.forEach((chapterHTML, index) => {
+                    createNewChapterElement(chapterHTML, index === 0); // createNewChapterElement recebe o HTML já processado
+                });
+            } else {
+                createNewChapterElement('', true);
+            }
+            const firstChapterElement = editorsContainer.querySelector('.text-editor-chapter');
+            if (firstChapterElement) {
+                const firstBlock = firstChapterElement.querySelector('p, div');
+                let chapterFontSizeCSS = DEFAULT_FONT_SIZE;
+                if (firstBlock && firstBlock.style.fontSize) chapterFontSizeCSS = firstBlock.style.fontSize;
+                const numericSize = parseInt(chapterFontSizeCSS, 10);
+                fontSizeInput.value = isNaN(numericSize) ? parseInt(DEFAULT_FONT_SIZE, 10) : numericSize;
+            }
+            renderReferences(references);
+            if (currentDocId) archiveCurrentDocBtn.style.display = 'inline-block'; else archiveCurrentDocBtn.style.display = 'none';
+            detectEntitiesInCurrentDoc(); // Isso verifica o texto *visível* no editor
+        }
+    
+        async function saveDocumentBody() {
+            if (!currentDocId) return;
+            console.log("[DEBUG][saveDocumentBody] Iniciando salvamento do corpo.");
+            const visualChapterContents = [];
+            editorsContainer.querySelectorAll('.text-editor-chapter').forEach(chapterDiv => {
+                visualChapterContents.push(chapterDiv.innerHTML); // Pega o HTML como está no editor (pode não estar destacado)
+            });
+            const combinedRawHTML = visualChapterContents.join(CHAPTER_DELIMITER_HTML);
+            console.log("[DEBUG][saveDocumentBody] HTML combinado bruto ANTES de autoHighlight:", combinedRawHTML ? combinedRawHTML.substring(0,300) + "..." : "HTML VAZIO");
+    
+            const finalHTMLToSave = autoHighlightEntitiesInHTML(combinedRawHTML); // Processa para destacar TUDO antes de salvar
+            console.log("[DEBUG][saveDocumentBody] HTML final DEPOIS de autoHighlight (para salvar):", finalHTMLToSave ? finalHTMLToSave.substring(0,300) + "..." : "HTML VAZIO");
+    
+    
+            if (currentDocumentData) { currentDocumentData.corpo = [finalHTMLToSave]; } // Atualiza localmente
+            try {
+                await updateDoc(doc(db, "documentos", currentDocId), {
+                    corpo: [finalHTMLToSave], atualizadoEm: serverTimestamp()
+                });
+                console.log("[DEBUG][saveDocumentBody] Corpo salvo com sucesso.");
+            } catch (e) { console.error("Erro salvar corpo:", e); }
+        }
+        async function saveDocumentTitle() {
+            if (!currentDocId) return; const newTitle = docTitleInput.value.trim() || "Documento Sem Título";
+            try {
+                await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() });
+                if(currentDocumentData) currentDocumentData.titulo = newTitle;
+            } catch (e) { console.error("Erro salvar título:", e); }
+        }
+    
+        // --- Entity Management ---
+        async function loadKnownEntities() {
+            try {
+                const pSnap = await getDocs(collection(db, "pessoas")); knownPersons = pSnap.docs.map(d=>({id:d.id,...d.data()}));
+                const eSnap = await getDocs(collection(db, "eventos")); knownEvents = eSnap.docs.map(d=>({id:d.id,...d.data()}));
+                const lSnap = await getDocs(collection(db, "locais")); knownLocations = lSnap.docs.map(d=>({id:d.id,...d.data()}));
+                console.log(`[DEBUG] Entidades Carregadas: ${knownPersons.length} Pessoas, ${knownEvents.length} Eventos, ${knownLocations.length} Locais.`);
+            } catch (error) { console.error("Erro ao carregar entidades conhecidas:", error); }
+        }
+        async function saveNewPerson(name) { if (!name.trim()){alert("Nome da pessoa é obrigatório.");return;} const id=generateId('person-'); const data={nome:name.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"pessoas"),where("nome","==",name.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Pessoa "${escapeHTML(name.trim())}" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"pessoas",id),data);knownPersons.push({id,...data});} tagSelectedTextWithEntity(targetId,'person-text','data-person-id');hidePopup(addPersonPopup);}catch(e){console.error("Erro ao salvar pessoa:",e);alert("Erro ao salvar pessoa.");}}
+        async function saveNewEvent(desc,year){ if(!desc.trim()||!year.trim()){alert("Descrição e ano do evento são obrigatórios.");return;} const id=generateId('event-'); const data={descricao:desc.trim(),ano:year.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"eventos"),where("descricao","==",desc.trim()),where("ano","==",year.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Evento "${escapeHTML(desc.trim())} (${escapeHTML(year.trim())})" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"eventos",id),data);knownEvents.push({id,...data});} tagSelectedTextWithEntity(targetId,'event-text','data-event-id');hidePopup(addEventPopup);}catch(e){console.error("Erro ao salvar evento:",e);alert("Erro ao salvar evento.");}}
+        async function saveNewLocation(name){ if(!name.trim()){alert("Nome do local é obrigatório.");return;} const id=generateId('location-'); const data={nome:name.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"locais"),where("nome","==",name.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Local "${escapeHTML(name.trim())}" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"locais",id),data);knownLocations.push({id,...data});} tagSelectedTextWithEntity(targetId,'location-text','data-location-id');hidePopup(addLocationPopup);}catch(e){console.error("Erro ao salvar local:",e);alert("Erro ao salvar local.");}}
+    
+        function tagSelectedTextWithEntity(entityId, className, dataAttribute) {
+            if (!currentSelectionRange || !activeEditorElement || !activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) {
+                alert("Por favor, selecione texto no capítulo ativo para marcar a entidade."); return;
+            }
+            const span=document.createElement('span');span.className=className;span.setAttribute(dataAttribute,entityId);
+            try {
+                // Se a seleção for apenas texto, e não contiver outros spans de entidade, envolva.
+                // Uma lógica mais robusta poderia ser necessária aqui para evitar aninhamento de spans de entidade.
+                currentSelectionRange.surroundContents(span);
+                saveDocumentBody(); // Força salvamento e re-highlight global
+            }catch(e){console.warn("Erro ao envolver seleção com entidade:",e); alert("Não foi possível marcar o texto. Tente selecionar apenas texto simples.");}
+        }
+    
+        function detectEntitiesInCurrentDoc() {
+            if (!currentDocId || !editorsContainer) return; let combinedText = "";
+            editorsContainer.querySelectorAll('.text-editor-chapter').forEach(ch => combinedText += ch.textContent + " "); combinedText = combinedText.trim();
+            if (!combinedText) {showFoundPersonsBtn.style.display='none'; showFoundEventsBtn.style.display='none'; showFoundLocationsBtn.style.display='none'; return;}
+            let pF=false,eF=false,lF=false;
+            knownPersons.forEach(p=>{if(p.nome && new RegExp(escapeRegExp(p.nome),"gi").test(combinedText))pF=true;});
+            knownEvents.forEach(e=>{
+                const termsToSearch = [];
+                if (e.ano && String(e.ano).trim()) termsToSearch.push(String(e.ano));
+                if (e.descricao && String(e.descricao).trim()) termsToSearch.push(String(e.descricao));
+                termsToSearch.forEach(term => {
+                    if(new RegExp(escapeRegExp(term),"gi").test(combinedText)) eF=true;
+                });
+            });
+            knownLocations.forEach(l=>{if(l.nome && new RegExp(escapeRegExp(l.nome),"gi").test(combinedText))lF=true;});
+            showFoundPersonsBtn.style.display=pF?'inline-block':'none'; showFoundEventsBtn.style.display=eF?'inline-block':'none'; showFoundLocationsBtn.style.display=lF?'inline-block':'none';
+        }
+    
+        async function showFoundEntitiesPopup(entityType) {
+            let popup, listUl, msgP, knownEnts, searchKeyPrimary, searchKeySecondary, entityDisplayName;
+            switch(entityType) {
+                case 'persons': popup=foundPersonsPopup; listUl=foundPersonsListContainerUl; msgP=foundPersonsListContainerMsg; knownEnts=knownPersons; searchKeyPrimary='nome'; entityDisplayName='pessoa'; break;
+                case 'events': popup=foundEventsPopup; listUl=foundEventsListContainerUl; msgP=foundEventsListContainerMsg; knownEnts=knownEvents; searchKeyPrimary='descricao'; searchKeySecondary='ano'; entityDisplayName='data/evento'; break;
+                case 'locations': popup=foundLocationsPopup; listUl=foundLocationsListContainerUl; msgP=foundLocationsListContainerMsg; knownEnts=knownLocations; searchKeyPrimary='nome'; entityDisplayName='local'; break;
+                default: console.error("Tipo de entidade inválido para popup:", entityType); return;
+            }
+            showPopup(popup); listUl.innerHTML=""; msgP.textContent="Verificando..."; msgP.style.display='block';
+            if(!currentDocId){msgP.textContent="Nenhum documento ativo.";return;}
+            let combinedTextContent=""; editorsContainer.querySelectorAll('.text-editor-chapter').forEach(ch=>combinedTextContent+=ch.textContent+" "); combinedTextContent=combinedTextContent.trim();
+            if(!combinedTextContent){msgP.textContent="O conteúdo do documento está vazio.";return;}
+    
+            const foundInCurrentDoc = [];
+            knownEnts.forEach(entity => {
+                let found = false;
+                if (entity[searchKeyPrimary] && new RegExp(escapeRegExp(String(entity[searchKeyPrimary])),"gi").test(combinedTextContent)) {
+                    found = true;
+                }
+                if (!found && searchKeySecondary && entity[searchKeySecondary] && new RegExp(escapeRegExp(String(entity[searchKeySecondary])),"gi").test(combinedTextContent)) {
+                    found = true;
+                }
+                if (found) {
+                    foundInCurrentDoc.push(entity);
+                }
+            });
+    
+            if(foundInCurrentDoc.length===0){msgP.textContent=`Nenhum(a) ${entityDisplayName} conhecido(a) encontrado(a) neste documento.`;return;}
+            msgP.style.display='none';
+            foundInCurrentDoc.sort((a,b) => (String(a[searchKeyPrimary]||a[searchKeySecondary]||"")).localeCompare(String(b[searchKeyPrimary]||b[searchKeySecondary]||"")) );
+            foundInCurrentDoc.forEach(entity=>{
+                const li=document.createElement('li');
+                let displayText = escapeHTML(String(entity[searchKeyPrimary] || ""));
+                if(entityType==='events') {
+                    displayText = `${escapeHTML(String(entity.descricao || ""))} (${escapeHTML(String(entity.ano || ""))})`;
+                }
+                li.textContent=displayText || "N/A";
+                li.dataset.entityId=entity.id;
+                li.dataset.entityTerm=String(entity[searchKeyPrimary] || entity[searchKeySecondary] || ""); // Termo principal para busca de contexto
+                if(entityType==='persons'||entityType==='locations' || entityType === 'events'){
+                    li.addEventListener('click',async e=>{
+                        const termForContext=e.currentTarget.dataset.entityTerm;
+                        hidePopup(popup);
+                        if(termForContext) await displayEntityContextInSidebar(termForContext);
+                    });
+                }
+                listUl.appendChild(li);
+            });
+        }
+    
+        // --- Sidebar Context ---
+        minimizeSidebarBtn.addEventListener('click', ()=>{entityContextSidebar.classList.toggle('minimized-sidebar-state');minimizeSidebarBtn.textContent=entityContextSidebar.classList.contains('minimized-sidebar-state')?'+':'_';minimizeSidebarBtn.title=entityContextSidebar.classList.contains('minimized-sidebar-state')?"Restaurar Sidebar":"Minimizar Sidebar";});
+        closeSidebarBtn.addEventListener('click', ()=>{entityContextSidebar.style.display='none';entityContextSidebar.classList.remove('minimized-sidebar-state');minimizeSidebarBtn.textContent='_';minimizeSidebarBtn.title="Minimizar Sidebar";});
+        async function displayEntityContextInSidebar(entityName) {
+            sidebarEntityNameSpan.textContent=escapeHTML(entityName); sidebarContextListDiv.innerHTML='<p>Buscando contexto...</p>';
+            if(entityContextSidebar.classList.contains('minimized-sidebar-state')){entityContextSidebar.classList.remove('minimized-sidebar-state');minimizeSidebarBtn.textContent='_';minimizeSidebarBtn.title="Minimizar Sidebar";}
+            entityContextSidebar.style.display='flex';
+            try {
+                const q=query(collection(db,"documentos"),where("ativo","==",true)); const docsSnap=await getDocs(q);
+                sidebarContextListDiv.innerHTML=''; let foundAnyContext=false;
+                for(const docSnapshot of docsSnap.docs){ const dData=docSnapshot.data(); const dId=docSnapshot.id; const docTitle=dData.titulo||`Documento ${dId.substring(0,5)}`; let passagesHTML=[];
+                    if(Array.isArray(dData.corpo) && dData.corpo.length > 0){
+                        const singleCombinedHtml = dData.corpo[0];
+                        const tempDivForContext=document.createElement('div'); tempDivForContext.innerHTML=singleCombinedHtml; const textContentForContext=tempDivForContext.textContent||"";
+                        // Tenta dividir em frases, mas pode ser complexo acertar todas as pontuações.
+                        const sentences = textContentForContext.split(/(?<=[.?!])\s+(?=[A-ZÀ-úa-z0-9ÓÀÉÍÚÂÊÔÃÕÇÑ])|(?<=\n)\s*/); // << PROVÁVEL LINHA COM PROBLEMA
+                        const rgx=new RegExp(escapeRegExp(entityName),"gi");
+                        sentences.forEach(sentence=>{if(sentence.trim() && rgx.test(sentence))passagesHTML.push({html:sentence.replace(rgx,m=>`<strong>${escapeHTML(m)}</strong>`),docId:dId,term:entityName});});
+                    }
+                    if(passagesHTML.length>0){foundAnyContext=true; const blockDiv=document.createElement('div');blockDiv.className='document-context-block'; const h4=document.createElement('h4');
+                        const titleWrap=document.createElement('span');titleWrap.className='title-text-wrapper';
+                        const matchedTerm=document.createElement('span');matchedTerm.className='matched-term-title';matchedTerm.textContent=entityName;
+                        const docTitleSpan=document.createElement('span');docTitleSpan.className='doc-title';docTitleSpan.textContent=docTitle;
+                        titleWrap.appendChild(matchedTerm);titleWrap.appendChild(document.createTextNode(' - (Doc: '));titleWrap.appendChild(docTitleSpan);titleWrap.appendChild(document.createTextNode(')'));
+                        const toggleIcon=document.createElement('span');toggleIcon.className='toggle-icon';
+                        h4.appendChild(titleWrap);h4.appendChild(toggleIcon);
+                        h4.addEventListener('click',()=>blockDiv.classList.toggle('collapsed-context')); blockDiv.appendChild(h4);
+                        const ul=document.createElement('ul'); passagesHTML.forEach(pD=>{const li=document.createElement('li');li.innerHTML=`...${pD.html}...`;li.dataset.docIdForContext=pD.docId;li.dataset.termForContext=pD.term;li.addEventListener('click',handleContextSentenceClick);ul.appendChild(li);});
+                        blockDiv.appendChild(ul); sidebarContextListDiv.appendChild(blockDiv);
+                    }
+                }
+                if(!foundAnyContext)sidebarContextListDiv.innerHTML=`<p>Nenhum contexto encontrado para "${escapeHTML(entityName)}".</p>`;
+            }catch(err){console.error("Erro ao buscar contexto na sidebar:",err);sidebarContextListDiv.innerHTML='<p>Erro ao buscar contexto.</p>';}
+        }
+        function handleContextSentenceClick(event){openDocumentAndHighlightTerm(event.currentTarget.dataset.docIdForContext,event.currentTarget.dataset.termForContext);}
+        async function openDocumentAndHighlightTerm(docId,term){
+            contextViewBodyDiv.innerHTML='<p>Carregando documento...</p>'; contextViewTitleH3.textContent='Visualizar Contexto'; showPopup(documentContextViewPopup);
+            try{const docRef=doc(db,"documentos",docId); const docSnap=await getDoc(docRef);
+                if(docSnap.exists()){const data=docSnap.data(); if(data.ativo===false){contextViewBodyDiv.innerHTML='<p>Este documento está arquivado.</p>';return;}
+                    contextViewTitleH3.textContent=escapeHTML(data.titulo)||`Documento ${docId.substring(0,5)}`;
+                    let combinedBodyHTML = "";
+                    if(Array.isArray(data.corpo) && data.corpo.length > 0) {
+                        combinedBodyHTML = data.corpo[0];
+                        combinedBodyHTML = combinedBodyHTML.split(CHAPTER_DELIMITER_HTML).map(ch => `<div>${ch}</div>`).join("<hr class='chapter-divider-in-view'>");
+                    } else if (typeof data.corpo === 'string') {
+                        combinedBodyHTML = data.corpo; // Para compatibilidade com formato antigo
+                    }
+                    contextViewBodyDiv.innerHTML = combinedBodyHTML || "<p>Conteúdo do documento vazio.</p>";
+                    const regex=new RegExp(`(${escapeRegExp(term)})`,'gi');let firstMatchElement=null;
+                    const walkAndHighlight=(elementNode)=>{
+                        if(elementNode.nodeType===3 && elementNode.textContent.match(regex)){ // Nó de texto
+                            const parentOfTextNode=elementNode.parentNode;
+                            if(!parentOfTextNode)return;
+                            const fragmentToReplace=document.createDocumentFragment();
+                            elementNode.textContent.split(regex).forEach((textPart,i)=>{
+                                if(i%2===1){ // Parte que deu match com o termo
+                                    const spanHighlight=document.createElement('span');
+                                    spanHighlight.className='highlighted-term-in-view';
+                                    spanHighlight.textContent=textPart;
+                                    fragmentToReplace.appendChild(spanHighlight);
+                                    if(!firstMatchElement)firstMatchElement=spanHighlight;
+                                }else{
+                                    fragmentToReplace.appendChild(document.createTextNode(textPart));
+                                }
+                            });
+                            parentOfTextNode.replaceChild(fragmentToReplace,elementNode);
+                        }else if(elementNode.nodeType===1&&elementNode.childNodes&&elementNode.childNodes.length>0&&(elementNode.tagName!=='SCRIPT'&&elementNode.tagName!=='STYLE')){ // Nó de elemento
+                            Array.from(elementNode.childNodes).forEach(walkAndHighlight); // Processa filhos recursivamente
+                        }
+                    };
+                    walkAndHighlight(contextViewBodyDiv);
+                    if(firstMatchElement)firstMatchElement.scrollIntoView({behavior:'smooth',block:'center'});
+                }else{contextViewBodyDiv.innerHTML='<p>Documento não encontrado.</p>';}
+            }catch(e){console.error("Erro ao abrir documento para contexto:",e);contextViewBodyDiv.innerHTML='<p>Erro ao carregar o documento.</p>';}
+        }
+    
+        // --- References Management ---
+        async function addReferenceToDocument(title,url){if(!currentDocId||!title||!url||!currentSelectionRange||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Para adicionar uma referência, selecione texto no capítulo ativo.");return;}const refId=generateId('ref-');const selTxt=currentSelectionRange.toString().trim();const span=document.createElement('span');span.className='referenced-text';span.setAttribute('data-ref-id',refId);try{currentSelectionRange.surroundContents(span);}catch(e){console.warn("Erro ao envolver texto com span de referência:",e);}const newRef={id:refId,tituloReferencia:title,urlReferencia:url,textoSelecionadoOriginal:selTxt};try{ if(!currentDocumentData.referencias) currentDocumentData.referencias = []; currentDocumentData.referencias.push(newRef); await updateDoc(doc(db,"documentos",currentDocId),{referencias:arrayUnion(newRef), atualizadoEm:serverTimestamp()});renderReferences(currentDocumentData.referencias);hidePopup(addReferencePopup); saveDocumentBody(); /* Para garantir que o span da referência no corpo seja salvo */ }catch(e){console.error("Erro ao adicionar referência:",e);alert("Erro ao adicionar referência.");}}
+        function renderReferences(refs=[]){referencesListUl.innerHTML="";if(refs.length===0){referencesListUl.innerHTML="<li>Nenhuma referência adicionada.</li>";return;}refs.forEach(ref=>{const li=document.createElement('li');li.className='reference-item';li.setAttribute('data-ref-id',ref.id);const cDiv=document.createElement('div');cDiv.className='ref-content';const tS=document.createElement('span');tS.className='ref-title';tS.textContent=`${escapeHTML(ref.tituloReferencia)}: `;tS.dataset.refId=ref.id;tS.addEventListener('click',navigateToReferencedTextInEditor);cDiv.appendChild(tS);const a=document.createElement('a');a.href=ref.urlReferencia;a.textContent=escapeHTML(ref.urlReferencia);a.target="_blank";cDiv.appendChild(a);li.appendChild(cDiv);const eB=document.createElement('button');eB.className='edit-ref-btn';eB.innerHTML='✎';eB.title="Editar Referência";eB.dataset.refId=ref.id;eB.addEventListener('click',()=>openEditReferencePopup(ref.id));li.appendChild(eB);referencesListUl.appendChild(li);});}
+        function openEditReferencePopup(refId){if(!currentDocumentData||!currentDocumentData.referencias)return;const ref=currentDocumentData.referencias.find(r=>r.id===refId);if(!ref){alert("Referência não encontrada.");return;}editingRefIdInput.value=refId;editRefTitleInput.value=ref.tituloReferencia;editRefUrlInput.value=ref.urlReferencia;showPopup(editReferencePopup);}
+        async function saveEditedReference(){const id=editingRefIdInput.value;const title=editRefTitleInput.value.trim();const url=editRefUrlInput.value.trim();if(!id||!title||!url){alert("Título e URL da referência são obrigatórios.");return;}if(!currentDocumentData||!currentDocumentData.referencias)return;const idx=currentDocumentData.referencias.findIndex(r=>r.id===id);if(idx===-1){alert("Referência não encontrada para editar.");return;}const updatedRefs=[...currentDocumentData.referencias];updatedRefs[idx]={...updatedRefs[idx],tituloReferencia:title,urlReferencia:url};try{await updateDoc(doc(db,"documentos",currentDocId),{referencias:updatedRefs,atualizadoEm:serverTimestamp()});currentDocumentData.referencias=updatedRefs;renderReferences(currentDocumentData.referencias);hidePopup(editReferencePopup);}catch(e){console.error("Erro ao salvar referência editada:",e);alert("Erro ao salvar alterações na referência.");}}
+        async function deleteReference(){const refId=editingRefIdInput.value;if(!refId||!window.confirm("Tem certeza que deseja excluir esta referência?"))return;if(!currentDocumentData||!currentDocumentData.referencias)return;const updatedRefs=currentDocumentData.referencias.filter(r=>r.id!==refId);let bodyChanged=false;editorsContainer.querySelectorAll(`.text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{const frag=document.createDocumentFragment();while(spanInEditor.firstChild)frag.appendChild(spanInEditor.firstChild);if(spanInEditor.parentNode)spanInEditor.parentNode.replaceChild(frag,spanInEditor);bodyChanged=true;});try{const payload={referencias:updatedRefs,atualizadoEm:serverTimestamp()}; await updateDoc(doc(db,"documentos",currentDocId),payload);currentDocumentData.referencias=updatedRefs;renderReferences(currentDocumentData.referencias);hidePopup(editReferencePopup); if(bodyChanged) saveDocumentBody(); }catch(e){console.error("Erro ao excluir referência:",e);alert("Erro ao excluir a referência.");}}
+        function clearEditorHighlights(){editorsContainer.querySelectorAll('.text-editor-chapter .highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));referencesListUl.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));}
+        function navigateToReferencedTextInEditor(event){const refId=event.target.dataset.refId;if(!refId)return;let refSpanInEditor=null;editorsContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id="'+refId+'"]').forEach(s=>{if(!refSpanInEditor)refSpanInEditor=s;});const refListItem=event.target.closest('li.reference-item');clearEditorHighlights();if(refSpanInEditor){refSpanInEditor.scrollIntoView({behavior:'smooth',block:'center'});refSpanInEditor.classList.add('highlight-scroll');if(refListItem)refListItem.classList.add('highlight-scroll');setTimeout(clearEditorHighlights,2500);}}
+    
+        // --- Editor Actions & Setup (Popups) ---
+        function showFloatingToolbar(){if(!currentSelectionRange||!activeEditorElement)return;const rect=currentSelectionRange.getBoundingClientRect();floatingToolbar.style.left=`${rect.left+window.scrollX+(rect.width/2)-(floatingToolbar.offsetWidth/2)}px`;floatingToolbar.style.top=`${rect.top+window.scrollY-floatingToolbar.offsetHeight-10}px`;floatingToolbar.style.display='flex';}
+        function hideFloatingToolbar(){floatingToolbar.style.display='none';}
+        function showAddReferencePopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo ativo para adicionar referência.");return;}refTitleInput.value="";refUrlInput.value="";showPopup(addReferencePopup);refTitleInput.focus();hideFloatingToolbar();}
+        function showAddPersonPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo ativo para adicionar pessoa.");return;}personNameInput.value=currentSelectionRange.toString().trim();showPopup(addPersonPopup);personNameInput.focus();hideFloatingToolbar();}
+        function showAddEventPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo ativo para adicionar data/evento.");return;}eventDescriptionInput.value=currentSelectionRange.toString().trim();eventYearInput.value="";showPopup(addEventPopup);eventDescriptionInput.focus();hideFloatingToolbar();}
+        function showAddLocationPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo ativo para adicionar local.");return;}locationNameInput.value=currentSelectionRange.toString().trim();showPopup(addLocationPopup);locationNameInput.focus();hideFloatingToolbar();}
+        async function showLoadDocumentsPopup(){showPopup(loadDocumentPopup);documentsListContainerUl.innerHTML="";documentsListContainerMsg.textContent="Carregando lista de documentos...";documentsListContainerMsg.style.display='block';try{const q=query(collection(db,"documentos"),where("ativo","==",true),orderBy("atualizadoEm","desc"));const snap=await getDocs(q);if(snap.empty){documentsListContainerMsg.textContent="Nenhum documento ativo encontrado.";return;}documentsListContainerMsg.style.display='none';snap.forEach(dS=>{const data=dS.data();const li=document.createElement('li');const ts=document.createElement('span');ts.textContent=escapeHTML(data.titulo)||"Sem Título";ts.title=escapeHTML(data.titulo)||"Sem Título";const eb=document.createElement('button');eb.textContent="Editar";eb.dataset.docId=dS.id;eb.addEventListener('click',e=>{loadDocument(e.target.dataset.docId);hidePopup(loadDocumentPopup);});li.appendChild(ts);li.appendChild(eb);documentsListContainerUl.appendChild(li);});}catch(e){console.error("Erro ao buscar documentos para carregar:",e);documentsListContainerMsg.textContent="Erro ao carregar documentos.";}}
+    
+        // --- Funções do Índice (Capítulos Visuais) ---
+        function populateChapterIndex() {
+            indexChapterListUl.innerHTML = ''; indexChapterMsgP.style.display = 'none';
+            const chapterElements = editorsContainer.querySelectorAll('.text-editor-chapter');
+            if (chapterElements.length === 0) {
+                indexChapterMsgP.textContent = "Nenhum capítulo para exibir no índice."; indexChapterMsgP.style.display = 'block'; return;
+            }
+            chapterElements.forEach((chapterDiv, index) => {
+                const li = document.createElement('li'); li.dataset.chapterIndex = index;
+                const titleSpan = document.createElement('span'); titleSpan.className = 'chapter-title-index'; titleSpan.textContent = `Capítulo ${index + 1}`;
+                const previewSpan = document.createElement('span'); previewSpan.className = 'chapter-preview-index';
+                const firstSentence = getFirstSentence(chapterDiv.innerHTML);
+                previewSpan.textContent = firstSentence || "(Capítulo vazio)"; previewSpan.title = firstSentence || "(Capítulo vazio)";
+                li.appendChild(titleSpan); li.appendChild(previewSpan);
+                li.addEventListener('click', () => {
+                    const targetChapterIndex = parseInt(li.dataset.chapterIndex, 10);
+                    const targetChapterDiv = editorsContainer.querySelectorAll('.text-editor-chapter')[targetChapterIndex];
+                    if (targetChapterDiv) {
+                        targetChapterDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => {
+                            const range = document.createRange(); const sel = window.getSelection();
+                            if (targetChapterDiv.firstChild) { range.setStart(targetChapterDiv.firstChild, 0); }
+                            else { range.selectNodeContents(targetChapterDiv); }
+                            range.collapse(true);
+                            if(sel) {sel.removeAllRanges(); sel.addRange(range);}
+                            targetChapterDiv.focus();
+                        }, 300); // Atraso para permitir scroll antes do foco
+                        hidePopup(indexPopup);
+                    }
+                });
+                indexChapterListUl.appendChild(li);
+            });
+        }
+    
+        // --- Formatting Logic ---
+        function getParagraphsForSelection(){if(!activeEditorElement)return[];const sel=window.getSelection();if(!sel||!sel.rangeCount||!activeEditorElement.contains(sel.anchorNode)){const fP=activeEditorElement.querySelector('p,div');return fP?[fP]:[];}const range=sel.getRangeAt(0);const paras=new Set();function getClosestBlock(node){while(node&&node!==activeEditorElement){if(node.nodeType===1&&(node.tagName==='P'||node.tagName==='DIV'))return node;node=node.parentNode;}return null;}if(range.collapsed){const b=getClosestBlock(sel.anchorNode);if(b)paras.add(b);else if(activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&& (activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);}else{const sb=getClosestBlock(range.startContainer);const eb=getClosestBlock(range.endContainer);if(sb)paras.add(sb);if(eb)paras.add(eb);if(sb&&eb&&sb!==eb){let curr=sb.nextElementSibling;while(curr&&curr!==eb){if((curr.tagName==='P'||curr.tagName==='DIV')&&activeEditorElement.contains(curr))paras.add(curr);curr=curr.nextElementSibling;}}if(paras.size===0){const cb=getClosestBlock(range.commonAncestorContainer);if(cb&&activeEditorElement.contains(cb))paras.add(cb);}}if(paras.size===0&&activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&&(activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);return Array.from(paras);}
+        function applyFontSizeChange(){if(!activeEditorElement)return;const val=fontSizeInput.value;if(!val||isNaN(parseInt(val,10)))return;const cssVal=`${val}px`;const paras=getParagraphsForSelection();if(paras.length>0){paras.forEach(p=>{if(p&&p.style)p.style.fontSize=cssVal;});clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}else if(activeEditorElement.innerHTML.trim()===""||activeEditorElement.innerHTML.trim()==="<p><br></p>" || activeEditorElement.innerHTML.trim()===`<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`){activeEditorElement.innerHTML=`<p style="font-size:${cssVal};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}}
+    
+        // --- Event Listeners ---
+        fontSizeInput.addEventListener('input', applyFontSizeChange);
+        fontSizeInput.addEventListener('change', applyFontSizeChange);
+    
+        initNewDocBtn.addEventListener('click', createNewDocument);
+        initLoadDocBtn.addEventListener('click', showLoadDocumentsPopup);
+        newDocBtn.addEventListener('click', createNewDocument);
+        openLoadDocPopupBtn.addEventListener('click', showLoadDocumentsPopup);
+        docTitleInput.addEventListener('blur', saveDocumentTitle);
+    
+        addChapterBtn.addEventListener('click', () => {
+            createNewChapterElement('', true);
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => saveDocumentBody(), 300);
+        });
+    
+        showIndexBtn.addEventListener('click', () => {
+            populateChapterIndex();
+            showPopup(indexPopup);
+        });
+    
+        document.addEventListener('selectionchange', ()=>{const sel=window.getSelection();if(!activeEditorElement||!sel||!sel.rangeCount){hideFloatingToolbar();return;}const isInActiveEditor=activeEditorElement.contains(sel.anchorNode)&&activeEditorElement.contains(sel.focusNode);if(isInActiveEditor){if(!sel.isCollapsed&&sel.toString().trim()!==""){currentSelectionRange=sel.getRangeAt(0);showFloatingToolbar();}else{hideFloatingToolbar();}}else{hideFloatingToolbar();}});
+        document.addEventListener('mousedown',e=>{const isEditorUI=editorInterfaceDiv.contains(e.target);const isPopup=e.target.closest('.popup')||floatingToolbar.contains(e.target)||entityContextSidebar.contains(e.target);let isChapterClick=e.target.closest('.text-editor-chapter')!==null;if(isEditorUI&&!isPopup&&!isChapterClick){}else if(!isChapterClick&&!isPopup){hideFloatingToolbar();}});
+    
+        attachLinkBtn.addEventListener('click', showAddReferencePopup);
+        addPersonBtn.addEventListener('click', showAddPersonPopup);
+        addEventBtn.addEventListener('click', showAddEventPopup);
+        addLocationBtn.addEventListener('click', showAddLocationPopup);
+        saveNewPersonBtn.addEventListener('click',()=>saveNewPerson(personNameInput.value));
+        saveNewEventBtn.addEventListener('click',()=>saveNewEvent(eventDescriptionInput.value,eventYearInput.value));
+        saveNewLocationBtn.addEventListener('click',()=>saveNewLocation(locationNameInput.value));
+        showFoundPersonsBtn.addEventListener('click',()=>showFoundEntitiesPopup('persons'));
+        showFoundEventsBtn.addEventListener('click',()=>showFoundEntitiesPopup('events'));
+        showFoundLocationsBtn.addEventListener('click',()=>showFoundEntitiesPopup('locations'));
+        saveNewRefBtnElement.addEventListener('click',()=>{const t=refTitleInput.value.trim();const u=refUrlInput.value.trim();if(t&&u){try{new URL(u);addReferenceToDocument(t,u);}catch(_){alert("A URL da referência parece ser inválida.");}}else{alert("Título e URL da referência são obrigatórios.");}});
+        saveEditedRefBtn.addEventListener('click', saveEditedReference);
+        deleteRefBtn.addEventListener('click', deleteReference);
+        document.querySelectorAll('.close-popup-btn').forEach(btn=>btn.addEventListener('click',()=>hidePopup(btn.closest('.popup'))));
+    
+        editorsContainer.addEventListener('click',async e=>{const ch=e.target.closest('.text-editor-chapter');if(ch)activeEditorElement=ch;else return;const t=e.target;const pS=t.closest('span.person-text[data-person-id]');if(pS){const id=pS.dataset.personId;const p=knownPersons.find(x=>x.id===id);if(p&&p.nome)await displayEntityContextInSidebar(p.nome);else if(pS.textContent)await displayEntityContextInSidebar(pS.textContent.trim());return;}const eS=t.closest('span.event-text[data-event-id]');if(eS){const id=eS.dataset.eventId;const ev=knownEvents.find(x=>x.id===id);if(ev){const term=ev.descricao||ev.ano;if(term)await displayEntityContextInSidebar(term);}else if(eS.textContent)await displayEntityContextInSidebar(eS.textContent.trim());return;}const lS=t.closest('span.location-text[data-location-id]');if(lS){const id=lS.dataset.locationId;const l=knownLocations.find(x=>x.id===id);if(l&&l.nome)await displayEntityContextInSidebar(l.nome);else if(lS.textContent)await displayEntityContextInSidebar(lS.textContent.trim());return;}});
+        viewPageBtn.addEventListener('click',()=>{if(!currentDocId||!currentDocumentData){alert("Nenhum documento ativo para visualizar.");return;} const singleBodyHtml = (Array.isArray(currentDocumentData.corpo) && currentDocumentData.corpo.length > 0) ? currentDocumentData.corpo[0] : ""; const dFV={...currentDocumentData, corpo: [singleBodyHtml] };try{sessionStorage.setItem('documentToView',JSON.stringify(dFV));window.open('view.html','_blank');}catch(e){console.error("Erro ao preparar documento para visualização:",e);alert("Erro ao abrir a página de visualização.");}});
+        archiveCurrentDocBtn.addEventListener('click',()=>{if(!currentDocId){alert("Nenhum documento ativo para arquivar.");return;}showPopup(confirmArchivePopup);});
+        confirmArchiveYesBtn.addEventListener('click',async()=>{if(!currentDocId){hidePopup(confirmArchivePopup);return;}try{await updateDoc(doc(db,"documentos",currentDocId),{ativo:false,atualizadoEm:serverTimestamp()});hidePopup(confirmArchivePopup);alert("Documento arquivado com sucesso!");showInitialScreen();}catch(e){console.error("Erro ao arquivar documento:",e);alert("Erro ao arquivar o documento.");hidePopup(confirmArchivePopup);}});
+    
+        // --- Initial Load ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log("App V6.2 Com Índice inicializada.");
+            initialScreenDiv.style.display = 'block'; editorInterfaceDiv.style.display = 'none';
+            await loadKnownEntities(); // Carrega knownPersons, knownEvents, knownLocations
+            showInitialScreen();
+    
+            // TESTE MANUAL - Adicione isto:
+            console.log("--- INICIANDO TESTE MANUAL DE autoHighlightEntitiesInHTML ---");
+            console.log("Known Persons para teste (nomes):", typeof knownPersons !== 'undefined' ? knownPersons.map(p => p.nome) : "knownPersons N/A");
+            console.log("Known Locations para teste (nomes):", typeof knownLocations !== 'undefined' ? knownLocations.map(l => l.nome) : "knownLocations N/A");
+            console.log("Known Events para teste (anos):", typeof knownEvents !== 'undefined' ? knownEvents.map(e => e.ano) : "knownEvents N/A");
+    
+            // Adicione nomes que você sabe que existem em suas listas knownPersons, knownLocations, e um ano de knownEvents
+            const nomePessoaTeste = knownPersons.length > 0 ? knownPersons[0].nome : "David"; // Exemplo
+            const nomeLocalTeste = knownLocations.length > 0 ? knownLocations[0].nome : "Jerusalém"; // Exemplo
+            const anoEventoTeste = knownEvents.length > 0 ? knownEvents[0].ano : "70 d.C."; // Exemplo
+    
+            const testeHtml = `<p>Teste com ${nomePessoaTeste} e outro ${nomePessoaTeste}. Teste com local ${nomeLocalTeste}. Teste com evento ${anoEventoTeste}.</p><div>Outro bloco com ${nomePessoaTeste}.</div>`;
+            console.log("HTML de teste ANTES:", testeHtml);
+            const resultadoTeste = autoHighlightEntitiesInHTML(testeHtml);
+            console.log("HTML de teste DEPOIS:", resultadoTeste);
+            console.log("--- FIM DO TESTE MANUAL ---");
+        });
+    </script>
+</body>
+</html>

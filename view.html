@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualização do Documento</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .view-container { max-width: 950px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+        #viewPageTitle { font-size: 2em; margin-bottom: 20px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        #viewPageBody { margin-bottom: 30px; line-height: 1.7; font-size: 1.1em; }
+        #viewPageBody p, #viewPageBody div { margin-bottom: 0.75em; }
+        
+        #viewPageReferencesContainer { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; }
+        #viewPageReferencesContainer h3 { font-size: 1.5em; margin-bottom: 15px; color: #444; }
+        #viewPageReferencesList { list-style: none; padding: 0; }
+        #viewPageReferencesList li { background: #f9f9f9; padding: 12px 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e9ecef; }
+        #viewPageReferencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 4px; color: #0056b3; }
+        #viewPageReferencesList li a { text-decoration: none; color: #007bff; word-break: break-all; }
+        #viewPageReferencesList li a:hover { text-decoration: underline; }
+
+        #viewPageBody .referenced-text { cursor: pointer; }
+        #viewPageBody .referenced-text:hover { background-color: #e0efff; text-decoration: underline; text-decoration-color: #007bff; }
+        
+        .view-highlight-scroll { background-color: #cce5ff !important; transition: background-color 0.3s ease-out; border-radius: 3px; }
+        #viewPageReferencesList .view-highlight-scroll { background-color: #fff3cd !important; }
+        
+        .error-message { color: #dc3545; text-align: center; font-size: 1.2em; padding: 20px; border: 1px solid #f5c6cb; background-color: #f8d7da; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="view-container">
+        <h1 id="viewPageTitle">Carregando...</h1>
+        <div id="viewPageBody">
+            <p>Carregando conteúdo...</p>
+        </div>
+        <div id="viewPageReferencesContainer">
+            <h3>Referências</h3>
+            <ul id="viewPageReferencesList">
+                <li>Carregando referências...</li>
+            </ul>
+        </div>
+        <p id="viewErrorMessage" class="error-message" style="display:none;">Não foi possível carregar o documento para visualização. Por favor, volte e tente novamente.</p>
+    </div>
+
+    <script>
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            // Garantir que as aspas dentro do objeto de mapeamento são retas
+            return str.replace(/[&<>"'`]/g, tag => ({
+                '&': '&', 
+                '<': '<', 
+                '>': '>', 
+                '"': '"', 
+            }[tag] || tag));
+        }
+
+        function applyDefaultStylesToBlocks(container, targetFontSize, targetLineHeight) {
+            container.querySelectorAll('p, div').forEach(el => {
+                if (!el.style.fontSize) el.style.fontSize = targetFontSize;
+                if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const titleEl = document.getElementById('viewPageTitle');
+            const bodyEl = document.getElementById('viewPageBody');
+            const referencesListEl = document.getElementById('viewPageReferencesList');
+            const referencesContainerEl = document.getElementById('viewPageReferencesContainer');
+            const errorMessageEl = document.getElementById('viewErrorMessage');
+
+            const dataString = sessionStorage.getItem('documentToView');
+            // sessionStorage.removeItem('documentToView'); 
+
+            if (dataString) {
+                try {
+                    const docData = JSON.parse(dataString);
+
+                    // Esta é a linha que seria aproximadamente a linha 50-57 no contexto do script
+                    // Certifique-se de que as aspas em "Documento Sem Título" são retas: "
+                    const pageTitle = docData.titulo ? escapeHTML(docData.titulo) : "Documento Sem Título";
+                    
+                    titleEl.textContent = pageTitle;
+                    document.title = pageTitle; 
+
+                    bodyEl.innerHTML = docData.corpo || "<p>Conteúdo do documento vazio.</p>";
+                    
+                    bodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
+
+                    let docDefaultFontSize = '1.1em'; 
+                    let docDefaultLineHeight = '1.7'; 
+                    const firstBlock = bodyEl.querySelector('p, div');
+                    if (firstBlock) {
+                        if (firstBlock.style.fontSize) docDefaultFontSize = firstBlock.style.fontSize;
+                        if (firstBlock.style.lineHeight) docDefaultLineHeight = firstBlock.style.lineHeight;
+                    }
+                    applyDefaultStylesToBlocks(bodyEl, docDefaultFontSize, docDefaultLineHeight);
+
+                    const references = docData.referencias || [];
+                    if (references.length === 0) {
+                        referencesListEl.innerHTML = "<li>Nenhuma referência neste documento.</li>";
+                    } else {
+                        referencesListEl.innerHTML = ""; 
+                        references.forEach(ref => {
+                            const li = document.createElement('li');
+                            li.className = 'reference-item'; 
+                            li.setAttribute('data-ref-id', ref.id);
+
+                            const titleSpan = document.createElement('span');
+                            titleSpan.className = 'ref-title';
+                            titleSpan.textContent = `${escapeHTML(ref.tituloReferencia)}: `;
+                            li.appendChild(titleSpan);
+
+                            const a = document.createElement('a');
+                            a.href = ref.urlReferencia;
+                            a.textContent = escapeHTML(ref.urlReferencia);
+                            a.target = "_blank"; 
+                            li.appendChild(a);
+                            
+                            referencesListEl.appendChild(li);
+                        });
+                    }
+
+                    bodyEl.addEventListener('click', (event) => {
+                        const targetSpan = event.target.closest('span.referenced-text');
+                        if (targetSpan && targetSpan.dataset.refId) {
+                            const refId = targetSpan.dataset.refId;
+                            const refListItemInView = referencesListEl.querySelector(`li.reference-item[data-ref-id="${refId}"]`);
+
+                            bodyEl.querySelectorAll('.view-highlight-scroll').forEach(el => el.classList.remove('view-highlight-scroll'));
+                            referencesListEl.querySelectorAll('.view-highlight-scroll').forEach(el => el.classList.remove('view-highlight-scroll'));
+
+                            if (refListItemInView) {
+                                refListItemInView.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                refListItemInView.classList.add('view-highlight-scroll'); 
+                                targetSpan.classList.add('view-highlight-scroll'); 
+                                
+                                setTimeout(() => {
+                                    if (targetSpan) targetSpan.classList.remove('view-highlight-scroll');
+                                    if (refListItemInView) refListItemInView.classList.remove('view-highlight-scroll');
+                                }, 3000); 
+                            }
+                        }
+                    });
+
+                } catch (e) {
+                    console.error("Erro ao processar dados do documento para visualização:", e);
+                    titleEl.style.display = 'none';
+                    bodyEl.style.display = 'none';
+                    referencesContainerEl.style.display = 'none';
+                    errorMessageEl.textContent = "Erro ao processar os dados do documento. Verifique o console para detalhes.";
+                    errorMessageEl.style.display = 'block';
+                }
+            } else {
+                titleEl.style.display = 'none';
+                bodyEl.style.display = 'none';
+                referencesContainerEl.style.display = 'none';
+                errorMessageEl.textContent = "Nenhum documento encontrado para visualização. Por favor, volte à página anterior e tente novamente.";
+                errorMessageEl.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

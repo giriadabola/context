@@ -981,10 +981,98 @@
             const newRef = { id: refId, tituloReferencia: title, urls: urls, textoSelecionadoOriginal: selTxt };
             try { if (!currentDocumentData.referencias) currentDocumentData.referencias = []; currentDocumentData.referencias.push(newRef); await updateDoc(doc(db, "documentos", currentDocId), { referencias: arrayUnion(newRef), atualizadoEm: serverTimestamp() }); renderReferences(currentDocumentData.referencias); hidePopup(addReferencePopup); saveDocumentBody(); } catch (e) { console.error("Erro ao adicionar referência:", e); alert("Erro ao adicionar referência."); }
         }
-        function renderReferences(refs = []) {
-            referencesListUl.innerHTML = ""; if (refs.length === 0) { referencesListUl.innerHTML = "<li>Nenhuma referência adicionada.</li>"; return; }
-            refs.forEach(ref => { const li = document.createElement('li'); li.className = 'reference-item'; li.setAttribute('data-ref-id', ref.id); const cDiv = document.createElement('div'); cDiv.className = 'ref-content'; const tS = document.createElement('span'); tS.className = 'ref-title'; tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `; tS.dataset.refId = ref.id; tS.addEventListener('click', navigateToReferencedTextInEditor); cDiv.appendChild(tS); const urlsToDisplay = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []); if (urlsToDisplay.length > 0) { const urlsContainer = document.createElement('div'); urlsContainer.style.marginTop = '3px'; urlsToDisplay.forEach(url => { const a = document.createElement('a'); a.href = url; a.textContent = escapeHTML(url); a.target = "_blank"; a.style.display = 'block'; a.style.marginBottom = '2px'; urlsContainer.appendChild(a); }); cDiv.appendChild(urlsContainer); } li.appendChild(cDiv); const eB = document.createElement('button'); eB.className = 'edit-ref-btn'; eB.innerHTML = '✎'; eB.title = "Editar Referência"; eB.dataset.refId = ref.id; eB.addEventListener('click', () => openEditReferencePopup(ref.id)); li.appendChild(eB); referencesListUl.appendChild(li); });
+        function renderReferences(refsInput = []) { // Renomeei 'refs' para 'refsInput' para evitar conflito
+            referencesListUl.innerHTML = "";
+
+            // Garantir que temos acesso ao container do editor e ao ID do documento
+            if (!currentDocId || !editorsContainer) {
+                referencesListUl.innerHTML = "<li>Nenhuma referência para exibir (editor não carregado ou documento não ativo).</li>";
+                return;
+            }
+
+            // Usa as refs passadas ou as do documento atual
+            const allRefsInCurrentDoc = refsInput.length > 0 ? refsInput : (currentDocumentData ? currentDocumentData.referencias : []);
+
+            if (!allRefsInCurrentDoc || allRefsInCurrentDoc.length === 0) {
+                referencesListUl.innerHTML = "<li>Nenhuma referência adicionada.</li>";
+                return;
+            }
+
+            // 1. Obter todos os spans de referência do editor, na ordem em que aparecem
+            const refSpansInEditor = Array.from(editorsContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id]'));
+
+            // 2. Extrair os IDs das referências na ordem em que aparecem no texto
+            const orderedRefIdsFromEditor = refSpansInEditor.map(span => span.dataset.refId);
+
+            // 3. Criar um mapa para busca rápida dos objetos de referência completos
+            const refMap = new Map();
+            allRefsInCurrentDoc.forEach(ref => refMap.set(ref.id, ref));
+
+            // 4. Construir a lista de referências ordenadas com base na sua aparição no texto
+            const sortedReferencesToDisplay = [];
+            orderedRefIdsFromEditor.forEach(id => {
+                if (refMap.has(id)) {
+                    sortedReferencesToDisplay.push(refMap.get(id));
+                    // Opcional: remover do mapa para depois adicionar as que não estão no texto, se desejado
+                    // refMap.delete(id);
+                }
+            });
+
+            // (Opcional) Se você quiser listar referências que existem nos dados mas não no texto
+            // (por exemplo, se o span foi deletado mas a referência não), elas poderiam ser adicionadas aqui.
+            // Por agora, vamos seguir estritamente a ordem do texto.
+            // refMap.forEach(refNotInText => sortedReferencesToDisplay.push(refNotInText));
+
+
+            if (sortedReferencesToDisplay.length === 0) {
+                referencesListUl.innerHTML = "<li>Nenhuma referência encontrada no texto do documento.</li>";
+                return;
+            }
+
+            sortedReferencesToDisplay.forEach(ref => {
+                const li = document.createElement('li');
+                li.className = 'reference-item';
+                li.setAttribute('data-ref-id', ref.id);
+
+                const cDiv = document.createElement('div');
+                cDiv.className = 'ref-content';
+
+                const tS = document.createElement('span');
+                tS.className = 'ref-title';
+                tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `;
+                tS.dataset.refId = ref.id;
+                tS.addEventListener('click', navigateToReferencedTextInEditor);
+                cDiv.appendChild(tS);
+
+                const urlsToDisplay = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
+                if (urlsToDisplay.length > 0) {
+                    const urlsContainer = document.createElement('div');
+                    urlsContainer.style.marginTop = '3px';
+                    urlsToDisplay.forEach(url => {
+                        const a = document.createElement('a');
+                        a.href = url; // A URL já deve estar correta, não precisa escapar para href
+                        a.textContent = escapeHTML(url); // Escapa para exibição
+                        a.target = "_blank";
+                        a.style.display = 'block';
+                        a.style.marginBottom = '2px';
+                        urlsContainer.appendChild(a);
+                    });
+                    cDiv.appendChild(urlsContainer);
+                }
+                li.appendChild(cDiv);
+
+                const eB = document.createElement('button');
+                eB.className = 'edit-ref-btn';
+                eB.innerHTML = '✎';
+                eB.title = "Editar Referência";
+                eB.dataset.refId = ref.id;
+                eB.addEventListener('click', () => openEditReferencePopup(ref.id));
+                li.appendChild(eB);
+
+                referencesListUl.appendChild(li);
+            });
         }
+
         function openEditReferencePopup(refId) {
             if (!currentDocumentData || !currentDocumentData.referencias) return; const ref = currentDocumentData.referencias.find(r => r.id === refId); if (!ref) { alert("Referência não encontrada."); return; }
             editingRefIdInput.value = refId; editRefTitleInput.value = ref.tituloReferencia;

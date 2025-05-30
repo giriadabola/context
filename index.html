@@ -6,6 +6,9 @@
     <title>Editor de Documentos Completo - V6 (Com Índice)</title>
 
     <style>
+    :root {
+        color-scheme: dark light;
+    }
     body {
         font-family: sans-serif;
         margin: 0;
@@ -127,6 +130,16 @@
     .doc-actions button.archive-btn:hover {
         background-color: #c9302c;
     }
+
+    /* Reset para inputs para melhor controle de estilo no dark mode */
+    input[type="text"],
+    input[type="url"],
+    input[type="number"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
     #docTitle {
         width: calc(100% - 22px);
         padding: 10px;
@@ -135,7 +148,7 @@
         border: 1px solid #555; /* Darker border */
         border-radius: 4px;
         background-color: #252525; /* Dark input background */
-        color: #d4d4d4; /* Light text */
+        color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
     }
     #docTitle::placeholder { color: #777; }
 
@@ -162,7 +175,7 @@
         align-items: center;
         flex-grow: 1;
     }
-    .editor-toolbar button, .editor-toolbar select, .editor-toolbar input[type="number"] {
+    .editor-toolbar button, .editor-toolbar select, .editor-toolbar input[type="number"], .editor-toolbar input[type="color"] {
         margin-right: 8px;
         padding: 5px 8px;
         cursor: pointer;
@@ -171,12 +184,18 @@
         color: #d4d4d4; /* Light text */
         border: 1px solid #666; /* Darker border */
         box-sizing: border-box;
+        border-radius: 3px;
     }
     .editor-toolbar input[type="number"] {
-        padding: 4px 6px;
-        border-radius: 3px;
+        padding: 4px 6px; /* Ajuste específico se necessário */
         width: 60px;
         text-align: right;
+        color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
+    }
+    .editor-toolbar input[type="color"] {
+        padding: 0px 2px; /* Menor padding para input de cor */
+        width: 40px;
+        min-width: 40px; /* Garante que não encolha demais */
     }
     .editor-toolbar button.entity-btn { display: none; }
     .editor-toolbar label { margin-right: 5px; font-size: 0.9em; color: #b0b0b0; }
@@ -203,14 +222,18 @@
         outline: none;
         line-height: 1.6;
         background-color: #252525; /* Dark editor background */
-        color: #d4d4d4; /* Light text for editor */
+        color: #d4d4d4 !important; /* Cor padrão do texto no capítulo (pode ser !important aqui) */
     }
     #editorsContainer .text-editor-chapter:focus {
         border-color: #5a90c2; /* Brighter focus border */
         box-shadow: 0 0 0 2px rgba(58, 124, 165, 0.35); /* Focus shadow */
     }
+    /* IMPORTANTE: Removido !important daqui para permitir a mudança de cor do texto selecionado */
     #editorsContainer .text-editor-chapter p,
-    #editorsContainer .text-editor-chapter div { margin-bottom: 0.5em; }
+    #editorsContainer .text-editor-chapter div {
+        margin-bottom: 0.5em;
+        color: inherit; /* Herda a cor do .text-editor-chapter, ou defina #d4d4d4 sem !important */
+    }
 
     /* Entity highlights for dark mode */
     #editorsContainer .text-editor-chapter .referenced-text {
@@ -280,7 +303,7 @@
         border: 1px solid #555; /* Darker border */
         border-radius: 4px;
         background-color: #252525; /* Dark input */
-        color: #d4d4d4; /* Light text */
+        color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
     }
     .popup-content input[type="text"]::placeholder, .popup-content input[type="url"]::placeholder { color: #777; }
     .popup-content button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; }
@@ -497,6 +520,12 @@
                         <option value="16"></option><option value="18"></option><option value="20"></option>
                         <option value="24"></option><option value="28"></option><option value="32"></option>
                     </datalist>
+
+                    <!-- NOVO SELETOR DE COR -->
+                    <label for="fontColorInput" style="margin-left: 10px;">Cor:</label>
+                    <input type="color" id="fontColorInput" title="Cor da Fonte" value="#d4d4d4">
+                    <!-- FIM DO NOVO SELETOR DE COR -->
+
                     <button id="showIndexBtn" title="Mostrar Índice dos Capítulos">Index</button>
 
                     <button id="showFoundPersonsBtn" class="entity-btn" title="Pessoas Encontradas">👤</button>
@@ -619,16 +648,7 @@
 
     <script type="module">
         console.log("VERSÃO DO SCRIPT: ", Date.now()); // Log para verificar a versão do script
-        // ATENÇÃO: Substitua pelas suas credenciais reais do Firebase!
-        const firebaseConfig = {
-            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // EXEMPLO - SUBSTITUA
-            authDomain: "bibliacontexto.firebaseapp.com", // EXEMPLO - SUBSTITUA
-            projectId: "bibliacontexto", // EXEMPLO - SUBSTITUA
-            storageBucket: "bibliacontexto.firebasestorage.app", // EXEMPLO - SUBSTITUA
-            messagingSenderId: "266293600679", // EXEMPLO - SUBSTITUA
-            appId: "1:266293600679:web:3b7c264f0b5e35ebea1682" // EXEMPLO - SUBSTITUA
-        };
-        window.firebaseConfigGlobal = firebaseConfig; // Embora já esteja no escopo global do módulo, pode ser útil se referenciado externamente
+        const firebaseConfig = window.firebaseConfigGlobal; // Pega do script de config no <head>
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import {
@@ -645,7 +665,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // DOM Elements (copiados do seu HTML original)
+        // DOM Elements
         const initialScreenDiv = document.getElementById('initialScreen');
         const editorInterfaceDiv = document.getElementById('editorInterface');
         const initNewDocBtn = document.getElementById('initNewDocBtn');
@@ -686,6 +706,7 @@
         const foundLocationsListContainerMsg = document.querySelector('#foundLocationsListContainer p');
 
         const fontSizeInput = document.getElementById('fontSizeInput');
+        const fontColorInput = document.getElementById('fontColorInput'); // NOVO ELEMENTO
 
         const newDocBtn = document.getElementById('newDocBtn');
         const openLoadDocPopupBtn = document.getElementById('openLoadDocPopupBtn');
@@ -693,11 +714,9 @@
         const referencesListUl = document.getElementById('referencesList');
         const addReferencePopup = document.getElementById('addReferencePopup');
         const refTitleInput = document.getElementById('refTitleInput');
-        // const refUrlInput = document.getElementById('refUrlInput'); // No longer a single input
         const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
         const editReferencePopup = document.getElementById('editReferencePopup');
         const editRefTitleInput = document.getElementById('editRefTitleInput');
-        // const editRefUrlInput = document.getElementById('editRefUrlInput'); // No longer a single input
         const editingRefIdInput = document.getElementById('editingRefIdInput');
         const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
         const deleteRefBtn = document.getElementById('deleteRefBtn');
@@ -750,22 +769,23 @@
             container.querySelectorAll('p, div').forEach(el => {
                 if (!el.style.fontSize) el.style.fontSize = targetFontSizeCSS;
                 if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
+                // A cor é agora herdada ou definida sem !important para permitir spans coloridos
             });
         }
         function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
-        function escapeHTML(str) {
-            if (typeof str !== 'string') return '';
-            const map = { 
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;', 
-                '"': '&quot;',
-                "'": '&apos;',
-                '`': '&#96;'
-            };
-            return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; });
-        }
+         function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            const map = { 
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;', 
+                '"': '&quot;',
+                "'": '&apos;',
+                '`': '&#96;'
+            };
+            return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; });
+        }
 
         function getFirstSentence(htmlString) {
             if (!htmlString) return "";
@@ -784,25 +804,13 @@
 
             const inputGroup = document.createElement('div');
             inputGroup.className = 'url-input-group';
-            // Styles already in CSS, but can be kept for fallback if needed
-            // inputGroup.style.display = 'flex';
-            // inputGroup.style.alignItems = 'center';
-            // inputGroup.style.marginBottom = '10px';
 
             const urlInput = document.createElement('input');
             urlInput.type = 'url';
             urlInput.className = 'ref-url-input';
             urlInput.placeholder = 'URL do Link';
             urlInput.value = urlValue;
-            // Styles for urlInput also in CSS
-            // urlInput.style.flexGrow = '1';
-            // urlInput.style.padding = '10px';
-            // urlInput.style.border = '1px solid #555'; // Dark mode border
-            // urlInput.style.borderRadius = '4px';
-            // urlInput.style.backgroundColor = '#252525'; // Dark mode background
-            // urlInput.style.color = '#d4d4d4'; // Dark mode text
             urlInput.style.marginRight = canBeRemoved ? '10px' : '0';
-
 
             inputGroup.appendChild(urlInput);
 
@@ -810,15 +818,6 @@
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
                 removeBtn.textContent = 'Remover';
-                // Styles for removeBtn also in CSS
-                // removeBtn.style.padding = '10px 15px';
-                // removeBtn.style.border = 'none';
-                // removeBtn.style.borderRadius = '4px';
-                // removeBtn.style.backgroundColor = '#d9534f'; // Dark mode danger
-                // removeBtn.style.color = 'white';
-                // removeBtn.style.cursor = 'pointer';
-                // removeBtn.style.flexShrink = '0';
-                // removeBtn.style.marginLeft = '10px'; // Added in CSS
                 removeBtn.addEventListener('click', () => {
                     inputGroup.remove();
                     if (container.childElementCount === 0) {
@@ -908,7 +907,7 @@
         }
 
         function showEditorInterfaceScreen() { initialScreenDiv.style.display = 'none'; editorInterfaceDiv.style.display = 'block'; }
-        function showInitialScreen() { editorInterfaceDiv.style.display = 'none'; initialScreenDiv.style.display = 'block'; loadRecentDocuments(); currentDocId = null; currentDocumentData = null; docTitleInput.value = ''; editorsContainer.innerHTML = ''; activeEditorElement = null; fontSizeInput.value = parseInt(DEFAULT_FONT_SIZE, 10); referencesListUl.innerHTML = "<li>Nenhuma referência.</li>"; showFoundPersonsBtn.style.display = 'none'; showFoundEventsBtn.style.display = 'none'; showFoundLocationsBtn.style.display = 'none'; entityContextSidebar.style.display = 'none'; archiveCurrentDocBtn.style.display = 'none'; indexChapterListUl.innerHTML = ''; indexChapterMsgP.textContent = "Nenhum capítulo para exibir."; indexChapterMsgP.style.display = 'block'; }
+        function showInitialScreen() { editorInterfaceDiv.style.display = 'none'; initialScreenDiv.style.display = 'block'; loadRecentDocuments(); currentDocId = null; currentDocumentData = null; docTitleInput.value = ''; editorsContainer.innerHTML = ''; activeEditorElement = null; fontSizeInput.value = parseInt(DEFAULT_FONT_SIZE, 10); fontColorInput.value = '#d4d4d4'; referencesListUl.innerHTML = "<li>Nenhuma referência.</li>"; showFoundPersonsBtn.style.display = 'none'; showFoundEventsBtn.style.display = 'none'; showFoundLocationsBtn.style.display = 'none'; entityContextSidebar.style.display = 'none'; archiveCurrentDocBtn.style.display = 'none'; indexChapterListUl.innerHTML = ''; indexChapterMsgP.textContent = "Nenhum capítulo para exibir."; indexChapterMsgP.style.display = 'block'; }
 
         async function loadRecentDocuments() {
             recentDocumentsListUl.innerHTML = ''; recentDocumentsMsgP.textContent = 'Carregando...'; recentDocumentsMsgP.style.display = 'block';
@@ -932,10 +931,27 @@
         }
 
         async function saveDocumentBody() {
-            if (!currentDocId) return; const visualChapterContents = []; editorsContainer.querySelectorAll('.text-editor-chapter').forEach(chapterDiv => visualChapterContents.push(chapterDiv.innerHTML)); const combinedRawHTML = visualChapterContents.join(CHAPTER_DELIMITER_HTML);
-            const finalHTMLToSave = autoHighlightEntitiesInHTML(combinedRawHTML);
-            if (currentDocumentData) { currentDocumentData.corpo = [finalHTMLToSave]; }
-            try { await updateDoc(doc(db, "documentos", currentDocId), { corpo: [finalHTMLToSave], atualizadoEm: serverTimestamp() }); } catch (e) { console.error("Erro salvar corpo:", e); }
+            if (!currentDocId) return;
+            console.log("saveDocumentBody: Iniciado.");
+            const visualChapterContents = [];
+            editorsContainer.querySelectorAll('.text-editor-chapter').forEach(chapterDiv => {
+                visualChapterContents.push(chapterDiv.innerHTML);
+            });
+            const combinedRawHTML = visualChapterContents.join(CHAPTER_DELIMITER_HTML);
+            const finalHTMLToSave = autoHighlightEntitiesInHTML(combinedRawHTML); // Re-highlight antes de salvar
+
+            if (currentDocumentData) {
+                currentDocumentData.corpo = [finalHTMLToSave]; // Atualiza o estado local
+            }
+            try {
+                await updateDoc(doc(db, "documentos", currentDocId), {
+                    corpo: [finalHTMLToSave],
+                    atualizadoEm: serverTimestamp()
+                });
+                console.log("saveDocumentBody: Corpo do documento salvo com sucesso.");
+            } catch (e) {
+                console.error("Erro ao salvar corpo do documento:", e);
+            }
         }
         async function saveDocumentTitle() { if (!currentDocId) return; const newTitle = docTitleInput.value.trim() || "Documento Sem Título"; try { await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() }); if(currentDocumentData) currentDocumentData.titulo = newTitle; } catch (e) { console.error("Erro salvar título:", e); } }
 
@@ -1003,8 +1019,72 @@
         function getParagraphsForSelection(){if(!activeEditorElement)return[];const sel=window.getSelection();if(!sel||!sel.rangeCount||!activeEditorElement.contains(sel.anchorNode)){const fP=activeEditorElement.querySelector('p,div');return fP?[fP]:[];}const range=sel.getRangeAt(0);const paras=new Set();function getClosestBlock(node){while(node&&node!==activeEditorElement){if(node.nodeType===1&&(node.tagName==='P'||node.tagName==='DIV'))return node;node=node.parentNode;}return null;}if(range.collapsed){const b=getClosestBlock(sel.anchorNode);if(b)paras.add(b);else if(activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&& (activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);}else{const sb=getClosestBlock(range.startContainer);const eb=getClosestBlock(range.endContainer);if(sb)paras.add(sb);if(eb)paras.add(eb);if(sb&&eb&&sb!==eb){let curr=sb.nextElementSibling;while(curr&&curr!==eb){if((curr.tagName==='P'||curr.tagName==='DIV')&&activeEditorElement.contains(curr))paras.add(curr);curr=curr.nextElementSibling;}}if(paras.size===0){const cb=getClosestBlock(range.commonAncestorContainer);if(cb&&activeEditorElement.contains(cb))paras.add(cb);}}if(paras.size===0&&activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&&(activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);return Array.from(paras);}
         function applyFontSizeChange(){if(!activeEditorElement)return;const val=fontSizeInput.value;if(!val||isNaN(parseInt(val,10)))return;const cssVal=`${val}px`;const paras=getParagraphsForSelection();if(paras.length>0){paras.forEach(p=>{if(p&&p.style)p.style.fontSize=cssVal;});clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}else if(activeEditorElement.innerHTML.trim()===""||activeEditorElement.innerHTML.trim()==="<p><br></p>" || activeEditorElement.innerHTML.trim()===`<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`){activeEditorElement.innerHTML=`<p style="font-size:${cssVal};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}}
 
+        // Função para aplicar a cor da fonte ao texto selecionado
+        function applyFontColorChange(event) {
+            console.log("applyFontColorChange: Iniciada.");
+            if (!activeEditorElement) {
+                console.warn("applyFontColorChange: Nenhum editor ativo.");
+                return;
+            }
+
+            const color = event.target.value;
+            console.log(`applyFontColorChange: Cor selecionada: ${color}`);
+
+            if (!currentSelectionRange) {
+                console.warn("applyFontColorChange: currentSelectionRange está nulo. Nenhuma seleção para aplicar cor.");
+                return;
+            }
+
+            if (currentSelectionRange.commonAncestorContainer.ownerDocument !== document) {
+                console.warn("applyFontColorChange: currentSelectionRange não pertence ao documento principal.");
+                return;
+            }
+
+            console.log(`applyFontColorChange: Texto do currentSelectionRange: "${currentSelectionRange.toString()}"`);
+
+            activeEditorElement.focus();
+            console.log("applyFontColorChange: Editor focado.");
+
+            const sel = window.getSelection();
+            if (!sel) {
+                console.error("applyFontColorChange: window.getSelection() retornou nulo.");
+                return;
+            }
+            sel.removeAllRanges();
+            sel.addRange(currentSelectionRange);
+            console.log(`applyFontColorChange: Seleção restaurada. Texto selecionado agora: "${sel.toString()}"`);
+
+            if (sel.rangeCount > 0 && sel.getRangeAt(0).collapsed && currentSelectionRange.toString().length > 0) {
+                console.warn("applyFontColorChange: Seleção restaurada está colapsada, mas a seleção original não estava.");
+            } else if (sel.rangeCount === 0 && currentSelectionRange.toString().length > 0) {
+                console.error("applyFontColorChange: Falha ao restaurar a seleção (rangeCount é 0).");
+                return;
+            }
+
+            try {
+                document.execCommand('styleWithCSS', false, true);
+                const success = document.execCommand('foreColor', false, color);
+                console.log(`applyFontColorChange: document.execCommand('foreColor') sucesso: ${success}`);
+
+                if (!success) {
+                    console.warn("applyFontColorChange: execCommand('foreColor') retornou false. A cor pode não ter sido aplicada.");
+                } else {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        console.log("applyFontColorChange: Salvando documento após mudança de cor...");
+                        saveDocumentBody();
+                    }, 700);
+                }
+            } catch (e) {
+                console.error("applyFontColorChange: Erro durante execCommand:", e);
+                alert("Ocorreu um erro ao tentar aplicar a cor.");
+            }
+        }
+
         fontSizeInput.addEventListener('input', applyFontSizeChange);
         fontSizeInput.addEventListener('change', applyFontSizeChange);
+        fontColorInput.addEventListener('input', applyFontColorChange); // NOVO EVENT LISTENER
+
         initNewDocBtn.addEventListener('click', createNewDocument);
         initLoadDocBtn.addEventListener('click', showLoadDocumentsPopup);
         newDocBtn.addEventListener('click', createNewDocument);
@@ -1012,7 +1092,38 @@
         docTitleInput.addEventListener('blur', saveDocumentTitle);
         addChapterBtn.addEventListener('click', () => { createNewChapterElement('', true); clearTimeout(debounceTimer); debounceTimer = setTimeout(() => saveDocumentBody(), 300); });
         showIndexBtn.addEventListener('click', () => { populateChapterIndex(); showPopup(indexPopup); });
-        document.addEventListener('selectionchange', ()=>{const sel=window.getSelection();if(!activeEditorElement||!sel||!sel.rangeCount){hideFloatingToolbar();return;}const isInActiveEditor=activeEditorElement.contains(sel.anchorNode)&&activeEditorElement.contains(sel.focusNode);if(isInActiveEditor){if(!sel.isCollapsed&&sel.toString().trim()!==""){currentSelectionRange=sel.getRangeAt(0);showFloatingToolbar();}else{hideFloatingToolbar();}}else{hideFloatingToolbar();}});
+
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+
+            if (!activeEditorElement || !sel || !sel.rangeCount) {
+                hideFloatingToolbar();
+                return;
+            }
+
+            const range = sel.getRangeAt(0);
+            let node = range.commonAncestorContainer;
+            let isSelectionInActiveEditor = false;
+            while (node) {
+                if (node === activeEditorElement) {
+                    isSelectionInActiveEditor = true;
+                    break;
+                }
+                node = node.parentNode;
+            }
+
+            if (isSelectionInActiveEditor) {
+                currentSelectionRange = range; // ATUALIZA currentSelectionRange
+                if (!sel.isCollapsed && sel.toString().trim() !== "") {
+                    showFloatingToolbar();
+                } else {
+                    hideFloatingToolbar();
+                }
+            } else {
+                hideFloatingToolbar();
+            }
+        });
+
         document.addEventListener('mousedown',e=>{const isEditorUI=editorInterfaceDiv.contains(e.target);const isPopup=e.target.closest('.popup')||floatingToolbar.contains(e.target)||entityContextSidebar.contains(e.target);let isChapterClick=e.target.closest('.text-editor-chapter')!==null;if(isEditorUI&&!isPopup&&!isChapterClick){}else if(!isChapterClick&&!isPopup){hideFloatingToolbar();}});
         attachLinkBtn.addEventListener('click', showAddReferencePopup);
         addPersonBtn.addEventListener('click', showAddPersonPopup);
@@ -1034,7 +1145,7 @@
         confirmArchiveYesBtn.addEventListener('click',async()=>{if(!currentDocId){hidePopup(confirmArchivePopup);return;}try{await updateDoc(doc(db,"documentos",currentDocId),{ativo:false,atualizadoEm:serverTimestamp()});hidePopup(confirmArchivePopup);alert("Documento arquivado com sucesso!");showInitialScreen();}catch(e){console.error("Erro ao arquivar documento:",e);alert("Erro ao arquivar o documento.");hidePopup(confirmArchivePopup);}});
 
         window.addEventListener('DOMContentLoaded', async () => {
-            console.log("App V6.2 Com Índice (Dark Mode) inicializada.");
+            console.log("App V6.2 Com Índice (Dark Mode) e Seletor de Cor inicializada.");
             initialScreenDiv.style.display = 'block'; editorInterfaceDiv.style.display = 'none';
             await loadKnownEntities();
             showInitialScreen();

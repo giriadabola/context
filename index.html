@@ -5,486 +5,507 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor de Documentos Completo - V6 (Com Índice)</title>
 
+
     <style>
-    :root {
-        color-scheme: dark light;
-    }
-    body {
-        font-family: sans-serif;
-        margin: 0;
-        padding: 20px;
-        background-color: #1e1e1e; /* Dark background */
-        color: #d4d4d4; /* Light text */
-    }
-    .container {
-        max-width: 900px;
-        margin: auto;
-        background: #2d2d2d; /* Darker container background */
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 15px rgba(0,0,0,0.5); /* Adjusted shadow for dark */
-        position: relative;
-    }
+        :root {
+            color-scheme: dark light;
+        }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e; /* Dark background */
+            color: #d4d4d4; /* Light text */
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #2d2d2d; /* Darker container background */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5); /* Adjusted shadow for dark */
+            position: relative;
+        }
 
-    #initialScreen {
-        text-align: center;
-        padding: 40px 20px;
-    }
-    #initialScreen h1 {
-        margin-bottom: 30px;
-        color: #e0e0e0; /* Lighter heading */
-    }
-    .initial-actions button {
-        padding: 12px 25px;
-        font-size: 1.1em;
-        cursor: pointer;
-        border: 1px solid #3a7ca5; /* Dark mode primary action color */
-        background-color: #3a7ca5;
-        color: white;
-        border-radius: 5px;
-        margin: 0 10px 20px 10px;
-    }
-    .initial-actions button:hover {
-        background-color: #4a90c2; /* Lighter hover for primary */
-        border-color: #4a90c2;
-    }
-    #recentDocumentsSection {
-        margin-top: 30px;
-        text-align: left;
-        max-width: 700px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    #recentDocumentsSection h2 {
-        font-size: 1.3em;
-        margin-bottom: 15px;
-        color: #c0c0c0; /* Lighter subheading */
-        border-bottom: 1px solid #444; /* Darker border */
-        padding-bottom: 10px;
-    }
-    #recentDocumentsList {
-        list-style: none;
-        padding: 0;
-    }
-    #recentDocumentsList li {
-        background: #333; /* Dark list item background */
-        border: 1px solid #444; /* Darker border */
-        padding: 10px 15px;
-        margin-bottom: 10px;
-        border-radius: 4px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    #recentDocumentsList li .doc-info {
-        flex-grow: 1;
-    }
-    #recentDocumentsList li .doc-title {
-        font-weight: bold;
-        color: #6fa3d0; /* Adjusted link color */
-    }
-    #recentDocumentsList li .doc-date {
-        font-size: 0.85em;
-        color: #999; /* Lighter secondary text */
-        display: block;
-        margin-top: 3px;
-    }
-    #recentDocumentsList li button {
-        padding: 6px 12px;
-        font-size: 0.9em;
-        background-color: #4CAF50; /* Dark mode success */
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    #recentDocumentsList li button:hover {
-        background-color: #5cb85c; /* Lighter success hover */
-    }
-    #recentDocumentsMsg {
-        color: #999;
-    }
+        #initialScreen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        #initialScreen h1 {
+            margin-bottom: 30px;
+            color: #e0e0e0; /* Lighter heading */
+        }
+        .initial-actions button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border: 1px solid #3a7ca5; /* Dark mode primary action color */
+            background-color: #3a7ca5;
+            color: white;
+            border-radius: 5px;
+            margin: 0 10px 20px 10px;
+        }
+        .initial-actions button:hover {
+            background-color: #4a90c2; /* Lighter hover for primary */
+            border-color: #4a90c2;
+        }
+        #recentDocumentsSection {
+            margin-top: 30px;
+            text-align: left;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #recentDocumentsSection h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #c0c0c0; /* Lighter subheading */
+            border-bottom: 1px solid #444; /* Darker border */
+            padding-bottom: 10px;
+        }
+        #recentDocumentsList {
+            list-style: none;
+            padding: 0;
+        }
+        #recentDocumentsList li {
+            background: #333; /* Dark list item background */
+            border: 1px solid #444; /* Darker border */
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #recentDocumentsList li .doc-info {
+            flex-grow: 1;
+        }
+        #recentDocumentsList li .doc-title {
+            font-weight: bold;
+            color: #6fa3d0; /* Adjusted link color */
+        }
+        #recentDocumentsList li .doc-date {
+            font-size: 0.85em;
+            color: #999; /* Lighter secondary text */
+            display: block;
+            margin-top: 3px;
+        }
+        #recentDocumentsList li button {
+            padding: 6px 12px;
+            font-size: 0.9em;
+            background-color: #4CAF50; /* Dark mode success */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #recentDocumentsList li button:hover {
+            background-color: #5cb85c; /* Lighter success hover */
+        }
+        #recentDocumentsMsg {
+            color: #999;
+        }
 
-    .doc-actions {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 10px;
-    }
-    .doc-actions button {
-        padding: 10px 15px;
-        font-size: 1em;
-        cursor: pointer;
-        border: 1px solid #555; /* Darker border */
-        background-color: #3f3f3f; /* Dark button background */
-        color: #d4d4d4; /* Light text */
-        border-radius: 4px;
-    }
-    .doc-actions button:hover {
-        background-color: #4f4f4f; /* Lighter hover */
-    }
-    .doc-actions button.archive-btn {
-        background-color: #d9534f; /* Dark mode danger */
-        color: white;
-        border-color: #c9302c;
-    }
-    .doc-actions button.archive-btn:hover {
-        background-color: #c9302c;
-    }
+        .doc-actions {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .doc-actions button {
+            padding: 10px 15px;
+            font-size: 1em;
+            cursor: pointer;
+            border: 1px solid #555; /* Darker border */
+            background-color: #3f3f3f; /* Dark button background */
+            color: #d4d4d4; /* Light text */
+            border-radius: 4px;
+        }
+        .doc-actions button:hover {
+            background-color: #4f4f4f; /* Lighter hover */
+        }
+        .doc-actions button.archive-btn {
+            background-color: #d9534f; /* Dark mode danger */
+            color: white;
+            border-color: #c9302c;
+        }
+        .doc-actions button.archive-btn:hover {
+            background-color: #c9302c;
+        }
 
-    /* Reset para inputs para melhor controle de estilo no dark mode */
-    input[type="text"],
-    input[type="url"],
-    input[type="number"] {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-    }
+        /* Reset para inputs para melhor controle de estilo no dark mode */
+        input[type="text"],
+        input[type="url"],
+        input[type="number"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
 
-    #docTitle {
-        width: calc(100% - 22px);
-        padding: 10px;
-        font-size: 1.5em;
-        margin-bottom: 10px;
-        border: 1px solid #555; /* Darker border */
-        border-radius: 4px;
-        background-color: #252525; /* Dark input background */
-        color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
-    }
-    #docTitle::placeholder { color: #777; }
-
-
-    .editor-toolbar-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0;
-        background-color: #2d2d2d; /* Match container background */
-        z-index: 900;
-        padding-top: 10px;
-        padding-bottom: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Adjusted shadow */
-    }
-    .editor-toolbar {
-        padding: 5px;
-        background-color: #383838; /* Darker toolbar background */
-        border-radius: 4px;
-        border: 1px solid #555; /* Darker border */
-        display: flex;
-        align-items: center;
-        flex-grow: 1;
-    }
-    .editor-toolbar button, .editor-toolbar select, .editor-toolbar input[type="number"], .editor-toolbar input[type="color"] {
-        margin-right: 8px;
-        padding: 5px 8px;
-        cursor: pointer;
-        height: 30px;
-        background-color: #444; /* Dark button/input background */
-        color: #d4d4d4; /* Light text */
-        border: 1px solid #666; /* Darker border */
-        box-sizing: border-box;
-        border-radius: 3px;
-    }
-    .editor-toolbar input[type="number"] {
-        padding: 4px 6px; /* Ajuste específico se necessário */
-        width: 60px;
-        text-align: right;
-        color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
-    }
-    .editor-toolbar input[type="color"] {
-        padding: 0px 2px; /* Menor padding para input de cor */
-        width: 40px;
-        min-width: 40px; /* Garante que não encolha demais */
-    }
-    .editor-toolbar button.entity-btn { display: none; }
-    .editor-toolbar label { margin-right: 5px; font-size: 0.9em; color: #b0b0b0; }
-
-    #viewPageBtn {
-        margin-left: 10px;
-        padding: 5px 10px;
-        height: 30px;
-        cursor: pointer;
-        background-color: #3a7ca5; /* Dark mode primary */
-        color: white;
-        border: 1px solid #2a5c85; /* Darker primary border */
-        border-radius: 4px;
-        font-size: 0.9em;
-    }
-    #viewPageBtn:hover { background-color: #4a90c2; }
-
-    #editorsContainer .text-editor-chapter {
-        min-height: 150px;
-        border: 1px solid #4a4a4a; /* Darker border */
-        padding: 10px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        outline: none;
-        line-height: 1.6;
-        background-color: #252525; /* Dark editor background */
-        color: #d4d4d4 !important; /* Cor padrão do texto no capítulo (pode ser !important aqui) */
-    }
-    #editorsContainer .text-editor-chapter:focus {
-        border-color: #5a90c2; /* Brighter focus border */
-        box-shadow: 0 0 0 2px rgba(58, 124, 165, 0.35); /* Focus shadow */
-    }
-    /* IMPORTANTE: Removido !important daqui para permitir a mudança de cor do texto selecionado */
-    #editorsContainer .text-editor-chapter p,
-    #editorsContainer .text-editor-chapter div {
-        margin-bottom: 0.5em;
-        color: inherit; /* Herda a cor do .text-editor-chapter, ou defina #d4d4d4 sem !important */
-    }
-
-    /* Entity highlights for dark mode */
-    #editorsContainer .text-editor-chapter .referenced-text {
-        background-color: #384858; /* Dark blue-ish highlight */
-        padding: 1px 2px; border-radius: 3px; cursor: default;
-        color: #a8c8e8;
-    }
-    #editorsContainer .text-editor-chapter .person-text {
-        background-color: #2a3a3a; /* Dark desaturated cyan/green */
-        border-bottom: 1px dotted #77bbaA; /* Lighter dotted border */
-        padding: 1px 2px; border-radius: 3px; cursor: pointer;
-        color: #b0e0d0;
-    }
-    #editorsContainer .text-editor-chapter .person-text:hover { background-color: #3a4a4a; }
-
-    #editorsContainer .text-editor-chapter .event-text {
-        background-color: #3a3a2a; /* Dark desaturated yellow/orange */
-        border-bottom: 1px dotted #cca066;
-        padding: 1px 2px; border-radius: 3px; cursor: pointer;
-        color: #e0c090;
-    }
-    #editorsContainer .text-editor-chapter .event-text:hover { background-color: #4a4a3a; }
-
-    #editorsContainer .text-editor-chapter .location-text {
-        background-color: #3a2a3a; /* Dark desaturated purple/magenta */
-        border-bottom: 1px dotted #cc88cc;
-        padding: 1px 2px; border-radius: 3px; cursor: pointer;
-        color: #e0b0e0;
-    }
-    #editorsContainer .text-editor-chapter .location-text:hover { background-color: #4a3a4a; }
-
-    .highlight-scroll { background-color: #2c3e50 !important; /* Darker blue highlight for scroll */ }
-    .reference-item.highlight-scroll { background-color: #5a512e !important; /* Darker yellow highlight for reference scroll */ }
-
-    .toolbar {
-        position: absolute;
-        background: #444; /* Darker floating toolbar */
-        color: white;
-        padding: 5px 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-        z-index: 1000;
-        display: flex;
-        gap: 5px;
-    }
-    .toolbar button { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; padding: 5px; }
-    .toolbar button:hover { background-color: #555; }
-
-    .popup {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.7); /* Darker overlay */
-        display: flex; justify-content: center; align-items: center;
-        z-index: 1001; visibility: hidden; opacity: 0;
-        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
-    }
-    .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
-    .popup-content {
-        background: #333; /* Dark popup background */
-        color: #d4d4d4; /* Light text in popup */
-        padding: 25px; border-radius: 8px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.6);
-        width: 450px; max-height: 80vh; display: flex; flex-direction: column;
-    }
-    .popup-content h3 { margin-top: 0; margin-bottom: 15px; color: #e0e0e0; }
-    .popup-content input[type="text"], .popup-content input[type="url"] {
-        width: calc(100% - 22px); padding: 10px; margin-bottom: 15px;
-        border: 1px solid #555; /* Darker border */
-        border-radius: 4px;
-        background-color: #252525; /* Dark input */
-        color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
-    }
-    .popup-content input[type="text"]::placeholder, .popup-content input[type="url"]::placeholder { color: #777; }
-    .popup-content button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; }
-    .popup-content .popup-actions { margin-top: auto; padding-top: 15px; border-top: 1px solid #444; text-align: right; }
-    .popup-content .popup-actions button { background-color: #5a6268; color: white; }
-    .popup-content .popup-actions button:hover { background-color: #6c757d; }
-    .popup-content .popup-actions button.danger-btn { background-color: #d9534f; }
-    .popup-content .popup-actions button.danger-btn:hover { background-color: #c9302c; }
-    .popup-content .popup-actions button.save-btn { background-color: #4CAF50; }
-    .popup-content .popup-actions button.save-btn:hover { background-color: #5cb85c; }
-
-    .entity-list-popup .popup-content { width: 600px; }
-    .entity-list-container {
-        overflow-y: auto; flex-grow: 1; margin-bottom: 15px;
-        border: 1px solid #444; /* Darker border */
-        padding: 10px; min-height: 150px;
-        background-color: #2a2a2a; /* Slightly different dark for list container */
-    }
-    .entity-list-container ul { list-style: none; padding: 0; margin: 0; }
-    .entity-list-container > ul > li {
-        padding: 8px 5px; border-bottom: 1px solid #404040; /* Darker separator */
-        cursor: pointer; font-weight: bold; color: #b0c4de; /* Light steel blue for items */
-    }
-    .entity-list-container > ul > li:hover { background-color: #383838; }
-    .entity-list-container > ul > li:last-child { border-bottom: none; }
-    .entity-list-container p { color: #999; } /* For "Nenhum..." messages */
+        #docTitle {
+            width: calc(100% - 22px);
+            padding: 10px;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            border: 1px solid #555; /* Darker border */
+            border-radius: 4px;
+            background-color: #252525; /* Dark input background */
+            color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
+        }
+        #docTitle::placeholder { color: #777; }
 
 
-    #indexPopup .popup-content { width: 500px; max-height: 70vh; }
-    #indexChapterList li {
-        padding: 10px 8px; border-bottom: 1px solid #404040;
-        cursor: pointer; line-height: 1.4;
-    }
-    #indexChapterList li:hover { background-color: #383838; }
-    #indexChapterList li .chapter-title-index {
-        font-weight: bold; display: block; margin-bottom: 3px; color: #b0c4de;
-    }
-    #indexChapterList li .chapter-preview-index {
-        font-size: 0.9em; color: #999;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
-    }
+        .editor-toolbar-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            background-color: #2d2d2d; /* Match container background */
+            z-index: 900;
+            padding-top: 10px;
+            padding-bottom: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Adjusted shadow */
+        }
+        .editor-toolbar {
+            padding: 5px;
+            background-color: #383838; /* Darker toolbar background */
+            border-radius: 4px;
+            border: 1px solid #555; /* Darker border */
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+        }
+        .editor-toolbar button, .editor-toolbar select, .editor-toolbar input[type="number"], .editor-toolbar input[type="color"] {
+            margin-right: 8px;
+            padding: 5px 8px;
+            cursor: pointer;
+            height: 30px;
+            background-color: #444; /* Dark button/input background */
+            color: #d4d4d4; /* Light text */
+            border: 1px solid #666; /* Darker border */
+            box-sizing: border-box;
+            border-radius: 3px;
+        }
+        .editor-toolbar input[type="number"] {
+            padding: 4px 6px; /* Ajuste específico se necessário */
+            width: 60px;
+            text-align: right;
+            color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
+        }
+        .editor-toolbar input[type="color"] {
+            padding: 0px 2px; /* Menor padding para input de cor */
+            width: 40px;
+            min-width: 40px; /* Garante que não encolha demais */
+        }
+        .editor-toolbar button.entity-btn { display: none; }
+        .editor-toolbar label { margin-right: 5px; font-size: 0.9em; color: #b0b0b0; }
+
+        #viewPageBtn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            height: 30px;
+            cursor: pointer;
+            background-color: #3a7ca5; /* Dark mode primary */
+            color: white;
+            border: 1px solid #2a5c85; /* Darker primary border */
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        #viewPageBtn:hover { background-color: #4a90c2; }
+
+        #editorsContainer .text-editor-chapter {
+            min-height: 150px;
+            border: 1px solid #4a4a4a; /* Darker border */
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            outline: none;
+            line-height: 1.6;
+            background-color: #252525; /* Dark editor background */
+            color: #d4d4d4; /* Cor padrão do texto no capítulo */
+        }
+        #editorsContainer .text-editor-chapter:focus {
+            border-color: #5a90c2; /* Brighter focus border */
+            box-shadow: 0 0 0 2px rgba(58, 124, 165, 0.35); /* Focus shadow */
+        }
+        #editorsContainer .text-editor-chapter p,
+        #editorsContainer .text-editor-chapter div {
+            margin-bottom: 0.5em;
+            color: inherit; /* Herda a cor do .text-editor-chapter, ou defina #d4d4d4 sem !important */
+        }
+
+        /* Entity highlights for dark mode */
+        #editorsContainer .text-editor-chapter .referenced-text {
+            background-color: #384858; /* Dark blue-ish highlight */
+            padding: 1px 2px; border-radius: 3px; cursor: default;
+            color: #a8c8e8;
+        }
+        /* Para o span de texto que ativou a toolbar do olho */
+        #editorsContainer .text-editor-chapter .referenced-text.eye-icon-active {
+            background-color: #304050; /* Um leve destaque diferente, se desejado */
+            /* position: relative; /* Remover se o ícone não estiver mais inline */
+        }
+        /* A classe .editor-eye-icon e seu hover não são mais necessários se o ícone está na toolbar */
+        /* .editor-eye-icon { ... } */
+        /* .editor-eye-icon:hover { ... } */
+
+        #editorsContainer .text-editor-chapter .person-text {
+            background-color: #2a3a3a; /* Dark desaturated cyan/green */
+            border-bottom: 1px dotted #77bbaA; /* Lighter dotted border */
+            padding: 1px 2px; border-radius: 3px; cursor: pointer;
+            color: #b0e0d0;
+        }
+        #editorsContainer .text-editor-chapter .person-text:hover { background-color: #3a4a4a; }
+
+        #editorsContainer .text-editor-chapter .event-text {
+            background-color: #3a3a2a; /* Dark desaturated yellow/orange */
+            border-bottom: 1px dotted #cca066;
+            padding: 1px 2px; border-radius: 3px; cursor: pointer;
+            color: #e0c090;
+        }
+        #editorsContainer .text-editor-chapter .event-text:hover { background-color: #4a4a3a; }
+
+        #editorsContainer .text-editor-chapter .location-text {
+            background-color: #3a2a3a; /* Dark desaturated purple/magenta */
+            border-bottom: 1px dotted #cc88cc;
+            padding: 1px 2px; border-radius: 3px; cursor: pointer;
+            color: #e0b0e0;
+        }
+        #editorsContainer .text-editor-chapter .location-text:hover { background-color: #4a3a4a; }
+
+        .highlight-scroll { background-color: #2c3e50 !important; /* Darker blue highlight for scroll */ }
+        .reference-item.highlight-scroll { background-color: #5a512e !important; /* Darker yellow highlight for reference scroll */ }
+
+        .toolbar { /* Floating toolbar for selection OR reference eye */
+            position: absolute;
+            background: #444; /* Darker floating toolbar */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
+        }
+        .toolbar button { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; padding: 5px; }
+        .toolbar button:hover { background-color: #555; }
+
+        .popup {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); /* Darker overlay */
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1001; visibility: hidden; opacity: 0;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
+        .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
+        .popup-content {
+            background: #333; /* Dark popup background */
+            color: #d4d4d4; /* Light text in popup */
+            padding: 25px; border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
+            width: 450px; max-height: 80vh; display: flex; flex-direction: column;
+        }
+        .popup-content h3 { margin-top: 0; margin-bottom: 15px; color: #e0e0e0; }
+        .popup-content input[type="text"], .popup-content input[type="url"] {
+            width: calc(100% - 22px); padding: 10px; margin-bottom: 15px;
+            border: 1px solid #555; /* Darker border */
+            border-radius: 4px;
+            background-color: #252525; /* Dark input */
+            color: #d4d4d4 !important; /* Forçar cor do texto aqui se necessário */
+        }
+        .popup-content input[type="text"]::placeholder, .popup-content input[type="url"]::placeholder { color: #777; }
+        .popup-content button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .popup-content .popup-actions { margin-top: auto; padding-top: 15px; border-top: 1px solid #444; text-align: right; }
+        .popup-content .popup-actions button { background-color: #5a6268; color: white; }
+        .popup-content .popup-actions button:hover { background-color: #6c757d; }
+        .popup-content .popup-actions button.danger-btn { background-color: #d9534f; }
+        .popup-content .popup-actions button.danger-btn:hover { background-color: #c9302c; }
+        .popup-content .popup-actions button.save-btn { background-color: #4CAF50; }
+        .popup-content .popup-actions button.save-btn:hover { background-color: #5cb85c; }
+
+        .entity-list-popup .popup-content { width: 600px; }
+        .entity-list-container {
+            overflow-y: auto; flex-grow: 1; margin-bottom: 15px;
+            border: 1px solid #444; /* Darker border */
+            padding: 10px; min-height: 150px;
+            background-color: #2a2a2a; /* Slightly different dark for list container */
+        }
+        .entity-list-container ul { list-style: none; padding: 0; margin: 0; }
+        .entity-list-container > ul > li {
+            padding: 8px 5px; border-bottom: 1px solid #404040; /* Darker separator */
+            cursor: pointer; font-weight: bold; color: #b0c4de; /* Light steel blue for items */
+        }
+        .entity-list-container > ul > li:hover { background-color: #383838; }
+        .entity-list-container > ul > li:last-child { border-bottom: none; }
+        .entity-list-container p { color: #999; } /* For "Nenhum..." messages */
 
 
-    #referencesSection { margin-top: 30px; border-top: 1px solid #444; padding-top: 20px; }
-    #referencesSection h2 { color: #c0c0c0; }
-    #referencesList { list-style: none; padding: 0; }
-    #referencesList li {
-        background: #353535; /* Darker list item bg */
-        padding: 10px 12px; margin-bottom: 10px;
-        border-radius: 4px; border: 1px solid #484848; position: relative;
-    }
-    #referencesList li .ref-content { padding-right: 30px; }
-    #referencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 3px; cursor: pointer; color: #b0c4de;}
-    #referencesList li .ref-title:hover { color: #87cefa; text-decoration: underline; } /* Lighter blue for hover */
-    #referencesList li a { text-decoration: none; color: #7aa0c7; word-break: break-all; } /* Muted link color */
-    #referencesList li a:hover { text-decoration: underline; color: #87cefa; }
-    .edit-ref-btn {
-        position: absolute; top: 5px; right: 5px; background: none; border: none;
-        font-size: 1em; cursor: pointer; padding: 5px; color: #999;
-    }
-    .edit-ref-btn:hover { color: #bbb; }
-
-    #loadDocumentPopup .popup-content { background: #333; } /* Already dark from .popup-content */
-    #documentsListContainer ul li button {
-        background-color: #3a7ca5; color: white;
-        border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 10px;
-    }
-    #documentsListContainer ul li button:hover { background-color: #4a90c2; }
-    #documentsListContainer ul li {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 8px 5px; border-bottom: 1px solid #404040;
-        color: #d4d4d4;
-    }
-    #documentsListContainer ul li:last-child { border-bottom: none; }
-    #documentsListContainer ul li span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #documentsListContainer p { color: #999; } /* For "Carregando..." */
+        #indexPopup .popup-content { width: 500px; max-height: 70vh; }
+        #indexChapterList li {
+            padding: 10px 8px; border-bottom: 1px solid #404040;
+            cursor: pointer; line-height: 1.4;
+        }
+        #indexChapterList li:hover { background-color: #383838; }
+        #indexChapterList li .chapter-title-index {
+            font-weight: bold; display: block; margin-bottom: 3px; color: #b0c4de;
+        }
+        #indexChapterList li .chapter-preview-index {
+            font-size: 0.9em; color: #999;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+        }
 
 
-    #entityContextSidebar {
-        position: fixed; top: 80px; right: 20px; width: 350px; max-height: calc(100vh - 100px);
-        background-color: #2a2a2a; /* Dark sidebar background */
-        border: 1px solid #444; /* Darker border */
-        border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-        z-index: 1002; padding: 15px; display: none; flex-direction: column;
-        transition: width 0.3s ease, padding 0.3s ease;
-        color: #c0c0c0; /* Light text for sidebar */
-    }
-    .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    #entityContextSidebar h3 { margin-top: 0; font-size: 1.2em; margin-bottom: 0; flex-grow: 1; color: #d4d4d4; }
-    #sidebarEntityName { font-weight: bold; color: #6fa3d0; } /* Primary action color for entity name */
-    #minimizeSidebarBtn {
-        background: none; border: 1px solid #555; border-radius: 4px;
-        font-weight: bold; cursor: pointer; padding: 2px 8px; line-height: 1; font-size: 1.1em;
-        margin-left: 10px; color: #b0b0b0;
-    }
-    #minimizeSidebarBtn:hover { background-color: #3f3f3f; }
-    .sidebar-content-wrapper { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
-    #sidebarContextList { flex-grow: 1; font-size: 0.9em; }
-    #entityContextSidebar.minimized-sidebar-state { width: 50px; padding: 10px; overflow: hidden; }
-    #entityContextSidebar.minimized-sidebar-state .sidebar-header h3,
-    #entityContextSidebar.minimized-sidebar-state .sidebar-header #sidebarEntityName { display: none; }
-    #entityContextSidebar.minimized-sidebar-state .sidebar-content-wrapper,
-    #entityContextSidebar.minimized-sidebar-state #closeSidebarBtn { display: none; }
-    #entityContextSidebar.minimized-sidebar-state #minimizeSidebarBtn { width: 100%; text-align: center; }
-    #sidebarContextList .document-context-block { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dotted #555; }
-    #sidebarContextList .document-context-block:last-child { border-bottom: none; }
-    #sidebarContextList .document-context-block h4 {
-        font-size: 1em; margin-top: 0; margin-bottom: 8px; color: #c0c0c0;
-        cursor: pointer; padding: 5px; border-radius: 3px; background-color: #383838;
-        display: flex; justify-content: space-between; align-items: center;
-    }
-    #sidebarContextList .document-context-block h4:hover { background-color: #404040; }
-    #sidebarContextList .document-context-block h4 .toggle-icon::before { content: '▼'; display: inline-block; margin-left: 8px; font-size: 0.8em; }
-    #sidebarContextList .document-context-block.collapsed-context > ul { display: none; }
-    #sidebarContextList .document-context-block.collapsed-context h4 .toggle-icon::before { content: '►'; }
-    #sidebarContextList h4 .matched-term-title { color: #e06c75; } /* Light red/pink for matched term */
-    #sidebarContextList h4 .doc-title { color: #999; font-weight: normal; }
-    #sidebarContextList ul { list-style-type: none; padding-left: 0; margin-left: 0; }
-    #sidebarContextList li { padding: 4px 0; color: #b0b0b0; line-height: 1.4; cursor: pointer; }
-    #sidebarContextList li:hover { background-color: #3f3f3f; }
-    #sidebarContextList li strong {
-        background-color: #4a412a; /* Dark yellow background for term */
-        color: #f0e68c; /* Light yellow text */
-        padding: 0 2px; border-radius: 2px;
-    }
-    #closeSidebarBtn {
-        margin-top: 15px; padding: 8px 12px; background-color: #5a6268; color: white;
-        border: none; border-radius: 4px; cursor: pointer; align-self: flex-end;
-    }
-    #closeSidebarBtn:hover { background-color: #6c757d; }
+        #referencesSection { margin-top: 30px; border-top: 1px solid #444; padding-top: 20px; }
+        #referencesSection h2 { color: #c0c0c0; }
+        #referencesList { list-style: none; padding: 0; }
+        #referencesList li {
+            background: #353535; /* Darker list item bg */
+            padding: 10px 12px; margin-bottom: 10px;
+            border-radius: 4px; border: 1px solid #484848; position: relative;
+        }
+        #referencesList li .ref-content { padding-right: 30px; }
+        #referencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 3px; cursor: pointer; color: #b0c4de;}
+        #referencesList li .ref-title:hover { color: #87cefa; text-decoration: underline; } /* Lighter blue for hover */
+        #referencesList li a { text-decoration: none; color: #7aa0c7; word-break: break-all; } /* Muted link color */
+        #referencesList li a:hover { text-decoration: underline; color: #87cefa; }
+        .edit-ref-btn {
+            position: absolute; top: 5px; right: 5px; background: none; border: none;
+            font-size: 1em; cursor: pointer; padding: 5px; color: #999;
+        }
+        .edit-ref-btn:hover { color: #bbb; }
 
-    #documentContextViewPopup .popup-content { width: 80%; max-width: 1000px; height: 80vh; background-color: #282828; }
-    #contextViewBody {
-        flex-grow: 1; overflow-y: auto; border: 1px solid #444;
-        padding: 10px; background-color: #202020; /* Even darker for main view content */
-        line-height: 1.6; color: #d4d4d4;
-    }
-    #contextViewBody .highlighted-term-in-view {
-        background-color: #554200; /* Dark yellow, more prominent */
-        font-weight: bold;
-        color: #ffd700; /* Gold */
-    }
-    hr.chapter-divider-in-view { margin: 20px 0; border: 0; border-top: 1px dashed #555; }
+        #loadDocumentPopup .popup-content { background: #333; }
+        #documentsListContainer ul li button {
+            background-color: #3a7ca5; color: white;
+            border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 10px;
+        }
+        #documentsListContainer ul li button:hover { background-color: #4a90c2; }
+        #documentsListContainer ul li {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 5px; border-bottom: 1px solid #404040;
+            color: #d4d4d4;
+        }
+        #documentsListContainer ul li:last-child { border-bottom: none; }
+        #documentsListContainer ul li span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #documentsListContainer p { color: #999; }
 
-    #confirmArchivePopup .popup-content { width: 400px; background-color: #333;}
-    #confirmArchivePopup .popup-content p { margin-bottom: 20px; line-height: 1.5; color: #d4d4d4;}
 
-    /* URL Input group specific styles from previous request */
-    .url-input-group { display: flex; align-items: center; margin-bottom: 10px; }
-    .url-input-group .ref-url-input {
-        flex-grow: 1; padding: 10px; border: 1px solid #555;
-        border-radius: 4px; background-color: #252525; color: #d4d4d4;
-    }
-    .url-input-group .ref-url-input::placeholder { color: #777; }
-    .url-input-group button[type="button"] { /* Remove button for URLs */
-        padding: 10px 15px; border: none; border-radius: 4px;
-        background-color: #d9534f; color: white;
-        cursor: pointer; flex-shrink: 0; margin-left: 10px;
-    }
-    #addMoreUrlsToAddPopupBtn, #addMoreUrlsToEditPopupBtn {
-        padding: 8px 12px; font-size:0.9em; margin-bottom: 15px;
-        background-color: #5a6268; color:white; border:none;
-        border-radius:4px; cursor:pointer;
-    }
-    #addMoreUrlsToAddPopupBtn:hover, #addMoreUrlsToEditPopupBtn:hover {
-        background-color: #6c757d;
-    }
+        #entityContextSidebar {
+            position: fixed; top: 80px; right: 20px; width: 350px; max-height: calc(100vh - 100px);
+            background-color: #2a2a2a; /* Dark sidebar background */
+            border: 1px solid #444; /* Darker border */
+            border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            z-index: 1002; padding: 15px; display: none; flex-direction: column;
+            transition: width 0.3s ease, padding 0.3s ease;
+            color: #c0c0c0; /* Light text for sidebar */
+        }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        #entityContextSidebar h3 { margin-top: 0; font-size: 1.2em; margin-bottom: 0; flex-grow: 1; color: #d4d4d4; }
+        #sidebarEntityName { font-weight: bold; color: #6fa3d0; } /* Primary action color for entity name */
+        #minimizeSidebarBtn {
+            background: none; border: 1px solid #555; border-radius: 4px;
+            font-weight: bold; cursor: pointer; padding: 2px 8px; line-height: 1; font-size: 1.1em;
+            margin-left: 10px; color: #b0b0b0;
+        }
+        #minimizeSidebarBtn:hover { background-color: #3f3f3f; }
+        .sidebar-content-wrapper { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        #sidebarContextList { flex-grow: 1; font-size: 0.9em; }
+        #entityContextSidebar.minimized-sidebar-state { width: 50px; padding: 10px; overflow: hidden; }
+        #entityContextSidebar.minimized-sidebar-state .sidebar-header h3,
+        #entityContextSidebar.minimized-sidebar-state .sidebar-header #sidebarEntityName { display: none; }
+        #entityContextSidebar.minimized-sidebar-state .sidebar-content-wrapper,
+        #entityContextSidebar.minimized-sidebar-state #closeSidebarBtn { display: none; }
+        #entityContextSidebar.minimized-sidebar-state #minimizeSidebarBtn { width: 100%; text-align: center; }
+        #sidebarContextList .document-context-block { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dotted #555; }
+        #sidebarContextList .document-context-block:last-child { border-bottom: none; }
+        #sidebarContextList .document-context-block h4 {
+            font-size: 1em; margin-top: 0; margin-bottom: 8px; color: #c0c0c0;
+            cursor: pointer; padding: 5px; border-radius: 3px; background-color: #383838;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        #sidebarContextList .document-context-block h4:hover { background-color: #404040; }
+        #sidebarContextList .document-context-block h4 .toggle-icon::before { content: '▼'; display: inline-block; margin-left: 8px; font-size: 0.8em; }
+        #sidebarContextList .document-context-block.collapsed-context > ul { display: none; }
+        #sidebarContextList .document-context-block.collapsed-context h4 .toggle-icon::before { content: '►'; }
+        #sidebarContextList h4 .matched-term-title { color: #e06c75; } /* Light red/pink for matched term */
+        #sidebarContextList h4 .doc-title { color: #999; font-weight: normal; }
+        #sidebarContextList ul { list-style-type: none; padding-left: 0; margin-left: 0; }
+        #sidebarContextList li { padding: 4px 0; color: #b0b0b0; line-height: 1.4; cursor: pointer; }
+        #sidebarContextList li:hover { background-color: #3f3f3f; }
+        #sidebarContextList li strong {
+            background-color: #4a412a; /* Dark yellow background for term */
+            color: #f0e68c; /* Light yellow text */
+            padding: 0 2px; border-radius: 2px;
+        }
+        #closeSidebarBtn {
+            margin-top: 15px; padding: 8px 12px; background-color: #5a6268; color: white;
+            border: none; border-radius: 4px; cursor: pointer; align-self: flex-end;
+        }
+        #closeSidebarBtn:hover { background-color: #6c757d; }
+
+        #documentContextViewPopup .popup-content { width: 80%; max-width: 1000px; height: 80vh; background-color: #282828; }
+        #contextViewBody {
+            flex-grow: 1; overflow-y: auto; border: 1px solid #444;
+            padding: 10px; background-color: #202020; /* Even darker for main view content */
+            line-height: 1.6; color: #d4d4d4;
+        }
+        #contextViewBody .highlighted-term-in-view {
+            background-color: #554200; /* Dark yellow, more prominent */
+            font-weight: bold;
+            color: #ffd700; /* Gold */
+        }
+        hr.chapter-divider-in-view { margin: 20px 0; border: 0; border-top: 1px dashed #555; }
+
+        #confirmArchivePopup .popup-content { width: 400px; background-color: #333;}
+        #confirmArchivePopup .popup-content p { margin-bottom: 20px; line-height: 1.5; color: #d4d4d4;}
+
+        /* URL Input group specific styles */
+        .url-input-group { display: flex; align-items: center; margin-bottom: 10px; }
+        .url-input-group .ref-url-input {
+            flex-grow: 1; padding: 10px; border: 1px solid #555;
+            border-radius: 4px; background-color: #252525; color: #d4d4d4;
+        }
+        .url-input-group .ref-url-input::placeholder { color: #777; }
+        .url-input-group button[type="button"] { /* Remove button for URLs */
+            padding: 10px 15px; border: none; border-radius: 4px;
+            background-color: #d9534f; color: white;
+            cursor: pointer; flex-shrink: 0; margin-left: 10px;
+        }
+        #addMoreUrlsToAddPopupBtn, #addMoreUrlsToEditPopupBtn {
+            padding: 8px 12px; font-size:0.9em; margin-bottom: 15px;
+            background-color: #5a6268; color:white; border:none;
+            border-radius:4px; cursor:pointer;
+        }
+        #addMoreUrlsToAddPopupBtn:hover, #addMoreUrlsToEditPopupBtn:hover {
+            background-color: #6c757d;
+        }
+
+        /* Estilos para a página de visualização (view.html) - olho e interação */
+        #viewPageBody .referenced-text {
+            cursor: pointer;
+            position: relative;
+        }
+        .reference-eye-icon { /* Este é para view.html, não o .editor-eye-icon */
+            display: inline-block;
+            position: absolute;
+            top: 50%;
+            right: -22px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1em;
+            padding: 2px;
+            line-height: 1;
+            z-index: 10;
+        }
+        .reference-eye-icon:hover {
+            color: #0056b3;
+            transform: translateY(-50%) scale(1.1);
+        }
+        #viewPageBody .referenced-text.icon-visible {
+            background-color: #e0efff; /* Este é para view.html */
+        }
     </style>
-
-    <script type="module">
-        // ATENÇÃO: Substitua pelas suas credenciais reais do Firebase!
-        const firebaseConfig = {
-            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // EXEMPLO - SUBSTITUA
-            authDomain: "bibliacontexto.firebaseapp.com", // EXEMPLO - SUBSTITUA
-            projectId: "bibliacontexto", // EXEMPLO - SUBSTITUA
-            storageBucket: "bibliacontexto.firebasestorage.app", // EXEMPLO - SUBSTITUA
-            messagingSenderId: "266293600679", // EXEMPLO - SUBSTITUA
-            appId: "1:266293600679:web:3b7c264f0b5e35ebea1682" // EXEMPLO - SUBSTITUA
-        };
-        window.firebaseConfigGlobal = firebaseConfig;
-    </script>
 </head>
 <body>
     <!-- Initial Screen -->
@@ -521,10 +542,8 @@
                         <option value="24"></option><option value="28"></option><option value="32"></option>
                     </datalist>
 
-                    <!-- NOVO SELETOR DE COR -->
                     <label for="fontColorInput" style="margin-left: 10px;">Cor:</label>
                     <input type="color" id="fontColorInput" title="Cor da Fonte" value="#d4d4d4">
-                    <!-- FIM DO NOVO SELETOR DE COR -->
 
                     <button id="showIndexBtn" title="Mostrar Índice dos Capítulos">Index</button>
 
@@ -550,6 +569,11 @@
             </div>
             <div id="referencesSection"> <h2>Referências</h2> <ul id="referencesList"></ul> </div>
         </div>
+    </div>
+
+    <!-- Floating Toolbar for Reference Eye (NOVA ADIÇÃO) -->
+    <div id="referenceEyeToolbar" class="toolbar" style="display: none;">
+        <button id="viewReferenceFromToolbarBtn" title="Ver Referência">👁️</button>
     </div>
 
     <!-- Popups -->
@@ -595,7 +619,6 @@
     </div>
     <div id="loadDocumentPopup" class="popup"> <div class="popup-content"> <h3>Carregar Documento Existente</h3> <div id="documentsListContainer"> <p>Carregando lista de documentos...</p> <ul></ul> </div> <div class="popup-actions"> <button id="closeLoadDocPopupBtn" class="close-popup-btn">Fechar</button> </div> </div> </div>
 
-    <!-- POPUP DO ÍNDICE -->
     <div id="indexPopup" class="popup">
         <div class="popup-content">
             <h3>Índice dos Capítulos</h3>
@@ -611,7 +634,6 @@
         </div>
     </div>
 
-    <!-- Entity Context Sidebar -->
     <div id="entityContextSidebar" style="display: none;">
         <div class="sidebar-header">
             <h3>Contexto para: <span id="sidebarEntityName"></span></h3>
@@ -623,7 +645,6 @@
         <button id="closeSidebarBtn">Fechar Sidebar</button>
     </div>
 
-    <!-- Document Context View Popup (from sidebar click) -->
     <div id="documentContextViewPopup" class="popup">
         <div class="popup-content">
             <h3 id="contextViewTitle">Visualizar Documento</h3>
@@ -634,7 +655,6 @@
         </div>
     </div>
 
-    <!-- Popup de Confirmação de Arquivamento -->
     <div id="confirmArchivePopup" class="popup">
         <div class="popup-content">
             <h3>Confirmar Arquivamento</h3>
@@ -645,136 +665,157 @@
             </div>
         </div>
     </div>
+<body>
 
-    <script type="module">
-        console.log("VERSÃO DO SCRIPT: ", Date.now()); // Log para verificar a versão do script
-        const firebaseConfig = window.firebaseConfigGlobal; // Pega do script de config no <head>
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import {
-            getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, where, orderBy, serverTimestamp,
-            arrayUnion, arrayRemove, writeBatch, limit
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script type="module">
+    console.log("VERSÃO DO SCRIPT: ", Date.now()); // Log para verificar a versão do script
 
-        if (!firebaseConfig || !firebaseConfig.projectId) {
-            console.error("CONFIGURAÇÃO DO FIREBASE INVÁLIDA OU AUSENTE!");
-            alert("ERRO CRÍTICO: Configuração do Firebase não encontrada.");
-            throw new Error("Firebase config error: projectId is missing or firebaseConfig is not defined.");
-        }
+    // ATENÇÃO: Substitua os valores abaixo pelas suas credenciais REAIS do Firebase!
+    // Esta é a configuração que será usada para inicializar o Firebase neste script.
+    const firebaseConfig = {
+        apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // EXEMPLO - SUBSTITUA
+            authDomain: "bibliacontexto.firebaseapp.com", // EXEMPLO - SUBSTITUA
+            projectId: "bibliacontexto", // EXEMPLO - SUBSTITUA
+            storageBucket: "bibliacontexto.firebasestorage.app", // EXEMPLO - SUBSTITUA
+            messagingSenderId: "266293600679", // EXEMPLO - SUBSTITUA
+            appId: "1:266293600679:web:3b7c264f0b5e35ebea1682" // EXEMPLO - SUBSTITUA
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+        getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, where, orderBy, serverTimestamp,
+        arrayUnion, arrayRemove, writeBatch, limit
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // DOM Elements
-        const initialScreenDiv = document.getElementById('initialScreen');
-        const editorInterfaceDiv = document.getElementById('editorInterface');
-        const initNewDocBtn = document.getElementById('initNewDocBtn');
-        const initLoadDocBtn = document.getElementById('initLoadDocBtn');
-        const recentDocumentsListUl = document.getElementById('recentDocumentsList');
-        const recentDocumentsMsgP = document.getElementById('recentDocumentsMsg');
+    // Verificação da configuração do Firebase
+    if (!firebaseConfig || !firebaseConfig.projectId) {
+        console.error("CONFIGURAÇÃO DO FIREBASE INVÁLIDA OU AUSENTE! Verifique o objeto firebaseConfig definido neste script.");
+        alert("ERRO CRÍTICO: Configuração do Firebase não encontrada. Verifique o objeto firebaseConfig definido neste script.");
+        throw new Error("Firebase config error: projectId is missing or firebaseConfig (definida neste script) is not defined.");
+    }
 
-        const editorsContainer = document.getElementById('editorsContainer');
-        const addChapterBtn = document.getElementById('addChapterBtn');
-        const floatingToolbar = document.getElementById('floatingToolbar');
-        const attachLinkBtn = document.getElementById('attachLinkBtn');
-        const addPersonBtn = document.getElementById('addPersonBtn');
-        const addEventBtn = document.getElementById('addEventBtn');
-        const addLocationBtn = document.getElementById('addLocationBtn');
+    // Inicialização do Firebase com a configuração definida acima
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        const addPersonPopup = document.getElementById('addPersonPopup');
-        const personNameInput = document.getElementById('personNameInput');
-        const saveNewPersonBtn = document.getElementById('saveNewPersonBtn');
-        const addEventPopup = document.getElementById('addEventPopup');
-        const eventDescriptionInput = document.getElementById('eventDescriptionInput');
-        const eventYearInput = document.getElementById('eventYearInput');
-        const saveNewEventBtn = document.getElementById('saveNewEventBtn');
-        const addLocationPopup = document.getElementById('addLocationPopup');
-        const locationNameInput = document.getElementById('locationNameInput');
-        const saveNewLocationBtn = document.getElementById('saveNewLocationBtn');
+    // DOM Elements
+    const initialScreenDiv = document.getElementById('initialScreen');
+    const editorInterfaceDiv = document.getElementById('editorInterface');
+    const initNewDocBtn = document.getElementById('initNewDocBtn');
+    const initLoadDocBtn = document.getElementById('initLoadDocBtn');
+    const recentDocumentsListUl = document.getElementById('recentDocumentsList');
+    const recentDocumentsMsgP = document.getElementById('recentDocumentsMsg');
 
-        const showFoundPersonsBtn = document.getElementById('showFoundPersonsBtn');
-        const showFoundEventsBtn = document.getElementById('showFoundEventsBtn');
-        const showFoundLocationsBtn = document.getElementById('showFoundLocationsBtn');
-        const foundPersonsPopup = document.getElementById('foundPersonsPopup');
-        const foundPersonsListContainerUl = document.querySelector('#foundPersonsListContainer ul');
-        const foundPersonsListContainerMsg = document.querySelector('#foundPersonsListContainer p');
-        const foundEventsPopup = document.getElementById('foundEventsPopup');
-        const foundEventsListContainerUl = document.querySelector('#foundEventsListContainer ul');
-        const foundEventsListContainerMsg = document.querySelector('#foundEventsListContainer p');
-        const foundLocationsPopup = document.getElementById('foundLocationsPopup');
-        const foundLocationsListContainerUl = document.querySelector('#foundLocationsListContainer ul');
-        const foundLocationsListContainerMsg = document.querySelector('#foundLocationsListContainer p');
+    const editorsContainer = document.getElementById('editorsContainer');
+    const addChapterBtn = document.getElementById('addChapterBtn');
+    const floatingToolbar = document.getElementById('floatingToolbar');
+    const attachLinkBtn = document.getElementById('attachLinkBtn');
+    const addPersonBtn = document.getElementById('addPersonBtn');
+    const addEventBtn = document.getElementById('addEventBtn');
+    const addLocationBtn = document.getElementById('addLocationBtn');
 
-        const fontSizeInput = document.getElementById('fontSizeInput');
-        const fontColorInput = document.getElementById('fontColorInput'); // NOVO ELEMENTO
+    const addPersonPopup = document.getElementById('addPersonPopup');
+    const personNameInput = document.getElementById('personNameInput');
+    const saveNewPersonBtn = document.getElementById('saveNewPersonBtn');
+    const addEventPopup = document.getElementById('addEventPopup');
+    const eventDescriptionInput = document.getElementById('eventDescriptionInput');
+    const eventYearInput = document.getElementById('eventYearInput');
+    const saveNewEventBtn = document.getElementById('saveNewEventBtn');
+    const addLocationPopup = document.getElementById('addLocationPopup');
+    const locationNameInput = document.getElementById('locationNameInput');
+    const saveNewLocationBtn = document.getElementById('saveNewLocationBtn');
 
-        const newDocBtn = document.getElementById('newDocBtn');
-        const openLoadDocPopupBtn = document.getElementById('openLoadDocPopupBtn');
-        const docTitleInput = document.getElementById('docTitle');
-        const referencesListUl = document.getElementById('referencesList');
-        const addReferencePopup = document.getElementById('addReferencePopup');
-        const refTitleInput = document.getElementById('refTitleInput');
-        const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
-        const editReferencePopup = document.getElementById('editReferencePopup');
-        const editRefTitleInput = document.getElementById('editRefTitleInput');
-        const editingRefIdInput = document.getElementById('editingRefIdInput');
-        const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
-        const deleteRefBtn = document.getElementById('deleteRefBtn');
-        const loadDocumentPopup = document.getElementById('loadDocumentPopup');
-        const documentsListContainerUl = document.querySelector('#documentsListContainer ul');
-        const documentsListContainerMsg = document.querySelector('#documentsListContainer p');
-        const showIndexBtn = document.getElementById('showIndexBtn');
-        const indexPopup = document.getElementById('indexPopup');
-        const indexChapterListUl = document.getElementById('indexChapterList');
-        const indexChapterMsgP = document.getElementById('indexChapterMsg');
+    const showFoundPersonsBtn = document.getElementById('showFoundPersonsBtn');
+    const showFoundEventsBtn = document.getElementById('showFoundEventsBtn');
+    const showFoundLocationsBtn = document.getElementById('showFoundLocationsBtn');
+    const foundPersonsPopup = document.getElementById('foundPersonsPopup');
+    const foundPersonsListContainerUl = document.querySelector('#foundPersonsListContainer ul');
+    const foundPersonsListContainerMsg = document.querySelector('#foundPersonsListContainer p');
+    const foundEventsPopup = document.getElementById('foundEventsPopup');
+    const foundEventsListContainerUl = document.querySelector('#foundEventsListContainer ul');
+    const foundEventsListContainerMsg = document.querySelector('#foundEventsListContainer p');
+    const foundLocationsPopup = document.getElementById('foundLocationsPopup');
+    const foundLocationsListContainerUl = document.querySelector('#foundLocationsListContainer ul');
+    const foundLocationsListContainerMsg = document.querySelector('#foundLocationsListContainer p');
 
-        const entityContextSidebar = document.getElementById('entityContextSidebar');
-        const sidebarEntityNameSpan = document.getElementById('sidebarEntityName');
-        const sidebarContextListDiv = document.getElementById('sidebarContextList');
-        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-        const minimizeSidebarBtn = document.getElementById('minimizeSidebarBtn');
+    const fontSizeInput = document.getElementById('fontSizeInput');
+    const fontColorInput = document.getElementById('fontColorInput');
 
-        const documentContextViewPopup = document.getElementById('documentContextViewPopup');
-        const contextViewTitleH3 = document.getElementById('contextViewTitle');
-        const contextViewBodyDiv = document.getElementById('contextViewBody');
+    const newDocBtn = document.getElementById('newDocBtn');
+    const openLoadDocPopupBtn = document.getElementById('openLoadDocPopupBtn');
+    const docTitleInput = document.getElementById('docTitle');
+    const referencesListUl = document.getElementById('referencesList');
+    const addReferencePopup = document.getElementById('addReferencePopup');
+    const refTitleInput = document.getElementById('refTitleInput');
+    const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
+    const editReferencePopup = document.getElementById('editReferencePopup');
+    const editRefTitleInput = document.getElementById('editRefTitleInput');
+    const editingRefIdInput = document.getElementById('editingRefIdInput');
+    const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
+    const deleteRefBtn = document.getElementById('deleteRefBtn');
+    const loadDocumentPopup = document.getElementById('loadDocumentPopup');
+    const documentsListContainerUl = document.querySelector('#documentsListContainer ul');
+    const documentsListContainerMsg = document.querySelector('#documentsListContainer p');
+    const showIndexBtn = document.getElementById('showIndexBtn');
+    const indexPopup = document.getElementById('indexPopup');
+    const indexChapterListUl = document.getElementById('indexChapterList');
+    const indexChapterMsgP = document.getElementById('indexChapterMsg');
 
-        const viewPageBtn = document.getElementById('viewPageBtn');
+    const entityContextSidebar = document.getElementById('entityContextSidebar');
+    const sidebarEntityNameSpan = document.getElementById('sidebarEntityName');
+    const sidebarContextListDiv = document.getElementById('sidebarContextList');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const minimizeSidebarBtn = document.getElementById('minimizeSidebarBtn');
 
-        const archiveCurrentDocBtn = document.getElementById('archiveCurrentDocBtn');
-        const confirmArchivePopup = document.getElementById('confirmArchivePopup');
-        const confirmArchiveYesBtn = document.getElementById('confirmArchiveYesBtn');
+    const documentContextViewPopup = document.getElementById('documentContextViewPopup');
+    const contextViewTitleH3 = document.getElementById('contextViewTitle');
+    const contextViewBodyDiv = document.getElementById('contextViewBody');
 
-        // --- Global State Variables ---
-        let currentDocId = null;
-        let currentDocumentData = null;
-        let debounceTimer;
-        let currentSelectionRange = null;
-        let activeEditorElement = null;
-        let knownPersons = [];
-        let knownEvents = [];
-        let knownLocations = [];
-        let fontSizeDebounceTimer;
+    const viewPageBtn = document.getElementById('viewPageBtn');
 
-        const DEFAULT_FONT_SIZE = '14px';
-        const DEFAULT_LINE_HEIGHT = '1.6';
-        const CHAPTER_DELIMITER_HTML = '<hr class="chapter-break-for-storage" style="display:none;">';
+    const archiveCurrentDocBtn = document.getElementById('archiveCurrentDocBtn');
+    const confirmArchivePopup = document.getElementById('confirmArchivePopup');
+    const confirmArchiveYesBtn = document.getElementById('confirmArchiveYesBtn');
 
-        // --- Helper Functions ---
-        function generateId(prefix = 'entity-') { return prefix + Date.now() + '-' + Math.random().toString(36).substring(2, 7); }
-        function showPopup(popupElement) { if (popupElement) popupElement.classList.add('active'); }
-        function hidePopup(popupElement) { if (popupElement) popupElement.classList.remove('active'); }
+    // NOVA TOOLBAR E BOTÃO PARA O OLHO DA REFERÊNCIA
+    const referenceEyeToolbar = document.getElementById('referenceEyeToolbar');
+    const viewReferenceFromToolbarBtn = document.getElementById('viewReferenceFromToolbarBtn');
 
-        function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) {
-            if (!container) return;
-            container.querySelectorAll('p, div').forEach(el => {
-                if (!el.style.fontSize) el.style.fontSize = targetFontSizeCSS;
-                if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
-                // A cor é agora herdada ou definida sem !important para permitir spans coloridos
-            });
-        }
-        function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
-         function escapeHTML(str) {
+    // --- Global State Variables ---
+    let currentDocId = null;
+    let currentDocumentData = null;
+    let debounceTimer;
+    let currentSelectionRange = null;
+    let activeEditorElement = null;
+    let knownPersons = [];
+    let knownEvents = [];
+    let knownLocations = [];
+    let fontSizeDebounceTimer;
+    // let currentEditorEyeIcon = null; // Não mais usado para o ícone inline
+    let activeReferencedTextSpanForEye = null; // Para saber qual span ativou a toolbar do olho
+
+    const DEFAULT_FONT_SIZE = '14px';
+    const DEFAULT_LINE_HEIGHT = '1.6';
+    const CHAPTER_DELIMITER_HTML = '<hr class="chapter-break-for-storage" style="display:none;">';
+
+    // --- Helper Functions ---
+    function generateId(prefix = 'entity-') { return prefix + Date.now() + '-' + Math.random().toString(36).substring(2, 7); }
+    function showPopup(popupElement) { if (popupElement) popupElement.classList.add('active'); }
+    function hidePopup(popupElement) { if (popupElement) popupElement.classList.remove('active'); }
+
+    function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) {
+        if (!container) return;
+        container.querySelectorAll('p, div').forEach(el => {
+            if (!el.style.fontSize) el.style.fontSize = targetFontSizeCSS;
+            if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
+        });
+    }
+
+    function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+     function escapeHTML(str) {
             if (typeof str !== 'string') return '';
             const map = { 
                 '&': '&amp;',
@@ -787,475 +828,558 @@
             return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; });
         }
 
-        function getFirstSentence(htmlString) {
-            if (!htmlString) return "";
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlString;
-            let textContent = tempDiv.textContent || "";
-            textContent = textContent.trim();
-            const firstPeriodIndex = textContent.indexOf('.');
-            if (firstPeriodIndex !== -1) { return textContent.substring(0, firstPeriodIndex + 1); }
-            return textContent.substring(0, 100) + (textContent.length > 100 ? "..." : "");
-        }
+    function getFirstSentence(htmlString) {
+        if (!htmlString) return "";
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlString;
+        let textContent = (tempDiv.textContent || "").trim();
+        const firstPeriodIndex = textContent.indexOf('.');
+        if (firstPeriodIndex !== -1) { return textContent.substring(0, firstPeriodIndex + 1); }
+        return textContent.substring(0, 100) + (textContent.length > 100 ? "..." : "");
+    }
 
-        function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) {
-            const container = document.getElementById(containerId);
-            if (!container) return null;
-
-            const inputGroup = document.createElement('div');
-            inputGroup.className = 'url-input-group';
-
-            const urlInput = document.createElement('input');
-            urlInput.type = 'url';
-            urlInput.className = 'ref-url-input';
-            urlInput.placeholder = 'URL do Link';
-            urlInput.value = urlValue;
-            urlInput.style.marginRight = canBeRemoved ? '10px' : '0';
-
-            inputGroup.appendChild(urlInput);
-
-            if (canBeRemoved) {
-                const removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.textContent = 'Remover';
-                removeBtn.addEventListener('click', () => {
-                    inputGroup.remove();
-                    if (container.childElementCount === 0) {
-                         createUrlInputEntry(container.id, '', false);
-                    }
-                });
-                inputGroup.appendChild(removeBtn);
-            }
-            container.appendChild(inputGroup);
-            return urlInput;
-        }
-
-
-        function findAndMark(currentTextValue, entityArray, className, dataAttributePrefix, idField, nameField, node, tempDivDestino, replacementsArray) {
-            if (typeof entityArray === 'undefined' || !entityArray) {
-                console.warn(`[findAndMark] entityArray para ${className} está indefinido ou nulo.`);
-                return;
-            }
-            entityArray.forEach(entity => {
-                const entityTerm = entity[nameField];
-                if (!entityTerm || String(entityTerm).trim() === '') return;
-                const entityTermStr = String(entityTerm);
-                const regex = new RegExp(escapeRegExp(entityTermStr), 'gi');
-                let match;
-                while ((match = regex.exec(currentTextValue)) !== null) {
-                    let parent = node.parentNode; let alreadyTagged = false;
-                    while (parent && parent !== tempDivDestino && parent.nodeType === Node.ELEMENT_NODE) {
-                        if (parent.classList.contains('person-text') || parent.classList.contains('event-text') || parent.classList.contains('location-text')) {
-                            alreadyTagged = true; break;
-                        } parent = parent.parentNode;
-                    } if (alreadyTagged) continue;
-                    const span = document.createElement('span'); span.className = className;
-                    span.setAttribute(`data-${dataAttributePrefix}-id`, entity[idField]); span.textContent = match[0];
-                    replacementsArray.push({ index: match.index, length: match[0].length, replacementNode: span, term: entityTermStr });
+    function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) {
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'url-input-group';
+        const urlInput = document.createElement('input');
+        urlInput.type = 'url';
+        urlInput.className = 'ref-url-input';
+        urlInput.placeholder = 'URL do Link';
+        urlInput.value = urlValue;
+        urlInput.style.marginRight = canBeRemoved ? '10px' : '0';
+        inputGroup.appendChild(urlInput);
+        if (canBeRemoved) {
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = 'Remover';
+            removeBtn.addEventListener('click', () => {
+                inputGroup.remove();
+                if (container.childElementCount === 0) {
+                     createUrlInputEntry(container.id, '', false);
                 }
             });
+            inputGroup.appendChild(removeBtn);
         }
+        container.appendChild(inputGroup);
+        return urlInput;
+    }
 
-        function autoHighlightEntitiesInHTML(htmlContent) {
-            if (!htmlContent || typeof htmlContent !== 'string') return '';
-            const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlContent;
-            function processNode(node) {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    let currentText = node.nodeValue; if (!currentText.trim()) return;
-                    const replacements = [];
-                    findAndMark(currentText, knownPersons, 'person-text', 'person', 'id', 'nome', node, tempDiv, replacements);
-                    findAndMark(currentText, knownLocations, 'location-text', 'location', 'id', 'nome', node, tempDiv, replacements);
-                    if (typeof knownEvents !== 'undefined') {
-                        knownEvents.forEach(event => {
-                            const termsToSearch = [];
-                            if (event.ano && String(event.ano).trim()) termsToSearch.push(String(event.ano));
-                            if (event.descricao && String(event.descricao).trim() && event.descricao.length < 70 && event.descricao.length > 1) termsToSearch.push(String(event.descricao));
-                            termsToSearch.forEach(term => { if (!term) return; const regex = new RegExp(escapeRegExp(term), 'gi'); let match;
-                                while ((match = regex.exec(currentText)) !== null) {
-                                    let parent = node.parentNode; let alreadyTagged = false;
-                                    while(parent && parent !== tempDiv && parent.nodeType === Node.ELEMENT_NODE) { if (parent.classList.contains('person-text') || parent.classList.contains('event-text') || parent.classList.contains('location-text')) { alreadyTagged = true; break; } parent = parent.parentNode; }
-                                    if (alreadyTagged) continue;
-                                    const span = document.createElement('span'); span.className = 'event-text'; span.setAttribute('data-event-id', event.id); span.textContent = match[0];
-                                    replacements.push({ index: match.index, length: match[0].length, replacementNode: span, term: term });
-                                }
-                            });
+    function findAndMark(currentTextValue, entityArray, className, dataAttributePrefix, idField, nameField, node, tempDivDestino, replacementsArray) {
+        if (typeof entityArray === 'undefined' || !entityArray) return;
+        entityArray.forEach(entity => {
+            const entityTerm = entity[nameField];
+            if (!entityTerm || String(entityTerm).trim() === '') return;
+            const entityTermStr = String(entityTerm);
+            const regex = new RegExp(escapeRegExp(entityTermStr), 'gi');
+            let match;
+            while ((match = regex.exec(currentTextValue)) !== null) {
+                let parent = node.parentNode; let alreadyTagged = false;
+                while (parent && parent !== tempDivDestino && parent.nodeType === Node.ELEMENT_NODE) {
+                    if (parent.classList.contains('person-text') || parent.classList.contains('event-text') || parent.classList.contains('location-text')) {
+                        alreadyTagged = true; break;
+                    } parent = parent.parentNode;
+                } if (alreadyTagged) continue;
+                const span = document.createElement('span'); span.className = className;
+                span.setAttribute(`data-${dataAttributePrefix}-id`, entity[idField]); span.textContent = match[0];
+                replacementsArray.push({ index: match.index, length: match[0].length, replacementNode: span, term: entityTermStr });
+            }
+        });
+    }
+
+    function autoHighlightEntitiesInHTML(htmlContent) {
+        if (!htmlContent || typeof htmlContent !== 'string') return '';
+        const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlContent;
+        function processNode(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                let currentText = node.nodeValue; if (!currentText.trim()) return;
+                const replacements = [];
+                findAndMark(currentText, knownPersons, 'person-text', 'person', 'id', 'nome', node, tempDiv, replacements);
+                findAndMark(currentText, knownLocations, 'location-text', 'location', 'id', 'nome', node, tempDiv, replacements);
+                if (typeof knownEvents !== 'undefined') {
+                    knownEvents.forEach(event => {
+                        const termsToSearch = [];
+                        if (event.ano && String(event.ano).trim()) termsToSearch.push(String(event.ano));
+                        if (event.descricao && String(event.descricao).trim() && event.descricao.length < 70 && event.descricao.length > 1) termsToSearch.push(String(event.descricao));
+                        termsToSearch.forEach(term => { if (!term) return; const regex = new RegExp(escapeRegExp(term), 'gi'); let match;
+                            while ((match = regex.exec(currentText)) !== null) {
+                                let parent = node.parentNode; let alreadyTagged = false;
+                                while(parent && parent !== tempDiv && parent.nodeType === Node.ELEMENT_NODE) { if (parent.classList.contains('person-text') || parent.classList.contains('event-text') || parent.classList.contains('location-text')) { alreadyTagged = true; break; } parent = parent.parentNode; }
+                                if (alreadyTagged) continue;
+                                const span = document.createElement('span'); span.className = 'event-text'; span.setAttribute('data-event-id', event.id); span.textContent = match[0];
+                                replacements.push({ index: match.index, length: match[0].length, replacementNode: span, term: term });
+                            }
                         });
-                    } if (replacements.length === 0) return;
-                    replacements.sort((a, b) => a.index === b.index ? b.length - a.length : a.index - b.index);
-                    const finalNodesForThisTextNode = []; let currentIndex = 0; const processedRangesInTextNode = [];
-                    replacements.forEach(rep => { let skip = false; for (const range of processedRangesInTextNode) { if (rep.index >= range.start && (rep.index + rep.length) <= range.end && !(rep.index === range.start && rep.length === (range.end - range.start))) { skip = true; break; } } if (skip) return; if (rep.index > currentIndex) { finalNodesForThisTextNode.push(document.createTextNode(currentText.substring(currentIndex, rep.index))); } finalNodesForThisTextNode.push(rep.replacementNode.cloneNode(true)); currentIndex = rep.index + rep.length; processedRangesInTextNode.push({ start: rep.index, end: currentIndex }); });
-                    if (currentIndex < currentText.length) { finalNodesForThisTextNode.push(document.createTextNode(currentText.substring(currentIndex))); }
-                    if (finalNodesForThisTextNode.length > 0 && node.parentNode) { const fragment = document.createDocumentFragment(); finalNodesForThisTextNode.forEach(fn => fragment.appendChild(fn)); node.parentNode.replaceChild(fragment, node); }
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    if (node.isContentEditable === false || (node.classList && (node.classList.contains('person-text') || node.classList.contains('event-text') || node.classList.contains('location-text'))) || node.tagName === 'SCRIPT' || node.tagName === 'STYLE' || node.classList.contains('chapter-break-for-storage')) return;
-                    const childrenCopy = Array.from(node.childNodes); for (let i = 0; i < childrenCopy.length; i++) { processNode(childrenCopy[i]); }
-                }
-            }
-            Array.from(tempDiv.childNodes).forEach(child => processNode(child)); return tempDiv.innerHTML;
-        }
-
-        function createNewChapterElement(contentHTML = '', focusAfterCreation = false) {
-            const chapterDiv = document.createElement('div'); chapterDiv.className = 'text-editor-chapter'; chapterDiv.setAttribute('contenteditable', 'true');
-            const defaultFontSizeCSS = `${fontSizeInput.value || parseInt(DEFAULT_FONT_SIZE,10)}px`;
-            chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-size: ${defaultFontSizeCSS}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
-            applyDefaultStylesToBlocks(chapterDiv, defaultFontSizeCSS, DEFAULT_LINE_HEIGHT);
-            chapterDiv.addEventListener('focus', () => { activeEditorElement = chapterDiv; const firstBlock = chapterDiv.querySelector('p, div'); let chapterFontSizeCSS = defaultFontSizeCSS; if (firstBlock && firstBlock.style.fontSize) chapterFontSizeCSS = firstBlock.style.fontSize; const numericSize = parseInt(chapterFontSizeCSS, 10); if (!isNaN(numericSize)) fontSizeInput.value = numericSize; });
-            chapterDiv.addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => saveDocumentBody(), 1500); });
-            editorsContainer.appendChild(chapterDiv);
-            if (focusAfterCreation && document.activeElement !== chapterDiv) { const sel = window.getSelection(); const range = document.createRange(); if (chapterDiv.firstChild) { range.selectNodeContents(chapterDiv.firstChild); range.collapse(false); } else { range.selectNodeContents(chapterDiv); range.collapse(false); } if(sel) { sel.removeAllRanges(); sel.addRange(range); } chapterDiv.focus(); }
-            return chapterDiv;
-        }
-
-        function showEditorInterfaceScreen() { initialScreenDiv.style.display = 'none'; editorInterfaceDiv.style.display = 'block'; }
-        function showInitialScreen() { editorInterfaceDiv.style.display = 'none'; initialScreenDiv.style.display = 'block'; loadRecentDocuments(); currentDocId = null; currentDocumentData = null; docTitleInput.value = ''; editorsContainer.innerHTML = ''; activeEditorElement = null; fontSizeInput.value = parseInt(DEFAULT_FONT_SIZE, 10); fontColorInput.value = '#d4d4d4'; referencesListUl.innerHTML = "<li>Nenhuma referência.</li>"; showFoundPersonsBtn.style.display = 'none'; showFoundEventsBtn.style.display = 'none'; showFoundLocationsBtn.style.display = 'none'; entityContextSidebar.style.display = 'none'; archiveCurrentDocBtn.style.display = 'none'; indexChapterListUl.innerHTML = ''; indexChapterMsgP.textContent = "Nenhum capítulo para exibir."; indexChapterMsgP.style.display = 'block'; }
-
-        async function loadRecentDocuments() {
-            recentDocumentsListUl.innerHTML = ''; recentDocumentsMsgP.textContent = 'Carregando...'; recentDocumentsMsgP.style.display = 'block';
-            try { const q = query(collection(db, "documentos"), where("ativo", "==", true), orderBy("atualizadoEm", "desc"), limit(10)); const querySnapshot = await getDocs(q); if (querySnapshot.empty) { recentDocumentsMsgP.textContent = "Nenhum documento recente."; return; } recentDocumentsMsgP.style.display = 'none'; querySnapshot.forEach((docSnap) => { const data = docSnap.data(); const li = document.createElement('li'); const docInfoDiv = document.createElement('div'); docInfoDiv.className = 'doc-info'; const titleSpan = document.createElement('span'); titleSpan.className = 'doc-title'; titleSpan.textContent = escapeHTML(data.titulo) || "Sem Título"; const dateSpan = document.createElement('span'); dateSpan.className = 'doc-date'; if (data.atualizadoEm && data.atualizadoEm.toDate) dateSpan.textContent = `Atualizado: ${data.atualizadoEm.toDate().toLocaleString()}`; else dateSpan.textContent = `Data N/A`; docInfoDiv.appendChild(titleSpan); docInfoDiv.appendChild(dateSpan); li.appendChild(docInfoDiv); const editBtn = document.createElement('button'); editBtn.textContent = "Editar"; editBtn.dataset.docId = docSnap.id; editBtn.addEventListener('click', (e) => loadDocument(e.target.dataset.docId)); li.appendChild(editBtn); recentDocumentsListUl.appendChild(li); }); } catch (e) { console.error("Erro recentes:", e); recentDocumentsMsgP.textContent = "Erro ao carregar."; }
-        }
-
-        async function createNewDocument() {
-            showEditorInterfaceScreen(); currentDocId = generateId('doc-'); const initialFontSizeValue = fontSizeInput.value || '14'; const initialFontSizeCSS = `${initialFontSizeValue}px`; const initialChapterContent = `<p style="font-size: ${initialFontSizeCSS}; line-height: ${DEFAULT_LINE_HEIGHT};">Comece a escrever...</p>`;
-            const processedInitialContent = autoHighlightEntitiesInHTML(initialChapterContent);
-            currentDocumentData = { titulo: "Novo Documento Sem Título", corpo: [processedInitialContent], referencias: [], ativo: true, criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() };
-            try { await setDoc(doc(db, "documentos", currentDocId), currentDocumentData); fontSizeInput.value = initialFontSizeValue; displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo[0], currentDocumentData.referencias); const firstChapter = editorsContainer.querySelector('.text-editor-chapter'); if (firstChapter) { const range = document.createRange(); const sel = window.getSelection(); range.selectNodeContents(firstChapter); range.collapse(false); if(sel) {sel.removeAllRanges(); sel.addRange(range);} firstChapter.focus(); } } catch (e) { console.error("Erro criar doc:", e); alert("Erro ao criar."); }
-        }
-
-        async function loadDocument(id) {
-            if (!id) return; showEditorInterfaceScreen(); editorsContainer.innerHTML = "<p>Carregando capítulos...</p>"; docTitleInput.value = "Carregando..."; referencesListUl.innerHTML = "<li>Carregando...</li>"; currentDocId = id;
-            try { const docRef = doc(db, "documentos", currentDocId); const docSnap = await getDoc(docRef); if (docSnap.exists()) { currentDocumentData = docSnap.data(); if (currentDocumentData.ativo === false) { alert("Documento arquivado."); showInitialScreen(); return; } let singleHtmlBlockToDisplay; if (Array.isArray(currentDocumentData.corpo) && currentDocumentData.corpo.length > 0) { singleHtmlBlockToDisplay = currentDocumentData.corpo[0]; } else if (typeof currentDocumentData.corpo === 'string') { singleHtmlBlockToDisplay = currentDocumentData.corpo; currentDocumentData.corpo = [singleHtmlBlockToDisplay]; } else { singleHtmlBlockToDisplay = `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`; currentDocumentData.corpo = [singleHtmlBlockToDisplay]; } displayDocumentContent(currentDocumentData.titulo, singleHtmlBlockToDisplay, currentDocumentData.referencias); } else { alert("Documento não encontrado."); showInitialScreen(); } } catch (e) { console.error("Erro carregar doc:", e); alert("Erro ao carregar."); }
-        }
-
-        function displayDocumentContent(title, singleBodyHtml, references = []) {
-            docTitleInput.value = title || ""; editorsContainer.innerHTML = ''; activeEditorElement = null; const chapterHTMLs = singleBodyHtml.split(CHAPTER_DELIMITER_HTML); if (chapterHTMLs.length > 0) { chapterHTMLs.forEach((chapterHTML, index) => createNewChapterElement(chapterHTML, index === 0)); } else { createNewChapterElement('', true); } const firstChapterElement = editorsContainer.querySelector('.text-editor-chapter'); if (firstChapterElement) { const firstBlock = firstChapterElement.querySelector('p, div'); let chapterFontSizeCSS = DEFAULT_FONT_SIZE; if (firstBlock && firstBlock.style.fontSize) chapterFontSizeCSS = firstBlock.style.fontSize; const numericSize = parseInt(chapterFontSizeCSS, 10); fontSizeInput.value = isNaN(numericSize) ? parseInt(DEFAULT_FONT_SIZE, 10) : numericSize; } renderReferences(references); if (currentDocId) archiveCurrentDocBtn.style.display = 'inline-block'; else archiveCurrentDocBtn.style.display = 'none'; detectEntitiesInCurrentDoc();
-        }
-
-        async function saveDocumentBody() {
-            if (!currentDocId) return;
-            console.log("saveDocumentBody: Iniciado.");
-            const visualChapterContents = [];
-            editorsContainer.querySelectorAll('.text-editor-chapter').forEach(chapterDiv => {
-                visualChapterContents.push(chapterDiv.innerHTML);
-            });
-            const combinedRawHTML = visualChapterContents.join(CHAPTER_DELIMITER_HTML);
-            const finalHTMLToSave = autoHighlightEntitiesInHTML(combinedRawHTML); // Re-highlight antes de salvar
-
-            if (currentDocumentData) {
-                currentDocumentData.corpo = [finalHTMLToSave]; // Atualiza o estado local
-            }
-            try {
-                await updateDoc(doc(db, "documentos", currentDocId), {
-                    corpo: [finalHTMLToSave],
-                    atualizadoEm: serverTimestamp()
-                });
-                console.log("saveDocumentBody: Corpo do documento salvo com sucesso.");
-            } catch (e) {
-                console.error("Erro ao salvar corpo do documento:", e);
-            }
-        }
-        async function saveDocumentTitle() { if (!currentDocId) return; const newTitle = docTitleInput.value.trim() || "Documento Sem Título"; try { await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() }); if(currentDocumentData) currentDocumentData.titulo = newTitle; } catch (e) { console.error("Erro salvar título:", e); } }
-
-        async function loadKnownEntities() { try { const pSnap = await getDocs(collection(db, "pessoas")); knownPersons = pSnap.docs.map(d=>({id:d.id,...d.data()})); const eSnap = await getDocs(collection(db, "eventos")); knownEvents = eSnap.docs.map(d=>({id:d.id,...d.data()})); const lSnap = await getDocs(collection(db, "locais")); knownLocations = lSnap.docs.map(d=>({id:d.id,...d.data()})); } catch (error) { console.error("Erro ao carregar entidades conhecidas:", error); } }
-        async function saveNewPerson(name) { if (!name.trim()){alert("Nome da pessoa é obrigatório.");return;} const id=generateId('person-'); const data={nome:name.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"pessoas"),where("nome","==",name.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Pessoa "${escapeHTML(name.trim())}" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"pessoas",id),data);knownPersons.push({id,...data});} tagSelectedTextWithEntity(targetId,'person-text','data-person-id');hidePopup(addPersonPopup);}catch(e){console.error("Erro ao salvar pessoa:",e);alert("Erro ao salvar pessoa.");}}
-        async function saveNewEvent(desc,year){ if(!desc.trim()||!year.trim()){alert("Descrição e ano do evento são obrigatórios.");return;} const id=generateId('event-'); const data={descricao:desc.trim(),ano:year.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"eventos"),where("descricao","==",desc.trim()),where("ano","==",year.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Evento "${escapeHTML(desc.trim())} (${escapeHTML(year.trim())})" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"eventos",id),data);knownEvents.push({id,...data});} tagSelectedTextWithEntity(targetId,'event-text','data-event-id');hidePopup(addEventPopup);}catch(e){console.error("Erro ao salvar evento:",e);alert("Erro ao salvar evento.");}}
-        async function saveNewLocation(name){ if(!name.trim()){alert("Nome do local é obrigatório.");return;} const id=generateId('location-'); const data={nome:name.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"locais"),where("nome","==",name.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Local "${escapeHTML(name.trim())}" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"locais",id),data);knownLocations.push({id,...data});} tagSelectedTextWithEntity(targetId,'location-text','data-location-id');hidePopup(addLocationPopup);}catch(e){console.error("Erro ao salvar local:",e);alert("Erro ao salvar local.");}}
-
-        function tagSelectedTextWithEntity(entityId, className, dataAttribute) { if (!currentSelectionRange || !activeEditorElement || !activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) { alert("Por favor, selecione texto no capítulo ativo para marcar a entidade."); return; } const span=document.createElement('span');span.className=className;span.setAttribute(dataAttribute,entityId); try { currentSelectionRange.surroundContents(span); saveDocumentBody(); }catch(e){console.warn("Erro ao envolver seleção com entidade:",e); alert("Não foi possível marcar o texto. Tente selecionar apenas texto simples.");} }
-
-        function detectEntitiesInCurrentDoc() { if (!currentDocId || !editorsContainer) return; let combinedText = ""; editorsContainer.querySelectorAll('.text-editor-chapter').forEach(ch => combinedText += ch.textContent + " "); combinedText = combinedText.trim(); if (!combinedText) {showFoundPersonsBtn.style.display='none'; showFoundEventsBtn.style.display='none'; showFoundLocationsBtn.style.display='none'; return;} let pF=false,eF=false,lF=false; knownPersons.forEach(p=>{if(p.nome && new RegExp(escapeRegExp(p.nome),"gi").test(combinedText))pF=true;}); knownEvents.forEach(e=>{ const termsToSearch = []; if (e.ano && String(e.ano).trim()) termsToSearch.push(String(e.ano)); if (e.descricao && String(e.descricao).trim()) termsToSearch.push(String(e.descricao)); termsToSearch.forEach(term => { if(new RegExp(escapeRegExp(term),"gi").test(combinedText)) eF=true; }); }); knownLocations.forEach(l=>{if(l.nome && new RegExp(escapeRegExp(l.nome),"gi").test(combinedText))lF=true;}); showFoundPersonsBtn.style.display=pF?'inline-block':'none'; showFoundEventsBtn.style.display=eF?'inline-block':'none'; showFoundLocationsBtn.style.display=lF?'inline-block':'none'; }
-
-        async function showFoundEntitiesPopup(entityType) { let popup, listUl, msgP, knownEnts, searchKeyPrimary, searchKeySecondary, entityDisplayName; switch(entityType) { case 'persons': popup=foundPersonsPopup; listUl=foundPersonsListContainerUl; msgP=foundPersonsListContainerMsg; knownEnts=knownPersons; searchKeyPrimary='nome'; entityDisplayName='pessoa'; break; case 'events': popup=foundEventsPopup; listUl=foundEventsListContainerUl; msgP=foundEventsListContainerMsg; knownEnts=knownEvents; searchKeyPrimary='descricao'; searchKeySecondary='ano'; entityDisplayName='data/evento'; break; case 'locations': popup=foundLocationsPopup; listUl=foundLocationsListContainerUl; msgP=foundLocationsListContainerMsg; knownEnts=knownLocations; searchKeyPrimary='nome'; entityDisplayName='local'; break; default: console.error("Tipo de entidade inválido para popup:", entityType); return; } showPopup(popup); listUl.innerHTML=""; msgP.textContent="Verificando..."; msgP.style.display='block'; if(!currentDocId){msgP.textContent="Nenhum documento ativo.";return;} let combinedTextContent=""; editorsContainer.querySelectorAll('.text-editor-chapter').forEach(ch=>combinedTextContent+=ch.textContent+" "); combinedTextContent=combinedTextContent.trim(); if(!combinedTextContent){msgP.textContent="O conteúdo do documento está vazio.";return;} const foundInCurrentDoc = []; knownEnts.forEach(entity => { let found = false; if (entity[searchKeyPrimary] && new RegExp(escapeRegExp(String(entity[searchKeyPrimary])),"gi").test(combinedTextContent)) found = true; if (!found && searchKeySecondary && entity[searchKeySecondary] && new RegExp(escapeRegExp(String(entity[searchKeySecondary])),"gi").test(combinedTextContent)) found = true; if (found) foundInCurrentDoc.push(entity); }); if(foundInCurrentDoc.length===0){msgP.textContent=`Nenhum(a) ${entityDisplayName} conhecido(a) encontrado(a) neste documento.`;return;} msgP.style.display='none'; foundInCurrentDoc.sort((a,b) => (String(a[searchKeyPrimary]||a[searchKeySecondary]||"")).localeCompare(String(b[searchKeyPrimary]||b[searchKeySecondary]||"")) ); foundInCurrentDoc.forEach(entity=>{ const li=document.createElement('li'); let displayText = escapeHTML(String(entity[searchKeyPrimary] || "")); if(entityType==='events') displayText = `${escapeHTML(String(entity.descricao || ""))} (${escapeHTML(String(entity.ano || ""))})`; li.textContent=displayText || "N/A"; li.dataset.entityId=entity.id; li.dataset.entityTerm=String(entity[searchKeyPrimary] || entity[searchKeySecondary] || ""); if(entityType==='persons'||entityType==='locations' || entityType === 'events'){ li.addEventListener('click',async e=>{ const termForContext=e.currentTarget.dataset.entityTerm; hidePopup(popup); if(termForContext) await displayEntityContextInSidebar(termForContext); });} listUl.appendChild(li); }); }
-
-        minimizeSidebarBtn.addEventListener('click', ()=>{entityContextSidebar.classList.toggle('minimized-sidebar-state');minimizeSidebarBtn.textContent=entityContextSidebar.classList.contains('minimized-sidebar-state')?'+':'_';minimizeSidebarBtn.title=entityContextSidebar.classList.contains('minimized-sidebar-state')?"Restaurar Sidebar":"Minimizar Sidebar";});
-        closeSidebarBtn.addEventListener('click', ()=>{entityContextSidebar.style.display='none';entityContextSidebar.classList.remove('minimized-sidebar-state');minimizeSidebarBtn.textContent='_';minimizeSidebarBtn.title="Minimizar Sidebar";});
-        async function displayEntityContextInSidebar(entityName) { sidebarEntityNameSpan.textContent=escapeHTML(entityName); sidebarContextListDiv.innerHTML='<p>Buscando contexto...</p>'; if(entityContextSidebar.classList.contains('minimized-sidebar-state')){entityContextSidebar.classList.remove('minimized-sidebar-state');minimizeSidebarBtn.textContent='_';minimizeSidebarBtn.title="Minimizar Sidebar";} entityContextSidebar.style.display='flex'; try { const q=query(collection(db,"documentos"),where("ativo","==",true)); const docsSnap=await getDocs(q); sidebarContextListDiv.innerHTML=''; let foundAnyContext=false; for(const docSnapshot of docsSnap.docs){ const dData=docSnapshot.data(); const dId=docSnapshot.id; const docTitle=dData.titulo||`Documento ${dId.substring(0,5)}`; let passagesHTML=[]; if(Array.isArray(dData.corpo) && dData.corpo.length > 0){ const singleCombinedHtml = dData.corpo[0]; const tempDivForContext=document.createElement('div'); tempDivForContext.innerHTML=singleCombinedHtml; const textContentForContext=tempDivForContext.textContent||""; const sentences = textContentForContext.split(/(?<=[.?!])\s+(?=[A-ZÀ-úa-z0-9ÓÀÉÍÚÂÊÔÃÕÇÑ])|(?<=\n)\s*/); const rgx=new RegExp(escapeRegExp(entityName),"gi"); sentences.forEach(sentence=>{if(sentence.trim() && rgx.test(sentence))passagesHTML.push({html:sentence.replace(rgx,m=>`<strong>${escapeHTML(m)}</strong>`),docId:dId,term:entityName});}); } if(passagesHTML.length>0){foundAnyContext=true; const blockDiv=document.createElement('div');blockDiv.className='document-context-block'; const h4=document.createElement('h4'); const titleWrap=document.createElement('span');titleWrap.className='title-text-wrapper'; const matchedTerm=document.createElement('span');matchedTerm.className='matched-term-title';matchedTerm.textContent=entityName; const docTitleSpan=document.createElement('span');docTitleSpan.className='doc-title';docTitleSpan.textContent=docTitle; titleWrap.appendChild(matchedTerm);titleWrap.appendChild(document.createTextNode(' - (Doc: '));titleWrap.appendChild(docTitleSpan);titleWrap.appendChild(document.createTextNode(')')); const toggleIcon=document.createElement('span');toggleIcon.className='toggle-icon'; h4.appendChild(titleWrap);h4.appendChild(toggleIcon); h4.addEventListener('click',()=>blockDiv.classList.toggle('collapsed-context')); blockDiv.appendChild(h4); const ul=document.createElement('ul'); passagesHTML.forEach(pD=>{const li=document.createElement('li');li.innerHTML=`...${pD.html}...`;li.dataset.docIdForContext=pD.docId;li.dataset.termForContext=pD.term;li.addEventListener('click',handleContextSentenceClick);ul.appendChild(li);}); blockDiv.appendChild(ul); sidebarContextListDiv.appendChild(blockDiv); } } if(!foundAnyContext)sidebarContextListDiv.innerHTML=`<p>Nenhum contexto encontrado para "${escapeHTML(entityName)}".</p>`; }catch(err){console.error("Erro ao buscar contexto na sidebar:",err);sidebarContextListDiv.innerHTML='<p>Erro ao buscar contexto.</p>';} }
-        function handleContextSentenceClick(event){openDocumentAndHighlightTerm(event.currentTarget.dataset.docIdForContext,event.currentTarget.dataset.termForContext);}
-        async function openDocumentAndHighlightTerm(docId,term){ contextViewBodyDiv.innerHTML='<p>Carregando documento...</p>'; contextViewTitleH3.textContent='Visualizar Contexto'; showPopup(documentContextViewPopup); try{const docRef=doc(db,"documentos",docId); const docSnap=await getDoc(docRef); if(docSnap.exists()){const data=docSnap.data(); if(data.ativo===false){contextViewBodyDiv.innerHTML='<p>Este documento está arquivado.</p>';return;} contextViewTitleH3.textContent=escapeHTML(data.titulo)||`Documento ${docId.substring(0,5)}`; let combinedBodyHTML = ""; if(Array.isArray(data.corpo) && data.corpo.length > 0) { combinedBodyHTML = data.corpo[0]; combinedBodyHTML = combinedBodyHTML.split(CHAPTER_DELIMITER_HTML).map(ch => `<div>${ch}</div>`).join("<hr class='chapter-divider-in-view'>"); } else if (typeof data.corpo === 'string') { combinedBodyHTML = data.corpo; } contextViewBodyDiv.innerHTML = combinedBodyHTML || "<p>Conteúdo do documento vazio.</p>"; const regex=new RegExp(`(${escapeRegExp(term)})`,'gi');let firstMatchElement=null; const walkAndHighlight=(elementNode)=>{ if(elementNode.nodeType===3 && elementNode.textContent.match(regex)){ const parentOfTextNode=elementNode.parentNode; if(!parentOfTextNode)return; const fragmentToReplace=document.createDocumentFragment(); elementNode.textContent.split(regex).forEach((textPart,i)=>{ if(i%2===1){ const spanHighlight=document.createElement('span'); spanHighlight.className='highlighted-term-in-view'; spanHighlight.textContent=textPart; fragmentToReplace.appendChild(spanHighlight); if(!firstMatchElement)firstMatchElement=spanHighlight; }else{ fragmentToReplace.appendChild(document.createTextNode(textPart)); } }); parentOfTextNode.replaceChild(fragmentToReplace,elementNode); }else if(elementNode.nodeType===1&&elementNode.childNodes&&elementNode.childNodes.length>0&&(elementNode.tagName!=='SCRIPT'&&elementNode.tagName!=='STYLE')){ Array.from(elementNode.childNodes).forEach(walkAndHighlight); } }; walkAndHighlight(contextViewBodyDiv); if(firstMatchElement)firstMatchElement.scrollIntoView({behavior:'smooth',block:'center'}); }else{contextViewBodyDiv.innerHTML='<p>Documento não encontrado.</p>';} }catch(e){console.error("Erro ao abrir documento para contexto:",e);contextViewBodyDiv.innerHTML='<p>Erro ao carregar o documento.</p>';} }
-
-        async function addReferenceToDocument(title) {
-            if (!currentDocId || !title || !currentSelectionRange || !activeEditorElement || !activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) { alert("Para adicionar uma referência, selecione texto no capítulo ativo e forneça um título."); return; }
-            const urlInputs = document.querySelectorAll('#addRefUrlsContainer .ref-url-input'); const urls = []; let allUrlsValid = true; let atLeastOneUrlProvided = false;
-            urlInputs.forEach(input => { const urlVal = input.value.trim(); if (urlVal) { atLeastOneUrlProvided = true; try { new URL(urlVal); urls.push(urlVal); } catch (_) { allUrlsValid = false; } } });
-            if (!atLeastOneUrlProvided) { alert("Pelo menos uma URL de referência é obrigatória."); return; } if (!allUrlsValid) { alert("Uma ou mais URLs parecem ser inválidas. Verifique o formato (ex: http://example.com)."); return; }
-            const refId = generateId('ref-'); const selTxt = currentSelectionRange.toString().trim(); const span = document.createElement('span'); span.className = 'referenced-text'; span.setAttribute('data-ref-id', refId); try { currentSelectionRange.surroundContents(span); } catch (e) { console.warn("Erro ao envolver texto com span de referência:", e); }
-            const newRef = { id: refId, tituloReferencia: title, urls: urls, textoSelecionadoOriginal: selTxt };
-            try { if (!currentDocumentData.referencias) currentDocumentData.referencias = []; currentDocumentData.referencias.push(newRef); await updateDoc(doc(db, "documentos", currentDocId), { referencias: arrayUnion(newRef), atualizadoEm: serverTimestamp() }); renderReferences(currentDocumentData.referencias); hidePopup(addReferencePopup); saveDocumentBody(); } catch (e) { console.error("Erro ao adicionar referência:", e); alert("Erro ao adicionar referência."); }
-        }
-        function renderReferences(refsInput = []) { // Renomeei 'refs' para 'refsInput' para evitar conflito
-            referencesListUl.innerHTML = "";
-
-            // Garantir que temos acesso ao container do editor e ao ID do documento
-            if (!currentDocId || !editorsContainer) {
-                referencesListUl.innerHTML = "<li>Nenhuma referência para exibir (editor não carregado ou documento não ativo).</li>";
-                return;
-            }
-
-            // Usa as refs passadas ou as do documento atual
-            const allRefsInCurrentDoc = refsInput.length > 0 ? refsInput : (currentDocumentData ? currentDocumentData.referencias : []);
-
-            if (!allRefsInCurrentDoc || allRefsInCurrentDoc.length === 0) {
-                referencesListUl.innerHTML = "<li>Nenhuma referência adicionada.</li>";
-                return;
-            }
-
-            // 1. Obter todos os spans de referência do editor, na ordem em que aparecem
-            const refSpansInEditor = Array.from(editorsContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id]'));
-
-            // 2. Extrair os IDs das referências na ordem em que aparecem no texto
-            const orderedRefIdsFromEditor = refSpansInEditor.map(span => span.dataset.refId);
-
-            // 3. Criar um mapa para busca rápida dos objetos de referência completos
-            const refMap = new Map();
-            allRefsInCurrentDoc.forEach(ref => refMap.set(ref.id, ref));
-
-            // 4. Construir a lista de referências ordenadas com base na sua aparição no texto
-            const sortedReferencesToDisplay = [];
-            orderedRefIdsFromEditor.forEach(id => {
-                if (refMap.has(id)) {
-                    sortedReferencesToDisplay.push(refMap.get(id));
-                    // Opcional: remover do mapa para depois adicionar as que não estão no texto, se desejado
-                    // refMap.delete(id);
-                }
-            });
-
-            // (Opcional) Se você quiser listar referências que existem nos dados mas não no texto
-            // (por exemplo, se o span foi deletado mas a referência não), elas poderiam ser adicionadas aqui.
-            // Por agora, vamos seguir estritamente a ordem do texto.
-            // refMap.forEach(refNotInText => sortedReferencesToDisplay.push(refNotInText));
-
-
-            if (sortedReferencesToDisplay.length === 0) {
-                referencesListUl.innerHTML = "<li>Nenhuma referência encontrada no texto do documento.</li>";
-                return;
-            }
-
-            sortedReferencesToDisplay.forEach(ref => {
-                const li = document.createElement('li');
-                li.className = 'reference-item';
-                li.setAttribute('data-ref-id', ref.id);
-
-                const cDiv = document.createElement('div');
-                cDiv.className = 'ref-content';
-
-                const tS = document.createElement('span');
-                tS.className = 'ref-title';
-                tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `;
-                tS.dataset.refId = ref.id;
-                tS.addEventListener('click', navigateToReferencedTextInEditor);
-                cDiv.appendChild(tS);
-
-                const urlsToDisplay = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
-                if (urlsToDisplay.length > 0) {
-                    const urlsContainer = document.createElement('div');
-                    urlsContainer.style.marginTop = '3px';
-                    urlsToDisplay.forEach(url => {
-                        const a = document.createElement('a');
-                        a.href = url; // A URL já deve estar correta, não precisa escapar para href
-                        a.textContent = escapeHTML(url); // Escapa para exibição
-                        a.target = "_blank";
-                        a.style.display = 'block';
-                        a.style.marginBottom = '2px';
-                        urlsContainer.appendChild(a);
                     });
-                    cDiv.appendChild(urlsContainer);
-                }
-                li.appendChild(cDiv);
-
-                const eB = document.createElement('button');
-                eB.className = 'edit-ref-btn';
-                eB.innerHTML = '✎';
-                eB.title = "Editar Referência";
-                eB.dataset.refId = ref.id;
-                eB.addEventListener('click', () => openEditReferencePopup(ref.id));
-                li.appendChild(eB);
-
-                referencesListUl.appendChild(li);
-            });
-        }
-
-        function openEditReferencePopup(refId) {
-            if (!currentDocumentData || !currentDocumentData.referencias) return; const ref = currentDocumentData.referencias.find(r => r.id === refId); if (!ref) { alert("Referência não encontrada."); return; }
-            editingRefIdInput.value = refId; editRefTitleInput.value = ref.tituloReferencia;
-            const editRefUrlsContainer = document.getElementById('editRefUrlsContainer'); editRefUrlsContainer.innerHTML = '';
-            const existingUrls = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
-            if (existingUrls.length > 0) { existingUrls.forEach((url, index) => { createUrlInputEntry('editRefUrlsContainer', url, existingUrls.length > 1 || index > 0); }); if (editRefUrlsContainer.childElementCount === 1) { const singleInputGroup = editRefUrlsContainer.firstChild; const removeBtn = singleInputGroup.querySelector('button[type="button"]'); if (removeBtn) removeBtn.remove(); const urlInputInside = singleInputGroup.querySelector('.ref-url-input'); if (urlInputInside) urlInputInside.style.marginRight = '0'; } } else { createUrlInputEntry('editRefUrlsContainer', '', false); }
-            showPopup(editReferencePopup);
-        }
-        async function saveEditedReference() {
-            const id = editingRefIdInput.value; const title = editRefTitleInput.value.trim(); if (!id || !title) { alert("Título da referência é obrigatório."); return; }
-            const editUrlInputs = document.querySelectorAll('#editRefUrlsContainer .ref-url-input'); const newUrls = []; let allEditedUrlsValid = true; let atLeastOneUrlProvidedInEdit = false;
-            editUrlInputs.forEach(input => { const urlVal = input.value.trim(); if (urlVal) { atLeastOneUrlProvidedInEdit = true; try { new URL(urlVal); newUrls.push(urlVal); } catch (_) { allEditedUrlsValid = false; } } });
-            if (!atLeastOneUrlProvidedInEdit) { alert("Pelo menos uma URL de referência é obrigatória ao salvar."); return; } if (!allEditedUrlsValid) { alert("Uma ou mais URLs parecem ser inválidas no formulário de edição. Verifique o formato."); return; }
-            if (!currentDocumentData || !currentDocumentData.referencias) return; const idx = currentDocumentData.referencias.findIndex(r => r.id === id); if (idx === -1) { alert("Referência não encontrada para editar."); return; }
-            const updatedRefs = [...currentDocumentData.referencias]; updatedRefs[idx] = { ...updatedRefs[idx], tituloReferencia: title, urls: newUrls }; delete updatedRefs[idx].urlReferencia;
-            try { await updateDoc(doc(db, "documentos", currentDocId), { referencias: updatedRefs, atualizadoEm: serverTimestamp() }); currentDocumentData.referencias = updatedRefs; renderReferences(currentDocumentData.referencias); hidePopup(editReferencePopup); } catch (e) { console.error("Erro ao salvar referência editada:", e); alert("Erro ao salvar alterações na referência."); }
-        }
-        async function deleteReference(){const refId=editingRefIdInput.value;if(!refId||!window.confirm("Tem certeza que deseja excluir esta referência?"))return;if(!currentDocumentData||!currentDocumentData.referencias)return;const updatedRefs=currentDocumentData.referencias.filter(r=>r.id!==refId);let bodyChanged=false;editorsContainer.querySelectorAll(`.text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{const frag=document.createDocumentFragment();while(spanInEditor.firstChild)frag.appendChild(spanInEditor.firstChild);if(spanInEditor.parentNode)spanInEditor.parentNode.replaceChild(frag,spanInEditor);bodyChanged=true;});try{await updateDoc(doc(db,"documentos",currentDocId),{referencias:updatedRefs,atualizadoEm:serverTimestamp()});currentDocumentData.referencias=updatedRefs;renderReferences(currentDocumentData.referencias);hidePopup(editReferencePopup); if(bodyChanged) saveDocumentBody(); }catch(e){console.error("Erro ao excluir referência:",e);alert("Erro ao excluir a referência.");}}
-        function clearEditorHighlights(){editorsContainer.querySelectorAll('.text-editor-chapter .highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));referencesListUl.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));}
-        function navigateToReferencedTextInEditor(event){const refId=event.target.dataset.refId;if(!refId)return;let refSpanInEditor=null;editorsContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id="'+refId+'"]').forEach(s=>{if(!refSpanInEditor)refSpanInEditor=s;});const refListItem=event.target.closest('li.reference-item');clearEditorHighlights();if(refSpanInEditor){refSpanInEditor.scrollIntoView({behavior:'smooth',block:'center'});refSpanInEditor.classList.add('highlight-scroll');if(refListItem)refListItem.classList.add('highlight-scroll');setTimeout(clearEditorHighlights,2500);}}
-
-        function showFloatingToolbar(){if(!currentSelectionRange||!activeEditorElement)return;const rect=currentSelectionRange.getBoundingClientRect();floatingToolbar.style.left=`${rect.left+window.scrollX+(rect.width/2)-(floatingToolbar.offsetWidth/2)}px`;floatingToolbar.style.top=`${rect.top+window.scrollY-floatingToolbar.offsetHeight-10}px`;floatingToolbar.style.display='flex';}
-        function hideFloatingToolbar(){floatingToolbar.style.display='none';}
-        function showAddReferencePopup() { if (!currentSelectionRange || currentSelectionRange.collapsed || !activeEditorElement || !activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) { alert("Selecione texto no capítulo ativo para adicionar referência."); return; } refTitleInput.value = ""; const addRefUrlsContainer = document.getElementById('addRefUrlsContainer'); addRefUrlsContainer.innerHTML = ''; createUrlInputEntry('addRefUrlsContainer', '', false); showPopup(addReferencePopup); refTitleInput.focus(); hideFloatingToolbar(); }
-        function showAddPersonPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo ativo para adicionar pessoa.");return;}personNameInput.value=currentSelectionRange.toString().trim();showPopup(addPersonPopup);personNameInput.focus();hideFloatingToolbar();}
-        function showAddEventPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo ativo para adicionar data/evento.");return;}eventDescriptionInput.value=currentSelectionRange.toString().trim();eventYearInput.value="";showPopup(addEventPopup);eventDescriptionInput.focus();hideFloatingToolbar();}
-        function showAddLocationPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo ativo para adicionar local.");return;}locationNameInput.value=currentSelectionRange.toString().trim();showPopup(addLocationPopup);locationNameInput.focus();hideFloatingToolbar();}
-        async function showLoadDocumentsPopup(){showPopup(loadDocumentPopup);documentsListContainerUl.innerHTML="";documentsListContainerMsg.textContent="Carregando lista de documentos...";documentsListContainerMsg.style.display='block';try{const q=query(collection(db,"documentos"),where("ativo","==",true),orderBy("atualizadoEm","desc"));const snap=await getDocs(q);if(snap.empty){documentsListContainerMsg.textContent="Nenhum documento ativo encontrado.";return;}documentsListContainerMsg.style.display='none';snap.forEach(dS=>{const data=dS.data();const li=document.createElement('li');const ts=document.createElement('span');ts.textContent=escapeHTML(data.titulo)||"Sem Título";ts.title=escapeHTML(data.titulo)||"Sem Título";const eb=document.createElement('button');eb.textContent="Editar";eb.dataset.docId=dS.id;eb.addEventListener('click',e=>{loadDocument(e.target.dataset.docId);hidePopup(loadDocumentPopup);});li.appendChild(ts);li.appendChild(eb);documentsListContainerUl.appendChild(li);});}catch(e){console.error("Erro ao buscar documentos para carregar:",e);documentsListContainerMsg.textContent="Erro ao carregar documentos.";}}
-
-        function populateChapterIndex() { indexChapterListUl.innerHTML = ''; indexChapterMsgP.style.display = 'none'; const chapterElements = editorsContainer.querySelectorAll('.text-editor-chapter'); if (chapterElements.length === 0) { indexChapterMsgP.textContent = "Nenhum capítulo para exibir no índice."; indexChapterMsgP.style.display = 'block'; return; } chapterElements.forEach((chapterDiv, index) => { const li = document.createElement('li'); li.dataset.chapterIndex = index; const titleSpan = document.createElement('span'); titleSpan.className = 'chapter-title-index'; titleSpan.textContent = `Capítulo ${index + 1}`; const previewSpan = document.createElement('span'); previewSpan.className = 'chapter-preview-index'; const firstSentence = getFirstSentence(chapterDiv.innerHTML); previewSpan.textContent = firstSentence || "(Capítulo vazio)"; previewSpan.title = firstSentence || "(Capítulo vazio)"; li.appendChild(titleSpan); li.appendChild(previewSpan); li.addEventListener('click', () => { const targetChapterIndex = parseInt(li.dataset.chapterIndex, 10); const targetChapterDiv = editorsContainer.querySelectorAll('.text-editor-chapter')[targetChapterIndex]; if (targetChapterDiv) { targetChapterDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const range = document.createRange(); const sel = window.getSelection(); if (targetChapterDiv.firstChild) { range.setStart(targetChapterDiv.firstChild, 0); } else { range.selectNodeContents(targetChapterDiv); } range.collapse(true); if(sel) {sel.removeAllRanges(); sel.addRange(range);} targetChapterDiv.focus(); }, 300); hidePopup(indexPopup); } }); indexChapterListUl.appendChild(li); }); }
-
-        function getParagraphsForSelection(){if(!activeEditorElement)return[];const sel=window.getSelection();if(!sel||!sel.rangeCount||!activeEditorElement.contains(sel.anchorNode)){const fP=activeEditorElement.querySelector('p,div');return fP?[fP]:[];}const range=sel.getRangeAt(0);const paras=new Set();function getClosestBlock(node){while(node&&node!==activeEditorElement){if(node.nodeType===1&&(node.tagName==='P'||node.tagName==='DIV'))return node;node=node.parentNode;}return null;}if(range.collapsed){const b=getClosestBlock(sel.anchorNode);if(b)paras.add(b);else if(activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&& (activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);}else{const sb=getClosestBlock(range.startContainer);const eb=getClosestBlock(range.endContainer);if(sb)paras.add(sb);if(eb)paras.add(eb);if(sb&&eb&&sb!==eb){let curr=sb.nextElementSibling;while(curr&&curr!==eb){if((curr.tagName==='P'||curr.tagName==='DIV')&&activeEditorElement.contains(curr))paras.add(curr);curr=curr.nextElementSibling;}}if(paras.size===0){const cb=getClosestBlock(range.commonAncestorContainer);if(cb&&activeEditorElement.contains(cb))paras.add(cb);}}if(paras.size===0&&activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&&(activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);return Array.from(paras);}
-        function applyFontSizeChange(){if(!activeEditorElement)return;const val=fontSizeInput.value;if(!val||isNaN(parseInt(val,10)))return;const cssVal=`${val}px`;const paras=getParagraphsForSelection();if(paras.length>0){paras.forEach(p=>{if(p&&p.style)p.style.fontSize=cssVal;});clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}else if(activeEditorElement.innerHTML.trim()===""||activeEditorElement.innerHTML.trim()==="<p><br></p>" || activeEditorElement.innerHTML.trim()===`<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`){activeEditorElement.innerHTML=`<p style="font-size:${cssVal};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}}
-
-        // Função para aplicar a cor da fonte ao texto selecionado
-        function applyFontColorChange(event) {
-            console.log("applyFontColorChange: Iniciada.");
-            if (!activeEditorElement) {
-                console.warn("applyFontColorChange: Nenhum editor ativo.");
-                return;
-            }
-
-            const color = event.target.value;
-            console.log(`applyFontColorChange: Cor selecionada: ${color}`);
-
-            if (!currentSelectionRange) {
-                console.warn("applyFontColorChange: currentSelectionRange está nulo. Nenhuma seleção para aplicar cor.");
-                return;
-            }
-
-            if (currentSelectionRange.commonAncestorContainer.ownerDocument !== document) {
-                console.warn("applyFontColorChange: currentSelectionRange não pertence ao documento principal.");
-                return;
-            }
-
-            console.log(`applyFontColorChange: Texto do currentSelectionRange: "${currentSelectionRange.toString()}"`);
-
-            activeEditorElement.focus();
-            console.log("applyFontColorChange: Editor focado.");
-
-            const sel = window.getSelection();
-            if (!sel) {
-                console.error("applyFontColorChange: window.getSelection() retornou nulo.");
-                return;
-            }
-            sel.removeAllRanges();
-            sel.addRange(currentSelectionRange);
-            console.log(`applyFontColorChange: Seleção restaurada. Texto selecionado agora: "${sel.toString()}"`);
-
-            if (sel.rangeCount > 0 && sel.getRangeAt(0).collapsed && currentSelectionRange.toString().length > 0) {
-                console.warn("applyFontColorChange: Seleção restaurada está colapsada, mas a seleção original não estava.");
-            } else if (sel.rangeCount === 0 && currentSelectionRange.toString().length > 0) {
-                console.error("applyFontColorChange: Falha ao restaurar a seleção (rangeCount é 0).");
-                return;
-            }
-
-            try {
-                document.execCommand('styleWithCSS', false, true);
-                const success = document.execCommand('foreColor', false, color);
-                console.log(`applyFontColorChange: document.execCommand('foreColor') sucesso: ${success}`);
-
-                if (!success) {
-                    console.warn("applyFontColorChange: execCommand('foreColor') retornou false. A cor pode não ter sido aplicada.");
-                } else {
-                    clearTimeout(debounceTimer);
-                    debounceTimer = setTimeout(() => {
-                        console.log("applyFontColorChange: Salvando documento após mudança de cor...");
-                        saveDocumentBody();
-                    }, 700);
-                }
-            } catch (e) {
-                console.error("applyFontColorChange: Erro durante execCommand:", e);
-                alert("Ocorreu um erro ao tentar aplicar a cor.");
+                } if (replacements.length === 0) return;
+                replacements.sort((a, b) => a.index === b.index ? b.length - a.length : a.index - b.index);
+                const finalNodesForThisTextNode = []; let currentIndex = 0; const processedRangesInTextNode = [];
+                replacements.forEach(rep => { let skip = false; for (const range of processedRangesInTextNode) { if (rep.index >= range.start && (rep.index + rep.length) <= range.end && !(rep.index === range.start && rep.length === (range.end - range.start))) { skip = true; break; } } if (skip) return; if (rep.index > currentIndex) { finalNodesForThisTextNode.push(document.createTextNode(currentText.substring(currentIndex, rep.index))); } finalNodesForThisTextNode.push(rep.replacementNode.cloneNode(true)); currentIndex = rep.index + rep.length; processedRangesInTextNode.push({ start: rep.index, end: currentIndex }); });
+                if (currentIndex < currentText.length) { finalNodesForThisTextNode.push(document.createTextNode(currentText.substring(currentIndex))); }
+                if (finalNodesForThisTextNode.length > 0 && node.parentNode) { const fragment = document.createDocumentFragment(); finalNodesForThisTextNode.forEach(fn => fragment.appendChild(fn)); node.parentNode.replaceChild(fragment, node); }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.isContentEditable === false || (node.classList && (node.classList.contains('person-text') || node.classList.contains('event-text') || node.classList.contains('location-text'))) || node.tagName === 'SCRIPT' || node.tagName === 'STYLE' || node.classList.contains('chapter-break-for-storage')) return;
+                const childrenCopy = Array.from(node.childNodes); for (let i = 0; i < childrenCopy.length; i++) { processNode(childrenCopy[i]); }
             }
         }
+        Array.from(tempDiv.childNodes).forEach(child => processNode(child)); return tempDiv.innerHTML;
+    }
 
-        fontSizeInput.addEventListener('input', applyFontSizeChange);
-        fontSizeInput.addEventListener('change', applyFontSizeChange);
-        fontColorInput.addEventListener('input', applyFontColorChange); // NOVO EVENT LISTENER
+    function createNewChapterElement(contentHTML = '', focusAfterCreation = false) {
+        const chapterDiv = document.createElement('div'); chapterDiv.className = 'text-editor-chapter'; chapterDiv.setAttribute('contenteditable', 'true');
+        const defaultFontSizeCSS = `${fontSizeInput.value || parseInt(DEFAULT_FONT_SIZE,10)}px`;
+        chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-size: ${defaultFontSizeCSS}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
+        applyDefaultStylesToBlocks(chapterDiv, defaultFontSizeCSS, DEFAULT_LINE_HEIGHT);
+        chapterDiv.addEventListener('focus', () => { activeEditorElement = chapterDiv; const firstBlock = chapterDiv.querySelector('p, div'); let chapterFontSizeCSS = defaultFontSizeCSS; if (firstBlock && firstBlock.style.fontSize) chapterFontSizeCSS = firstBlock.style.fontSize; const numericSize = parseInt(chapterFontSizeCSS, 10); if (!isNaN(numericSize)) fontSizeInput.value = numericSize; });
+        chapterDiv.addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => saveDocumentBody(), 1500); });
+        if(editorsContainer) editorsContainer.appendChild(chapterDiv); else console.error("editorsContainer não encontrado para adicionar capítulo");
+        if (focusAfterCreation && document.activeElement !== chapterDiv) { const sel = window.getSelection(); const range = document.createRange(); if (chapterDiv.firstChild) { range.selectNodeContents(chapterDiv.firstChild); range.collapse(false); } else { range.selectNodeContents(chapterDiv); range.collapse(false); } if(sel) { sel.removeAllRanges(); sel.addRange(range); } chapterDiv.focus(); }
+        return chapterDiv;
+    }
 
-        initNewDocBtn.addEventListener('click', createNewDocument);
-        initLoadDocBtn.addEventListener('click', showLoadDocumentsPopup);
-        newDocBtn.addEventListener('click', createNewDocument);
-        openLoadDocPopupBtn.addEventListener('click', showLoadDocumentsPopup);
-        docTitleInput.addEventListener('blur', saveDocumentTitle);
-        addChapterBtn.addEventListener('click', () => { createNewChapterElement('', true); clearTimeout(debounceTimer); debounceTimer = setTimeout(() => saveDocumentBody(), 300); });
-        showIndexBtn.addEventListener('click', () => { populateChapterIndex(); showPopup(indexPopup); });
+    function showEditorInterfaceScreen() { if(initialScreenDiv) initialScreenDiv.style.display = 'none'; if(editorInterfaceDiv) editorInterfaceDiv.style.display = 'block'; }
+    function showInitialScreen() {
+        if(editorInterfaceDiv) editorInterfaceDiv.style.display = 'none';
+        if(initialScreenDiv) initialScreenDiv.style.display = 'block';
+        loadRecentDocuments(); currentDocId = null; currentDocumentData = null;
+        if(docTitleInput) docTitleInput.value = '';
+        if(editorsContainer) editorsContainer.innerHTML = '';
+        activeEditorElement = null;
+        if(fontSizeInput) fontSizeInput.value = parseInt(DEFAULT_FONT_SIZE, 10);
+        if(fontColorInput) fontColorInput.value = '#d4d4d4';
+        if(referencesListUl) referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
+        if(showFoundPersonsBtn) showFoundPersonsBtn.style.display = 'none';
+        if(showFoundEventsBtn) showFoundEventsBtn.style.display = 'none';
+        if(showFoundLocationsBtn) showFoundLocationsBtn.style.display = 'none';
+        if(entityContextSidebar) entityContextSidebar.style.display = 'none';
+        if(archiveCurrentDocBtn) archiveCurrentDocBtn.style.display = 'none';
+        if(indexChapterListUl) indexChapterListUl.innerHTML = '';
+        if(indexChapterMsgP) {indexChapterMsgP.textContent = "Nenhum capítulo para exibir."; indexChapterMsgP.style.display = 'block';}
+        hideFloatingToolbar();
+        hideReferenceEyeToolbar();
+    }
 
-        document.addEventListener('selectionchange', () => {
-            const sel = window.getSelection();
+    async function loadRecentDocuments() {
+        if(!recentDocumentsListUl || !recentDocumentsMsgP) return;
+        recentDocumentsListUl.innerHTML = ''; recentDocumentsMsgP.textContent = 'Carregando...'; recentDocumentsMsgP.style.display = 'block';
+        try { const q = query(collection(db, "documentos"), where("ativo", "==", true), orderBy("atualizadoEm", "desc"), limit(10)); const querySnapshot = await getDocs(q); if (querySnapshot.empty) { recentDocumentsMsgP.textContent = "Nenhum documento recente."; return; } recentDocumentsMsgP.style.display = 'none'; querySnapshot.forEach((docSnap) => { const data = docSnap.data(); const li = document.createElement('li'); const docInfoDiv = document.createElement('div'); docInfoDiv.className = 'doc-info'; const titleSpan = document.createElement('span'); titleSpan.className = 'doc-title'; titleSpan.textContent = escapeHTML(data.titulo) || "Sem Título"; const dateSpan = document.createElement('span'); dateSpan.className = 'doc-date'; if (data.atualizadoEm && data.atualizadoEm.toDate) dateSpan.textContent = `Atualizado: ${data.atualizadoEm.toDate().toLocaleString()}`; else dateSpan.textContent = `Data N/A`; docInfoDiv.appendChild(titleSpan); docInfoDiv.appendChild(dateSpan); li.appendChild(docInfoDiv); const editBtn = document.createElement('button'); editBtn.textContent = "Editar"; editBtn.dataset.docId = docSnap.id; editBtn.addEventListener('click', (e) => loadDocument(e.target.dataset.docId)); li.appendChild(editBtn); recentDocumentsListUl.appendChild(li); }); } catch (e) { console.error("Erro recentes:", e); recentDocumentsMsgP.textContent = "Erro ao carregar."; }
+    }
 
-            if (!activeEditorElement || !sel || !sel.rangeCount) {
-                hideFloatingToolbar();
-                return;
+    async function createNewDocument() {
+        showEditorInterfaceScreen(); currentDocId = generateId('doc-');
+        const initialFontSizeValue = fontSizeInput ? (fontSizeInput.value || '14') : '14';
+        const initialFontSizeCSS = `${initialFontSizeValue}px`;
+        const initialChapterContent = `<p style="font-size: ${initialFontSizeCSS}; line-height: ${DEFAULT_LINE_HEIGHT};">Comece a escrever...</p>`;
+        const processedInitialContent = autoHighlightEntitiesInHTML(initialChapterContent);
+        currentDocumentData = { titulo: "Novo Documento Sem Título", corpo: [processedInitialContent], referencias: [], ativo: true, criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() };
+        try { await setDoc(doc(db, "documentos", currentDocId), currentDocumentData); if(fontSizeInput) fontSizeInput.value = initialFontSizeValue; displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo[0], currentDocumentData.referencias); const firstChapter = editorsContainer.querySelector('.text-editor-chapter'); if (firstChapter) { const range = document.createRange(); const sel = window.getSelection(); range.selectNodeContents(firstChapter); range.collapse(false); if(sel) {sel.removeAllRanges(); sel.addRange(range);} firstChapter.focus(); } } catch (e) { console.error("Erro criar doc:", e); alert("Erro ao criar."); }
+    }
+
+    async function loadDocument(id) {
+        if (!id) return; showEditorInterfaceScreen();
+        if(editorsContainer) editorsContainer.innerHTML = "<p>Carregando capítulos...</p>";
+        if(docTitleInput) docTitleInput.value = "Carregando...";
+        if(referencesListUl) referencesListUl.innerHTML = "<li>Carregando...</li>";
+        currentDocId = id;
+        try { const docRef = doc(db, "documentos", currentDocId); const docSnap = await getDoc(docRef); if (docSnap.exists()) { currentDocumentData = docSnap.data(); if (currentDocumentData.ativo === false) { alert("Documento arquivado."); showInitialScreen(); return; } let singleHtmlBlockToDisplay; if (Array.isArray(currentDocumentData.corpo) && currentDocumentData.corpo.length > 0) { singleHtmlBlockToDisplay = currentDocumentData.corpo[0]; } else if (typeof currentDocumentData.corpo === 'string') { singleHtmlBlockToDisplay = currentDocumentData.corpo; currentDocumentData.corpo = [singleHtmlBlockToDisplay]; } else { singleHtmlBlockToDisplay = `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`; currentDocumentData.corpo = [singleHtmlBlockToDisplay]; } displayDocumentContent(currentDocumentData.titulo, singleHtmlBlockToDisplay, currentDocumentData.referencias); } else { alert("Documento não encontrado."); showInitialScreen(); } } catch (e) { console.error("Erro carregar doc:", e); alert("Erro ao carregar."); }
+    }
+
+    function displayDocumentContent(title, singleBodyHtml, references = []) {
+        if(docTitleInput) docTitleInput.value = title || "";
+        if(editorsContainer) editorsContainer.innerHTML = '';
+        activeEditorElement = null;
+        const chapterHTMLs = singleBodyHtml.split(CHAPTER_DELIMITER_HTML);
+        if (chapterHTMLs.length > 0) { chapterHTMLs.forEach((chapterHTML, index) => createNewChapterElement(chapterHTML, index === 0)); }
+        else { createNewChapterElement('', true); }
+        const firstChapterElement = editorsContainer ? editorsContainer.querySelector('.text-editor-chapter') : null;
+        if (firstChapterElement) { const firstBlock = firstChapterElement.querySelector('p, div'); let chapterFontSizeCSS = DEFAULT_FONT_SIZE; if (firstBlock && firstBlock.style.fontSize) chapterFontSizeCSS = firstBlock.style.fontSize; const numericSize = parseInt(chapterFontSizeCSS, 10); if(fontSizeInput) fontSizeInput.value = isNaN(numericSize) ? parseInt(DEFAULT_FONT_SIZE, 10) : numericSize; }
+        renderReferences(references);
+        if (currentDocId && archiveCurrentDocBtn) archiveCurrentDocBtn.style.display = 'inline-block';
+        else if(archiveCurrentDocBtn) archiveCurrentDocBtn.style.display = 'none';
+        detectEntitiesInCurrentDoc();
+    }
+
+    async function saveDocumentBody() {
+        if (!currentDocId || !editorsContainer) return;
+        const visualChapterContents = [];
+        editorsContainer.querySelectorAll('.text-editor-chapter').forEach(chapterDiv => {
+            visualChapterContents.push(chapterDiv.innerHTML);
+        });
+        const combinedRawHTML = visualChapterContents.join(CHAPTER_DELIMITER_HTML);
+        const finalHTMLToSave = autoHighlightEntitiesInHTML(combinedRawHTML);
+        if (currentDocumentData) currentDocumentData.corpo = [finalHTMLToSave];
+        try { await updateDoc(doc(db, "documentos", currentDocId), { corpo: [finalHTMLToSave], atualizadoEm: serverTimestamp() }); console.log("Corpo salvo."); }
+        catch (e) { console.error("Erro ao salvar corpo:", e); }
+    }
+    async function saveDocumentTitle() { if (!currentDocId || !docTitleInput) return; const newTitle = docTitleInput.value.trim() || "Documento Sem Título"; try { await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() }); if(currentDocumentData) currentDocumentData.titulo = newTitle; } catch (e) { console.error("Erro salvar título:", e); } }
+
+    async function loadKnownEntities() { try { const pSnap = await getDocs(collection(db, "pessoas")); knownPersons = pSnap.docs.map(d=>({id:d.id,...d.data()})); const eSnap = await getDocs(collection(db, "eventos")); knownEvents = eSnap.docs.map(d=>({id:d.id,...d.data()})); const lSnap = await getDocs(collection(db, "locais")); knownLocations = lSnap.docs.map(d=>({id:d.id,...d.data()})); } catch (error) { console.error("Erro ao carregar entidades:", error); } }
+    async function saveNewPerson(name) { if (!name.trim()){alert("Nome é obrigatório.");return;} const id=generateId('person-'); const data={nome:name.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"pessoas"),where("nome","==",name.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Pessoa "${escapeHTML(name.trim())}" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"pessoas",id),data);knownPersons.push({id,...data});} tagSelectedTextWithEntity(targetId,'person-text','data-person-id');if(addPersonPopup) hidePopup(addPersonPopup);}catch(e){console.error("Erro salvar pessoa:",e);}}
+    async function saveNewEvent(desc,year){ if(!desc.trim()||!year.trim()){alert("Descrição e ano são obrigatórios.");return;} const id=generateId('event-'); const data={descricao:desc.trim(),ano:year.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"eventos"),where("descricao","==",desc.trim()),where("ano","==",year.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Evento "${escapeHTML(desc.trim())} (${escapeHTML(year.trim())})" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"eventos",id),data);knownEvents.push({id,...data});} tagSelectedTextWithEntity(targetId,'event-text','data-event-id');if(addEventPopup) hidePopup(addEventPopup);}catch(e){console.error("Erro salvar evento:",e);}}
+    async function saveNewLocation(name){ if(!name.trim()){alert("Nome do local é obrigatório.");return;} const id=generateId('location-'); const data={nome:name.trim(),criadoEm:serverTimestamp()}; try {const q=query(collection(db,"locais"),where("nome","==",name.trim())); const snap=await getDocs(q); let targetId=id; if(!snap.empty){alert(`Local "${escapeHTML(name.trim())}" já existe.`);targetId=snap.docs[0].id;}else{await setDoc(doc(db,"locais",id),data);knownLocations.push({id,...data});} tagSelectedTextWithEntity(targetId,'location-text','data-location-id');if(addLocationPopup) hidePopup(addLocationPopup);}catch(e){console.error("Erro salvar local:",e);}}
+
+    function tagSelectedTextWithEntity(entityId, className, dataAttribute) { if (!currentSelectionRange || !activeEditorElement || !activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) { alert("Selecione texto no capítulo ativo."); return; } const span=document.createElement('span');span.className=className;span.setAttribute(dataAttribute,entityId); try { currentSelectionRange.surroundContents(span); saveDocumentBody(); }catch(e){console.warn("Erro ao marcar entidade:",e); alert("Não foi possível marcar. Tente texto simples.");}}
+
+    function detectEntitiesInCurrentDoc() { if (!currentDocId || !editorsContainer) return; let combinedText = ""; editorsContainer.querySelectorAll('.text-editor-chapter').forEach(ch => combinedText += ch.textContent + " "); combinedText = combinedText.trim(); if (!combinedText) { if(showFoundPersonsBtn) showFoundPersonsBtn.style.display='none'; if(showFoundEventsBtn) showFoundEventsBtn.style.display='none'; if(showFoundLocationsBtn) showFoundLocationsBtn.style.display='none'; return;} let pF=false,eF=false,lF=false; knownPersons.forEach(p=>{if(p.nome && new RegExp(escapeRegExp(p.nome),"gi").test(combinedText))pF=true;}); knownEvents.forEach(e=>{ const terms = []; if (e.ano) terms.push(String(e.ano)); if (e.descricao) terms.push(String(e.descricao)); terms.forEach(term => { if(new RegExp(escapeRegExp(term),"gi").test(combinedText)) eF=true; }); }); knownLocations.forEach(l=>{if(l.nome && new RegExp(escapeRegExp(l.nome),"gi").test(combinedText))lF=true;}); if(showFoundPersonsBtn) showFoundPersonsBtn.style.display=pF?'inline-block':'none'; if(showFoundEventsBtn) showFoundEventsBtn.style.display=eF?'inline-block':'none'; if(showFoundLocationsBtn) showFoundLocationsBtn.style.display=lF?'inline-block':'none'; }
+
+    async function showFoundEntitiesPopup(entityType) { let popup, listUl, msgP, knownEnts, searchKeyPrimary, searchKeySecondary, entityDisplayName; switch(entityType) { case 'persons': popup=foundPersonsPopup; listUl=foundPersonsListContainerUl; msgP=foundPersonsListContainerMsg; knownEnts=knownPersons; searchKeyPrimary='nome'; entityDisplayName='pessoa'; break; case 'events': popup=foundEventsPopup; listUl=foundEventsListContainerUl; msgP=foundEventsListContainerMsg; knownEnts=knownEvents; searchKeyPrimary='descricao'; searchKeySecondary='ano'; entityDisplayName='data/evento'; break; case 'locations': popup=foundLocationsPopup; listUl=foundLocationsListContainerUl; msgP=foundLocationsListContainerMsg; knownEnts=knownLocations; searchKeyPrimary='nome'; entityDisplayName='local'; break; default: return; } if(!popup || !listUl || !msgP) return; showPopup(popup); listUl.innerHTML=""; msgP.textContent="Verificando..."; msgP.style.display='block'; if(!currentDocId){msgP.textContent="Nenhum documento ativo.";return;} let combinedTextContent=""; if(editorsContainer) editorsContainer.querySelectorAll('.text-editor-chapter').forEach(ch=>combinedTextContent+=ch.textContent+" "); combinedTextContent=combinedTextContent.trim(); if(!combinedTextContent){msgP.textContent="Conteúdo do documento vazio.";return;} const foundInCurrentDoc = []; knownEnts.forEach(entity => { let found = false; if (entity[searchKeyPrimary] && new RegExp(escapeRegExp(String(entity[searchKeyPrimary])),"gi").test(combinedTextContent)) found = true; if (!found && searchKeySecondary && entity[searchKeySecondary] && new RegExp(escapeRegExp(String(entity[searchKeySecondary])),"gi").test(combinedTextContent)) found = true; if (found) foundInCurrentDoc.push(entity); }); if(foundInCurrentDoc.length===0){msgP.textContent=`Nenhum(a) ${entityDisplayName} conhecido(a) encontrado(a).`;return;} msgP.style.display='none'; foundInCurrentDoc.sort((a,b) => (String(a[searchKeyPrimary]||a[searchKeySecondary]||"")).localeCompare(String(b[searchKeyPrimary]||b[searchKeySecondary]||"")) ); foundInCurrentDoc.forEach(entity=>{ const li=document.createElement('li'); let displayText = escapeHTML(String(entity[searchKeyPrimary] || "")); if(entityType==='events') displayText = `${escapeHTML(String(entity.descricao || ""))} (${escapeHTML(String(entity.ano || ""))})`; li.textContent=displayText || "N/A"; li.dataset.entityId=entity.id; li.dataset.entityTerm=String(entity[searchKeyPrimary] || entity[searchKeySecondary] || ""); if(entityType==='persons'||entityType==='locations' || entityType === 'events'){ li.addEventListener('click',async e=>{ const termForContext=e.currentTarget.dataset.entityTerm; hidePopup(popup); if(termForContext) await displayEntityContextInSidebar(termForContext); });} listUl.appendChild(li); }); }
+
+    async function displayEntityContextInSidebar(entityName) {
+        if(!sidebarEntityNameSpan || !sidebarContextListDiv || !entityContextSidebar || !minimizeSidebarBtn) return;
+        sidebarEntityNameSpan.textContent=escapeHTML(entityName); sidebarContextListDiv.innerHTML='<p>Buscando contexto...</p>';
+        if(entityContextSidebar.classList.contains('minimized-sidebar-state')){entityContextSidebar.classList.remove('minimized-sidebar-state');minimizeSidebarBtn.textContent='_';minimizeSidebarBtn.title="Minimizar Sidebar";}
+        entityContextSidebar.style.display='flex';
+        try { const q=query(collection(db,"documentos"),where("ativo","==",true)); const docsSnap=await getDocs(q); sidebarContextListDiv.innerHTML=''; let foundAnyContext=false;
+            for(const docSnapshot of docsSnap.docs){ const dData=docSnapshot.data(); const dId=docSnapshot.id; const docTitle=dData.titulo||`Doc ${dId.substring(0,5)}`; let passagesHTML=[];
+                if(Array.isArray(dData.corpo) && dData.corpo.length > 0){ const singleCombinedHtml = dData.corpo[0]; const tempDivForContext=document.createElement('div'); tempDivForContext.innerHTML=singleCombinedHtml; const textContentForContext=(tempDivForContext.textContent||""); const sentences = textContentForContext.split(/(?<=[.?!])\s+(?=[A-ZÀ-úa-z0-9ÓÀÉÍÚÂÊÔÃÕÇÑ])|(?<=\n)\s*/); const rgx=new RegExp(escapeRegExp(entityName),"gi"); sentences.forEach(sentence=>{if(sentence.trim() && rgx.test(sentence))passagesHTML.push({html:sentence.replace(rgx,m=>`<strong>${escapeHTML(m)}</strong>`),docId:dId,term:entityName});}); }
+                if(passagesHTML.length>0){foundAnyContext=true; const blockDiv=document.createElement('div');blockDiv.className='document-context-block'; const h4=document.createElement('h4'); const titleWrap=document.createElement('span');titleWrap.className='title-text-wrapper'; const matchedTerm=document.createElement('span');matchedTerm.className='matched-term-title';matchedTerm.textContent=entityName; const docTitleSpan=document.createElement('span');docTitleSpan.className='doc-title';docTitleSpan.textContent=docTitle; titleWrap.appendChild(matchedTerm);titleWrap.appendChild(document.createTextNode(' - (Doc: '));titleWrap.appendChild(docTitleSpan);titleWrap.appendChild(document.createTextNode(')')); const toggleIcon=document.createElement('span');toggleIcon.className='toggle-icon'; h4.appendChild(titleWrap);h4.appendChild(toggleIcon); h4.addEventListener('click',()=>blockDiv.classList.toggle('collapsed-context')); blockDiv.appendChild(h4); const ul=document.createElement('ul'); passagesHTML.forEach(pD=>{const li=document.createElement('li');li.innerHTML=`...${pD.html}...`;li.dataset.docIdForContext=pD.docId;li.dataset.termForContext=pD.term;li.addEventListener('click',handleContextSentenceClick);ul.appendChild(li);}); blockDiv.appendChild(ul); sidebarContextListDiv.appendChild(blockDiv); }
+            } if(!foundAnyContext)sidebarContextListDiv.innerHTML=`<p>Nenhum contexto para "${escapeHTML(entityName)}".</p>`;
+        }catch(err){console.error("Erro buscar contexto sidebar:",err);sidebarContextListDiv.innerHTML='<p>Erro ao buscar contexto.</p>';}
+    }
+    function handleContextSentenceClick(event){openDocumentAndHighlightTerm(event.currentTarget.dataset.docIdForContext,event.currentTarget.dataset.termForContext);}
+    async function openDocumentAndHighlightTerm(docId,term){
+        if(!contextViewBodyDiv || !contextViewTitleH3 || !documentContextViewPopup) return;
+        contextViewBodyDiv.innerHTML='<p>Carregando...</p>'; contextViewTitleH3.textContent='Visualizar Contexto'; showPopup(documentContextViewPopup);
+        try{const docRef=doc(db,"documentos",docId); const docSnap=await getDoc(docRef);
+            if(docSnap.exists()){const data=docSnap.data(); if(data.ativo===false){contextViewBodyDiv.innerHTML='<p>Documento arquivado.</p>';return;}
+                contextViewTitleH3.textContent=escapeHTML(data.titulo)||`Doc ${docId.substring(0,5)}`; let combinedBodyHTML = "";
+                if(Array.isArray(data.corpo) && data.corpo.length > 0) { combinedBodyHTML = data.corpo[0]; combinedBodyHTML = combinedBodyHTML.split(CHAPTER_DELIMITER_HTML).map(ch => `<div>${ch}</div>`).join("<hr class='chapter-divider-in-view'>"); }
+                else if (typeof data.corpo === 'string') { combinedBodyHTML = data.corpo; }
+                contextViewBodyDiv.innerHTML = combinedBodyHTML || "<p>Conteúdo vazio.</p>";
+                const regex=new RegExp(`(${escapeRegExp(term)})`,'gi');let firstMatchElement=null;
+                const walkAndHighlight=(elementNode)=>{ if(elementNode.nodeType===3 && elementNode.textContent.match(regex)){ const parentOfTextNode=elementNode.parentNode; if(!parentOfTextNode)return; const fragmentToReplace=document.createDocumentFragment(); elementNode.textContent.split(regex).forEach((textPart,i)=>{ if(i%2===1){ const spanHighlight=document.createElement('span'); spanHighlight.className='highlighted-term-in-view'; spanHighlight.textContent=textPart; fragmentToReplace.appendChild(spanHighlight); if(!firstMatchElement)firstMatchElement=spanHighlight; }else{ fragmentToReplace.appendChild(document.createTextNode(textPart)); } }); parentOfTextNode.replaceChild(fragmentToReplace,elementNode); }else if(elementNode.nodeType===1&&elementNode.childNodes&&elementNode.childNodes.length>0&&(elementNode.tagName!=='SCRIPT'&&elementNode.tagName!=='STYLE')){ Array.from(elementNode.childNodes).forEach(walkAndHighlight); } };
+                walkAndHighlight(contextViewBodyDiv); if(firstMatchElement)firstMatchElement.scrollIntoView({behavior:'smooth',block:'center'});
+            }else{contextViewBodyDiv.innerHTML='<p>Documento não encontrado.</p>';}
+        }catch(e){console.error("Erro ao abrir doc para contexto:",e);contextViewBodyDiv.innerHTML='<p>Erro ao carregar.</p>';}
+    }
+
+    async function addReferenceToDocument(title) {
+        if (!currentDocId || !title || !currentSelectionRange || !activeEditorElement || !activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) { alert("Selecione texto e forneça um título."); return; }
+        const urlInputs = document.querySelectorAll('#addRefUrlsContainer .ref-url-input'); const urls = []; let allUrlsValid = true; let atLeastOneUrlProvided = false;
+        urlInputs.forEach(input => { const urlVal = input.value.trim(); if (urlVal) { atLeastOneUrlProvided = true; try { new URL(urlVal); urls.push(urlVal); } catch (_) { allUrlsValid = false; } } });
+        if (!atLeastOneUrlProvided) { alert("Pelo menos uma URL é obrigatória."); return; } if (!allUrlsValid) { alert("Uma ou mais URLs são inválidas."); return; }
+        const refId = generateId('ref-'); const selTxt = currentSelectionRange.toString().trim(); const span = document.createElement('span'); span.className = 'referenced-text'; span.setAttribute('data-ref-id', refId); try { currentSelectionRange.surroundContents(span); } catch (e) { console.warn("Erro ao envolver texto com ref:", e); }
+        const newRef = { id: refId, tituloReferencia: title, urls: urls, textoSelecionadoOriginal: selTxt };
+        try { if (!currentDocumentData.referencias) currentDocumentData.referencias = []; currentDocumentData.referencias.push(newRef); await updateDoc(doc(db, "documentos", currentDocId), { referencias: arrayUnion(newRef), atualizadoEm: serverTimestamp() }); renderReferences(currentDocumentData.referencias); if(addReferencePopup) hidePopup(addReferencePopup); saveDocumentBody(); } catch (e) { console.error("Erro adicionar referência:", e); }
+    }
+
+    function renderReferences(refsInput = []) {
+        if(!referencesListUl) return;
+        referencesListUl.innerHTML = "";
+        if (!currentDocId || !editorsContainer) { referencesListUl.innerHTML = "<li>Nenhuma referência (editor/doc não carregado).</li>"; return; }
+        const allRefsInCurrentDoc = refsInput.length > 0 ? refsInput : (currentDocumentData ? currentDocumentData.referencias : []);
+        if(editorsContainer) editorsContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id]').forEach(span => span.classList.add('eye-targetable'));
+        if (!allRefsInCurrentDoc || allRefsInCurrentDoc.length === 0) { referencesListUl.innerHTML = "<li>Nenhuma referência adicionada.</li>"; return; }
+        const refSpansInEditor = editorsContainer ? Array.from(editorsContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id]')) : [];
+        const orderedRefIdsFromEditor = refSpansInEditor.map(span => span.dataset.refId);
+        const refMap = new Map(); allRefsInCurrentDoc.forEach(ref => refMap.set(ref.id, ref));
+        const sortedReferencesToDisplay = []; orderedRefIdsFromEditor.forEach(id => { if (refMap.has(id)) sortedReferencesToDisplay.push(refMap.get(id)); });
+        if (sortedReferencesToDisplay.length === 0) { referencesListUl.innerHTML = "<li>Nenhuma referência no texto.</li>"; return; }
+        sortedReferencesToDisplay.forEach(ref => {
+            const li = document.createElement('li'); li.className = 'reference-item'; li.setAttribute('data-ref-id', ref.id);
+            const cDiv = document.createElement('div'); cDiv.className = 'ref-content';
+            const tS = document.createElement('span'); tS.className = 'ref-title'; tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `; tS.dataset.refId = ref.id; tS.addEventListener('click', navigateToReferencedTextInEditor); cDiv.appendChild(tS);
+            const urlsToDisplay = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
+            if (urlsToDisplay.length > 0) { const urlsContainer = document.createElement('div'); urlsContainer.style.marginTop = '3px'; urlsToDisplay.forEach(url => { const a = document.createElement('a'); a.href = url; a.textContent = escapeHTML(url); a.target = "_blank"; a.style.display = 'block'; a.style.marginBottom = '2px'; urlsContainer.appendChild(a); }); cDiv.appendChild(urlsContainer); }
+            li.appendChild(cDiv);
+            const eB = document.createElement('button'); eB.className = 'edit-ref-btn'; eB.innerHTML = '✎'; eB.title = "Editar Referência"; eB.dataset.refId = ref.id; eB.addEventListener('click', () => openEditReferencePopup(ref.id)); li.appendChild(eB);
+            referencesListUl.appendChild(li);
+        });
+    }
+
+    function openEditReferencePopup(refId) {
+        if (!currentDocumentData || !currentDocumentData.referencias || !editingRefIdInput || !editRefTitleInput || !editReferencePopup) return;
+        const ref = currentDocumentData.referencias.find(r => r.id === refId); if (!ref) { alert("Referência não encontrada."); return; }
+        editingRefIdInput.value = refId; editRefTitleInput.value = ref.tituloReferencia;
+        const editRefUrlsContainer = document.getElementById('editRefUrlsContainer'); if(!editRefUrlsContainer) return; editRefUrlsContainer.innerHTML = '';
+        const existingUrls = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
+        if (existingUrls.length > 0) { existingUrls.forEach((url, index) => { createUrlInputEntry('editRefUrlsContainer', url, existingUrls.length > 1 || index > 0); }); if (editRefUrlsContainer.childElementCount === 1) { const singleInputGroup = editRefUrlsContainer.firstChild; if(singleInputGroup){ const removeBtn = singleInputGroup.querySelector('button[type="button"]'); if (removeBtn) removeBtn.remove(); const urlInputInside = singleInputGroup.querySelector('.ref-url-input'); if (urlInputInside) urlInputInside.style.marginRight = '0';} } } else { createUrlInputEntry('editRefUrlsContainer', '', false); }
+        showPopup(editReferencePopup);
+    }
+    async function saveEditedReference() {
+        if(!editingRefIdInput || !editRefTitleInput) return;
+        const id = editingRefIdInput.value; const title = editRefTitleInput.value.trim(); if (!id || !title) { alert("Título é obrigatório."); return; }
+        const editUrlInputs = document.querySelectorAll('#editRefUrlsContainer .ref-url-input'); const newUrls = []; let allEditedUrlsValid = true; let atLeastOneUrlProvidedInEdit = false;
+        editUrlInputs.forEach(input => { const urlVal = input.value.trim(); if (urlVal) { atLeastOneUrlProvidedInEdit = true; try { new URL(urlVal); newUrls.push(urlVal); } catch (_) { allEditedUrlsValid = false; } } });
+        if (!atLeastOneUrlProvidedInEdit) { alert("Pelo menos uma URL é obrigatória."); return; } if (!allEditedUrlsValid) { alert("Uma ou mais URLs são inválidas."); return; }
+        if (!currentDocumentData || !currentDocumentData.referencias) return; const idx = currentDocumentData.referencias.findIndex(r => r.id === id); if (idx === -1) { alert("Referência não encontrada para editar."); return; }
+        const updatedRefs = [...currentDocumentData.referencias]; updatedRefs[idx] = { ...updatedRefs[idx], tituloReferencia: title, urls: newUrls }; delete updatedRefs[idx].urlReferencia;
+        try { await updateDoc(doc(db, "documentos", currentDocId), { referencias: updatedRefs, atualizadoEm: serverTimestamp() }); currentDocumentData.referencias = updatedRefs; renderReferences(currentDocumentData.referencias); if(editReferencePopup) hidePopup(editReferencePopup); } catch (e) { console.error("Erro salvar ref editada:", e); }
+    }
+    async function deleteReference(){
+        if(!editingRefIdInput) return;
+        const refId=editingRefIdInput.value; if(!refId||!window.confirm("Excluir esta referência?"))return;
+        if(!currentDocumentData||!currentDocumentData.referencias)return;
+        const updatedRefs=currentDocumentData.referencias.filter(r=>r.id!==refId); let bodyChanged=false;
+        if(editorsContainer) editorsContainer.querySelectorAll(`.text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{
+            spanInEditor.classList.remove('eye-targetable'); spanInEditor.classList.remove('eye-icon-active');
+            const frag=document.createDocumentFragment();
+            while(spanInEditor.firstChild) { frag.appendChild(spanInEditor.firstChild); } // Não precisa mais checar por currentEditorEyeIcon aqui
+            if(spanInEditor.parentNode)spanInEditor.parentNode.replaceChild(frag,spanInEditor); bodyChanged=true;
+        });
+        try{ await updateDoc(doc(db,"documentos",currentDocId),{referencias:updatedRefs,atualizadoEm:serverTimestamp()}); currentDocumentData.referencias=updatedRefs; renderReferences(currentDocumentData.referencias); if(editReferencePopup) hidePopup(editReferencePopup); if(bodyChanged) saveDocumentBody(); }catch(e){console.error("Erro excluir referência:",e);}
+    }
+
+    function clearEditorHighlights(){ if(editorsContainer) editorsContainer.querySelectorAll('.text-editor-chapter .highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')); if(referencesListUl) referencesListUl.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));}
+    function navigateToReferencedTextInEditor(event){const refId=event.target.dataset.refId;if(!refId || !editorsContainer)return;let refSpanInEditor=null;editorsContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id="'+refId+'"]').forEach(s=>{if(!refSpanInEditor)refSpanInEditor=s;});const refListItem=event.target.closest('li.reference-item');clearEditorHighlights();if(refSpanInEditor){refSpanInEditor.scrollIntoView({behavior:'smooth',block:'center'});refSpanInEditor.classList.add('highlight-scroll');if(refListItem)refListItem.classList.add('highlight-scroll');setTimeout(clearEditorHighlights,2500);}}
+
+    // FUNÇÕES PARA AS NOVAS TOOLBARS
+    function showReferenceEyeToolbar(targetSpan) {
+        if (!referenceEyeToolbar || !targetSpan) return;
+        hideFloatingToolbar(); // Esconde a toolbar de entidades
+
+        const rect = targetSpan.getBoundingClientRect();
+        referenceEyeToolbar.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (referenceEyeToolbar.offsetWidth / 2)}px`;
+        referenceEyeToolbar.style.top = `${rect.top + window.scrollY - referenceEyeToolbar.offsetHeight - 5}px`; // Um pouco acima
+        referenceEyeToolbar.style.display = 'flex';
+        referenceEyeToolbar.dataset.refId = targetSpan.dataset.refId; // Armazena o refId na toolbar
+
+        if (activeReferencedTextSpanForEye) {
+            activeReferencedTextSpanForEye.classList.remove('eye-icon-active');
+        }
+        activeReferencedTextSpanForEye = targetSpan;
+        activeReferencedTextSpanForEye.classList.add('eye-icon-active');
+    }
+
+    function hideReferenceEyeToolbar() {
+        if (referenceEyeToolbar) {
+            referenceEyeToolbar.style.display = 'none';
+        }
+        if (activeReferencedTextSpanForEye) {
+            activeReferencedTextSpanForEye.classList.remove('eye-icon-active');
+            activeReferencedTextSpanForEye = null;
+        }
+    }
+
+    function showFloatingToolbar(){ // Toolbar para entidades (🔗👤📅🏙️)
+        if(!currentSelectionRange||!activeEditorElement||!floatingToolbar)return;
+        hideReferenceEyeToolbar(); // Garante que a toolbar do olho seja escondida
+
+        const rect=currentSelectionRange.getBoundingClientRect();
+        floatingToolbar.style.left=`${rect.left+window.scrollX+(rect.width/2)-(floatingToolbar.offsetWidth/2)}px`;
+        floatingToolbar.style.top=`${rect.top+window.scrollY-floatingToolbar.offsetHeight-10}px`;
+        floatingToolbar.style.display='flex';
+    }
+
+    function hideFloatingToolbar(){ // Toolbar para entidades
+        if(floatingToolbar) floatingToolbar.style.display='none';
+    }
+
+
+    function showAddReferencePopup() { if (!currentSelectionRange || currentSelectionRange.collapsed || !activeEditorElement || !activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) { alert("Selecione texto no capítulo."); return; } if(refTitleInput) refTitleInput.value = ""; const addRefUrlsContainer = document.getElementById('addRefUrlsContainer'); if(addRefUrlsContainer) { addRefUrlsContainer.innerHTML = ''; createUrlInputEntry('addRefUrlsContainer', '', false); } if(addReferencePopup) { showPopup(addReferencePopup); if(refTitleInput) refTitleInput.focus(); } hideFloatingToolbar(); }
+    function showAddPersonPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo.");return;}if(personNameInput)personNameInput.value=currentSelectionRange.toString().trim();if(addPersonPopup){showPopup(addPersonPopup);if(personNameInput)personNameInput.focus();}hideFloatingToolbar();}
+    function showAddEventPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo.");return;}if(eventDescriptionInput)eventDescriptionInput.value=currentSelectionRange.toString().trim();if(eventYearInput)eventYearInput.value="";if(addEventPopup){showPopup(addEventPopup);if(eventDescriptionInput)eventDescriptionInput.focus();}hideFloatingToolbar();}
+    function showAddLocationPopup(){if(!currentSelectionRange||currentSelectionRange.collapsed||!activeEditorElement||!activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){alert("Selecione texto no capítulo.");return;}if(locationNameInput)locationNameInput.value=currentSelectionRange.toString().trim();if(addLocationPopup){showPopup(addLocationPopup);if(locationNameInput)locationNameInput.focus();}hideFloatingToolbar();}
+    async function showLoadDocumentsPopup(){ if(!loadDocumentPopup || !documentsListContainerUl || !documentsListContainerMsg) return; showPopup(loadDocumentPopup);documentsListContainerUl.innerHTML="";documentsListContainerMsg.textContent="Carregando...";documentsListContainerMsg.style.display='block';try{const q=query(collection(db,"documentos"),where("ativo","==",true),orderBy("atualizadoEm","desc"));const snap=await getDocs(q);if(snap.empty){documentsListContainerMsg.textContent="Nenhum documento ativo.";return;}documentsListContainerMsg.style.display='none';snap.forEach(dS=>{const data=dS.data();const li=document.createElement('li');const ts=document.createElement('span');ts.textContent=escapeHTML(data.titulo)||"Sem Título";ts.title=escapeHTML(data.titulo)||"Sem Título";const eb=document.createElement('button');eb.textContent="Editar";eb.dataset.docId=dS.id;eb.addEventListener('click',e=>{loadDocument(e.target.dataset.docId);hidePopup(loadDocumentPopup);});li.appendChild(ts);li.appendChild(eb);documentsListContainerUl.appendChild(li);});}catch(e){console.error("Erro buscar docs para carregar:",e);documentsListContainerMsg.textContent="Erro ao carregar.";}}
+
+    function populateChapterIndex() { if(!indexChapterListUl || !indexChapterMsgP || !editorsContainer) return; indexChapterListUl.innerHTML = ''; indexChapterMsgP.style.display = 'none'; const chapterElements = editorsContainer.querySelectorAll('.text-editor-chapter'); if (chapterElements.length === 0) { indexChapterMsgP.textContent = "Nenhum capítulo no índice."; indexChapterMsgP.style.display = 'block'; return; } chapterElements.forEach((chapterDiv, index) => { const li = document.createElement('li'); li.dataset.chapterIndex = index; const titleSpan = document.createElement('span'); titleSpan.className = 'chapter-title-index'; titleSpan.textContent = `Capítulo ${index + 1}`; const previewSpan = document.createElement('span'); previewSpan.className = 'chapter-preview-index'; const firstSentence = getFirstSentence(chapterDiv.innerHTML); previewSpan.textContent = firstSentence || "(Vazio)"; previewSpan.title = firstSentence || "(Vazio)"; li.appendChild(titleSpan); li.appendChild(previewSpan); li.addEventListener('click', () => { const targetChapterIndex = parseInt(li.dataset.chapterIndex, 10); const targetChapterDiv = editorsContainer.querySelectorAll('.text-editor-chapter')[targetChapterIndex]; if (targetChapterDiv) { targetChapterDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const range = document.createRange(); const sel = window.getSelection(); if (targetChapterDiv.firstChild) { range.setStart(targetChapterDiv.firstChild, 0); } else { range.selectNodeContents(targetChapterDiv); } range.collapse(true); if(sel) {sel.removeAllRanges(); sel.addRange(range);} targetChapterDiv.focus(); }, 300); if(indexPopup) hidePopup(indexPopup); } }); indexChapterListUl.appendChild(li); }); }
+
+    function getParagraphsForSelection(){if(!activeEditorElement)return[];const sel=window.getSelection();if(!sel||!sel.rangeCount||!activeEditorElement.contains(sel.anchorNode)){const fP=activeEditorElement.querySelector('p,div');return fP?[fP]:[];}const range=sel.getRangeAt(0);const paras=new Set();function getClosestBlock(node){while(node&&node!==activeEditorElement){if(node.nodeType===1&&(node.tagName==='P'||node.tagName==='DIV'))return node;node=node.parentNode;}return null;}if(range.collapsed){const b=getClosestBlock(sel.anchorNode);if(b)paras.add(b);else if(activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&& (activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);}else{const sb=getClosestBlock(range.startContainer);const eb=getClosestBlock(range.endContainer);if(sb)paras.add(sb);if(eb)paras.add(eb);if(sb&&eb&&sb!==eb){let curr=sb.nextElementSibling;while(curr&&curr!==eb){if((curr.tagName==='P'||curr.tagName==='DIV')&&activeEditorElement.contains(curr))paras.add(curr);curr=curr.nextElementSibling;}}if(paras.size===0){const cb=getClosestBlock(range.commonAncestorContainer);if(cb&&activeEditorElement.contains(cb))paras.add(cb);}}if(paras.size===0&&activeEditorElement.firstChild&&activeEditorElement.firstChild.nodeType===1&&(activeEditorElement.firstChild.tagName==='P'||activeEditorElement.firstChild.tagName==='DIV'))paras.add(activeEditorElement.firstChild);return Array.from(paras);}
+    function applyFontSizeChange(){if(!activeEditorElement || !fontSizeInput)return;const val=fontSizeInput.value;if(!val||isNaN(parseInt(val,10)))return;const cssVal=`${val}px`;const paras=getParagraphsForSelection();if(paras.length>0){paras.forEach(p=>{if(p&&p.style)p.style.fontSize=cssVal;});clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}else if(activeEditorElement.innerHTML.trim()===""||activeEditorElement.innerHTML.trim()==="<p><br></p>" || activeEditorElement.innerHTML.trim()===`<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`){activeEditorElement.innerHTML=`<p style="font-size:${cssVal};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;clearTimeout(fontSizeDebounceTimer);fontSizeDebounceTimer=setTimeout(()=>saveDocumentBody(),700);}}
+
+    function applyFontColorChange(event) {
+        if (!activeEditorElement || !event || !event.target) return;
+        const color = event.target.value;
+        if (!currentSelectionRange || currentSelectionRange.commonAncestorContainer.ownerDocument !== document) return;
+        activeEditorElement.focus();
+        const sel = window.getSelection(); if (!sel) return;
+        sel.removeAllRanges(); sel.addRange(currentSelectionRange);
+        if (sel.rangeCount === 0 && currentSelectionRange.toString().length > 0) return; //Should be sel.toString().length === 0
+        try { document.execCommand('styleWithCSS', false, true); const success = document.execCommand('foreColor', false, color);
+            if (success) { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => saveDocumentBody(), 700); }
+        } catch (e) { console.error("Erro aplicar cor:", e); }
+    }
+
+    // Helper para adicionar event listeners de forma segura
+    function safelyAddEventListener(element, eventType, listener, elementName = 'Elemento') {
+        if (element) {
+            element.addEventListener(eventType, listener);
+        } else {
+            console.warn(`Elemento "${elementName}" não encontrado. Listener para "${eventType}" não adicionado.`);
+        }
+    }
+
+    // Adicionando Event Listeners
+    safelyAddEventListener(fontSizeInput, 'input', applyFontSizeChange, 'fontSizeInput');
+    safelyAddEventListener(fontSizeInput, 'change', applyFontSizeChange, 'fontSizeInput (change)');
+    safelyAddEventListener(fontColorInput, 'input', applyFontColorChange, 'fontColorInput');
+
+    safelyAddEventListener(initNewDocBtn, 'click', createNewDocument, 'initNewDocBtn');
+    safelyAddEventListener(initLoadDocBtn, 'click', showLoadDocumentsPopup, 'initLoadDocBtn');
+    safelyAddEventListener(newDocBtn, 'click', createNewDocument, 'newDocBtn');
+    safelyAddEventListener(openLoadDocPopupBtn, 'click', showLoadDocumentsPopup, 'openLoadDocPopupBtn');
+    safelyAddEventListener(docTitleInput, 'blur', saveDocumentTitle, 'docTitleInput');
+    safelyAddEventListener(addChapterBtn, 'click', () => { createNewChapterElement('', true); clearTimeout(debounceTimer); debounceTimer = setTimeout(() => saveDocumentBody(), 300); }, 'addChapterBtn');
+    safelyAddEventListener(showIndexBtn, 'click', () => { populateChapterIndex(); if(indexPopup) showPopup(indexPopup); }, 'showIndexBtn');
+
+    safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup, 'attachLinkBtn');
+    safelyAddEventListener(addPersonBtn, 'click', showAddPersonPopup, 'addPersonBtn');
+    safelyAddEventListener(addEventBtn, 'click', showAddEventPopup, 'addEventBtn');
+    safelyAddEventListener(addLocationBtn, 'click', showAddLocationPopup, 'addLocationBtn');
+    safelyAddEventListener(saveNewPersonBtn, 'click', () => { if(personNameInput) saveNewPerson(personNameInput.value) }, 'saveNewPersonBtn');
+    safelyAddEventListener(saveNewEventBtn, 'click', () => { if(eventDescriptionInput && eventYearInput) saveNewEvent(eventDescriptionInput.value, eventYearInput.value) }, 'saveNewEventBtn');
+    safelyAddEventListener(saveNewLocationBtn, 'click', () => { if(locationNameInput) saveNewLocation(locationNameInput.value) }, 'saveNewLocationBtn');
+    safelyAddEventListener(showFoundPersonsBtn, 'click', () => showFoundEntitiesPopup('persons'), 'showFoundPersonsBtn');
+    safelyAddEventListener(showFoundEventsBtn, 'click', () => showFoundEntitiesPopup('events'), 'showFoundEventsBtn');
+    safelyAddEventListener(showFoundLocationsBtn, 'click', () => showFoundEntitiesPopup('locations'), 'showFoundLocationsBtn');
+
+    safelyAddEventListener(saveNewRefBtnElement, 'click', () => { if(refTitleInput) { const t = refTitleInput.value.trim(); if (t) addReferenceToDocument(t); else alert("Título é obrigatório.");} }, 'saveNewRefBtnElement');
+    safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference, 'saveEditedRefBtn');
+    safelyAddEventListener(deleteRefBtn, 'click', deleteReference, 'deleteRefBtn');
+
+    document.querySelectorAll('.close-popup-btn').forEach(btn => btn.addEventListener('click', () => hidePopup(btn.closest('.popup'))));
+
+    // MODIFICADO: Event listener do editorsContainer para 'click'
+    safelyAddEventListener(editorsContainer, 'click', async e => {
+        const chapterDiv = e.target.closest('.text-editor-chapter');
+        if (chapterDiv) activeEditorElement = chapterDiv; else return;
+
+        const clickedReferencedText = e.target.closest('span.referenced-text[data-ref-id]');
+        const clickedPersonText = e.target.closest('span.person-text[data-person-id]');
+        const clickedEventText = e.target.closest('span.event-text[data-event-id]');
+        const clickedLocationText = e.target.closest('span.location-text[data-location-id]');
+
+        const selection = window.getSelection();
+
+        // Lógica para a toolbar do olho
+        if (clickedReferencedText) {
+            e.stopPropagation(); // Impede que o clique se propague e feche a toolbar imediatamente
+            if (selection && selection.isCollapsed) { // Mostra a toolbar do olho APENAS se não houver seleção de texto
+                showReferenceEyeToolbar(clickedReferencedText);
+            } else {
+                hideReferenceEyeToolbar(); // Se houver seleção, esconde a toolbar do olho
             }
+        } else if (!e.target.closest('#referenceEyeToolbar')) {
+             // Se clicou fora de um referenced-text e fora da toolbar do olho, esconde a toolbar do olho
+            hideReferenceEyeToolbar();
+        }
 
-            const range = sel.getRangeAt(0);
-            let node = range.commonAncestorContainer;
-            let isSelectionInActiveEditor = false;
-            while (node) {
-                if (node === activeEditorElement) {
-                    isSelectionInActiveEditor = true;
-                    break;
-                }
-                node = node.parentNode;
-            }
+        // Lógica para entidades (pessoas, eventos, locais)
+        if (clickedPersonText && (!selection || selection.isCollapsed)) {
+            const id = clickedPersonText.dataset.personId;
+            const p = knownPersons.find(x => x.id === id);
+            if (p && p.nome) await displayEntityContextInSidebar(p.nome);
+            else if (clickedPersonText.textContent) await displayEntityContextInSidebar(clickedPersonText.textContent.trim());
+            return;
+        }
+        if (clickedEventText && (!selection || selection.isCollapsed)) {
+            const id = clickedEventText.dataset.eventId;
+            const ev = knownEvents.find(x => x.id === id);
+            if (ev) { const term = ev.descricao || ev.ano; if (term) await displayEntityContextInSidebar(term); }
+            else if (clickedEventText.textContent) await displayEntityContextInSidebar(clickedEventText.textContent.trim());
+            return;
+        }
+        if (clickedLocationText && (!selection || selection.isCollapsed)) {
+            const id = clickedLocationText.dataset.locationId;
+            const l = knownLocations.find(x => x.id === id);
+            if (l && l.nome) await displayEntityContextInSidebar(l.nome);
+            else if (clickedLocationText.textContent) await displayEntityContextInSidebar(clickedLocationText.textContent.trim());
+            return;
+        }
+    }, 'editorsContainer (click)');
 
-            if (isSelectionInActiveEditor) {
-                currentSelectionRange = range; // ATUALIZA currentSelectionRange
-                if (!sel.isCollapsed && sel.toString().trim() !== "") {
-                    showFloatingToolbar();
-                } else {
-                    hideFloatingToolbar();
-                }
+
+    // MODIFICADO: Event listener de 'selectionchange'
+    document.addEventListener('selectionchange', () => {
+        const sel = window.getSelection();
+        if (!activeEditorElement || !sel || !sel.rangeCount) {
+            hideFloatingToolbar();
+            return;
+        }
+        const range = sel.getRangeAt(0);
+        let node = range.commonAncestorContainer;
+        let isSelectionInActiveEditor = false;
+        while (node) { if (node === activeEditorElement) { isSelectionInActiveEditor = true; break; } node = node.parentNode; }
+
+        if (isSelectionInActiveEditor) {
+            currentSelectionRange = range;
+            if (!sel.isCollapsed && sel.toString().trim() !== "") {
+                showFloatingToolbar();
             } else {
                 hideFloatingToolbar();
             }
-        });
+        } else {
+            hideFloatingToolbar();
+        }
+    });
 
-        document.addEventListener('mousedown',e=>{const isEditorUI=editorInterfaceDiv.contains(e.target);const isPopup=e.target.closest('.popup')||floatingToolbar.contains(e.target)||entityContextSidebar.contains(e.target);let isChapterClick=e.target.closest('.text-editor-chapter')!==null;if(isEditorUI&&!isPopup&&!isChapterClick){}else if(!isChapterClick&&!isPopup){hideFloatingToolbar();}});
-        attachLinkBtn.addEventListener('click', showAddReferencePopup);
-        addPersonBtn.addEventListener('click', showAddPersonPopup);
-        addEventBtn.addEventListener('click', showAddEventPopup);
-        addLocationBtn.addEventListener('click', showAddLocationPopup);
-        saveNewPersonBtn.addEventListener('click',()=>saveNewPerson(personNameInput.value));
-        saveNewEventBtn.addEventListener('click',()=>saveNewEvent(eventDescriptionInput.value,eventYearInput.value));
-        saveNewLocationBtn.addEventListener('click',()=>saveNewLocation(locationNameInput.value));
-        showFoundPersonsBtn.addEventListener('click',()=>showFoundEntitiesPopup('persons'));
-        showFoundEventsBtn.addEventListener('click',()=>showFoundEntitiesPopup('events'));
-        showFoundLocationsBtn.addEventListener('click',()=>showFoundEntitiesPopup('locations'));
-        saveNewRefBtnElement.addEventListener('click', () => { const t = refTitleInput.value.trim(); if (t) { addReferenceToDocument(t); } else { alert("Título da referência é obrigatório."); } });
-        saveEditedRefBtn.addEventListener('click', saveEditedReference);
-        deleteRefBtn.addEventListener('click', deleteReference);
-        document.querySelectorAll('.close-popup-btn').forEach(btn=>btn.addEventListener('click',()=>hidePopup(btn.closest('.popup'))));
-        editorsContainer.addEventListener('click',async e=>{const ch=e.target.closest('.text-editor-chapter');if(ch)activeEditorElement=ch;else return;const t=e.target;const pS=t.closest('span.person-text[data-person-id]');if(pS){const id=pS.dataset.personId;const p=knownPersons.find(x=>x.id===id);if(p&&p.nome)await displayEntityContextInSidebar(p.nome);else if(pS.textContent)await displayEntityContextInSidebar(pS.textContent.trim());return;}const eS=t.closest('span.event-text[data-event-id]');if(eS){const id=eS.dataset.eventId;const ev=knownEvents.find(x=>x.id===id);if(ev){const term=ev.descricao||ev.ano;if(term)await displayEntityContextInSidebar(term);}else if(eS.textContent)await displayEntityContextInSidebar(eS.textContent.trim());return;}const lS=t.closest('span.location-text[data-location-id]');if(lS){const id=lS.dataset.locationId;const l=knownLocations.find(x=>x.id===id);if(l&&l.nome)await displayEntityContextInSidebar(l.nome);else if(lS.textContent)await displayEntityContextInSidebar(lS.textContent.trim());return;}});
-        viewPageBtn.addEventListener('click',()=>{if(!currentDocId||!currentDocumentData){alert("Nenhum documento ativo para visualizar.");return;} const singleBodyHtml = (Array.isArray(currentDocumentData.corpo) && currentDocumentData.corpo.length > 0) ? currentDocumentData.corpo[0] : ""; const dFV={...currentDocumentData, corpo: [singleBodyHtml] };try{sessionStorage.setItem('documentToView',JSON.stringify(dFV));window.open('view.html','_blank');}catch(e){console.error("Erro ao preparar documento para visualização:",e);alert("Erro ao abrir a página de visualização.");}});
-        archiveCurrentDocBtn.addEventListener('click',()=>{if(!currentDocId){alert("Nenhum documento ativo para arquivar.");return;}showPopup(confirmArchivePopup);});
-        confirmArchiveYesBtn.addEventListener('click',async()=>{if(!currentDocId){hidePopup(confirmArchivePopup);return;}try{await updateDoc(doc(db,"documentos",currentDocId),{ativo:false,atualizadoEm:serverTimestamp()});hidePopup(confirmArchivePopup);alert("Documento arquivado com sucesso!");showInitialScreen();}catch(e){console.error("Erro ao arquivar documento:",e);alert("Erro ao arquivar o documento.");hidePopup(confirmArchivePopup);}});
+    // MODIFICADO: Event listener de 'mousedown' global
+    document.addEventListener('mousedown', e => {
+        if (!editorInterfaceDiv || !floatingToolbar || !entityContextSidebar || !referenceEyeToolbar) return;
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            console.log("App V6.2 Com Índice (Dark Mode) e Seletor de Cor inicializada.");
-            initialScreenDiv.style.display = 'block'; editorInterfaceDiv.style.display = 'none';
-            await loadKnownEntities();
-            showInitialScreen();
+        const isEditorUIDisplayed = editorInterfaceDiv.style.display !== 'none';
+        if (!isEditorUIDisplayed) return; // Não faz nada se a interface do editor não estiver visível
 
-            const addMoreUrlsToAddPopupBtn = document.getElementById('addMoreUrlsToAddPopupBtn');
-            if (addMoreUrlsToAddPopupBtn) {
-                addMoreUrlsToAddPopupBtn.addEventListener('click', () => {
-                    const container = document.getElementById('addRefUrlsContainer');
-                    if (container.childElementCount === 1) { const firstGroup = container.firstChild; if (!firstGroup.querySelector('button[type="button"]')) { const urlInput = firstGroup.querySelector('.ref-url-input'); const val = urlInput ? urlInput.value : ''; firstGroup.remove(); createUrlInputEntry('addRefUrlsContainer', val, true); } }
-                    createUrlInputEntry('addRefUrlsContainer', '', true);
-                });
+        const isClickInsideEditorInterface = editorInterfaceDiv.contains(e.target);
+        const isClickOnAnyPopup = e.target.closest('.popup');
+        const isClickOnEntityToolbar = floatingToolbar.contains(e.target);
+        const isClickOnEyeToolbar = referenceEyeToolbar.contains(e.target);
+        const isClickOnSidebar = entityContextSidebar.contains(e.target);
+        const isClickInsideChapter = e.target.closest('.text-editor-chapter');
+
+
+        if (!isClickOnEntityToolbar && !isClickOnAnyPopup && !isClickOnSidebar) {
+             // A floatingToolbar (entidades) é controlada principalmente por selectionchange
+             // Mas um clique fora dela (e não para iniciar nova seleção) deve escondê-la
+             if (!isClickInsideChapter || (isClickInsideChapter && window.getSelection().isCollapsed)) {
+                 if (!isClickOnEntityToolbar) hideFloatingToolbar();
+             }
+        }
+        // A referenceEyeToolbar é escondida se o clique for fora dela E fora de um span.referenced-text
+        if (!isClickOnEyeToolbar && !e.target.closest('span.referenced-text[data-ref-id]')) {
+            hideReferenceEyeToolbar();
+        }
+    });
+
+    // Event listener para o botão na nova toolbar do olho
+    safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', (event) => {
+        event.stopPropagation(); // Impede que o clique no botão feche a toolbar através do listener de mousedown global
+        const targetRefId = referenceEyeToolbar.dataset.refId;
+        if (targetRefId) {
+            const referenceListItem = referencesListUl ? referencesListUl.querySelector(`li.reference-item[data-ref-id="${targetRefId}"]`) : null;
+            if (referenceListItem) {
+                clearEditorHighlights();
+                referenceListItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                referenceListItem.classList.add('highlight-scroll');
+                setTimeout(() => referenceListItem.classList.remove('highlight-scroll'), 2500);
             }
+        }
+        hideReferenceEyeToolbar();
+    }, 'viewReferenceFromToolbarBtn');
 
-            const addMoreUrlsToEditPopupBtn = document.getElementById('addMoreUrlsToEditPopupBtn');
-            if (addMoreUrlsToEditPopupBtn) {
-                addMoreUrlsToEditPopupBtn.addEventListener('click', () => {
-                     const container = document.getElementById('editRefUrlsContainer');
-                    if (container.childElementCount === 1) { const firstGroup = container.firstChild; if (!firstGroup.querySelector('button[type="button"]')) { const urlInput = firstGroup.querySelector('.ref-url-input'); const val = urlInput ? urlInput.value : ''; firstGroup.remove(); createUrlInputEntry('editRefUrlsContainer', val, true); } }
-                    createUrlInputEntry('editRefUrlsContainer', '', true);
-                });
-            }
-        });
-    </script>
-</body>
+
+    safelyAddEventListener(viewPageBtn, 'click', () => { if(!currentDocId||!currentDocumentData){alert("Nenhum documento ativo.");return;} const singleBodyHtml = (Array.isArray(currentDocumentData.corpo) && currentDocumentData.corpo.length > 0) ? currentDocumentData.corpo[0] : ""; const dFV={...currentDocumentData, corpo: [singleBodyHtml] };try{sessionStorage.setItem('documentToView',JSON.stringify(dFV));window.open('view.html','_blank');}catch(e){console.error("Erro preparar visualização:",e);}}, 'viewPageBtn');
+    safelyAddEventListener(archiveCurrentDocBtn, 'click', () => { if(!currentDocId){alert("Nenhum doc ativo para arquivar.");return;} if(confirmArchivePopup) showPopup(confirmArchivePopup); }, 'archiveCurrentDocBtn');
+    safelyAddEventListener(confirmArchiveYesBtn, 'click', async () => { if(!currentDocId){if(confirmArchivePopup) hidePopup(confirmArchivePopup);return;}try{await updateDoc(doc(db,"documentos",currentDocId),{ativo:false,atualizadoEm:serverTimestamp()});if(confirmArchivePopup)hidePopup(confirmArchivePopup);alert("Documento arquivado!");showInitialScreen();}catch(e){console.error("Erro arquivar:",e);if(confirmArchivePopup)hidePopup(confirmArchivePopup);}}, 'confirmArchiveYesBtn');
+    safelyAddEventListener(minimizeSidebarBtn, 'click', () => {if(!entityContextSidebar || !minimizeSidebarBtn) return; entityContextSidebar.classList.toggle('minimized-sidebar-state');minimizeSidebarBtn.textContent=entityContextSidebar.classList.contains('minimized-sidebar-state')?'+':'_';minimizeSidebarBtn.title=entityContextSidebar.classList.contains('minimized-sidebar-state')?"Restaurar":"Minimizar";}, 'minimizeSidebarBtn');
+    safelyAddEventListener(closeSidebarBtn, 'click', () => {if(!entityContextSidebar || !minimizeSidebarBtn) return; entityContextSidebar.style.display='none';entityContextSidebar.classList.remove('minimized-sidebar-state');minimizeSidebarBtn.textContent='_';minimizeSidebarBtn.title="Minimizar";}, 'closeSidebarBtn');
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        console.log("App inicializado.");
+        if (initialScreenDiv) initialScreenDiv.style.display = 'block';
+        if (editorInterfaceDiv) editorInterfaceDiv.style.display = 'none';
+        await loadKnownEntities();
+        showInitialScreen(); // Isso também chama hideFloatingToolbar e hideReferenceEyeToolbar
+
+        const addMoreUrlsToAddPopupBtn = document.getElementById('addMoreUrlsToAddPopupBtn');
+        if (addMoreUrlsToAddPopupBtn) {
+            addMoreUrlsToAddPopupBtn.addEventListener('click', () => {
+                const container = document.getElementById('addRefUrlsContainer'); if(!container) return;
+                if (container.childElementCount === 1) { const firstGroup = container.firstChild; if (firstGroup && !firstGroup.querySelector('button[type="button"]')) { const urlInput = firstGroup.querySelector('.ref-url-input'); const val = urlInput ? urlInput.value : ''; firstGroup.remove(); createUrlInputEntry('addRefUrlsContainer', val, true); } }
+                createUrlInputEntry('addRefUrlsContainer', '', true);
+            });
+        } else { console.warn("Elemento 'addMoreUrlsToAddPopupBtn' não encontrado no DOMContentLoaded."); }
+
+        const addMoreUrlsToEditPopupBtn = document.getElementById('addMoreUrlsToEditPopupBtn');
+        if (addMoreUrlsToEditPopupBtn) {
+            addMoreUrlsToEditPopupBtn.addEventListener('click', () => {
+                 const container = document.getElementById('editRefUrlsContainer'); if(!container) return;
+                if (container.childElementCount === 1) { const firstGroup = container.firstChild; if (firstGroup && !firstGroup.querySelector('button[type="button"]')) { const urlInput = firstGroup.querySelector('.ref-url-input'); const val = urlInput ? urlInput.value : ''; firstGroup.remove(); createUrlInputEntry('editRefUrlsContainer', val, true); } }
+                createUrlInputEntry('editRefUrlsContainer', '', true);
+            });
+        } else { console.warn("Elemento 'addMoreUrlsToEditPopupBtn' não encontrado no DOMContentLoaded."); }
+    });
+</script>
+<body>
 </html>

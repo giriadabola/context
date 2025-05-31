@@ -5,27 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualização do Documento</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
-        .view-container { max-width: 950px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
-        #viewPageTitle { font-size: 2em; margin-bottom: 20px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        #viewPageBody { margin-bottom: 30px; line-height: 1.7; font-size: 1.1em; }
-        #viewPageBody p, #viewPageBody div { margin-bottom: 0.75em; }
-        
-        #viewPageReferencesContainer { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; }
-        #viewPageReferencesContainer h3 { font-size: 1.5em; margin-bottom: 15px; color: #444; }
-        #viewPageReferencesList { list-style: none; padding: 0; }
-        #viewPageReferencesList li { background: #f9f9f9; padding: 12px 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e9ecef; }
-        #viewPageReferencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 4px; color: #0056b3; }
-        #viewPageReferencesList li a { text-decoration: none; color: #007bff; word-break: break-all; }
-        #viewPageReferencesList li a:hover { text-decoration: underline; }
+        /* ----- DARK MODE STYLES ----- */
+        :root {
+            color-scheme: dark light;
+        }
 
-        #viewPageBody .referenced-text { cursor: pointer; }
-        #viewPageBody .referenced-text:hover { background-color: #e0efff; text-decoration: underline; text-decoration-color: #007bff; }
-        
-        .view-highlight-scroll { background-color: #cce5ff !important; transition: background-color 0.3s ease-out; border-radius: 3px; }
-        #viewPageReferencesList .view-highlight-scroll { background-color: #fff3cd !important; }
-        
-        .error-message { color: #dc3545; text-align: center; font-size: 1.2em; padding: 20px; border: 1px solid #f5c6cb; background-color: #f8d7da; border-radius: 4px; }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e; /* Dark background */
+            color: #d4d4d4; /* Light text for body */
+            line-height: 1.7;
+        }
+
+        .view-container {
+            max-width: 950px;
+            margin: 20px auto;
+            background: #2d2d2d; /* Darker container background */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.5);
+        }
+
+        #viewPageTitle {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #e0e0e0; /* Lighter heading */
+            border-bottom: 1px solid #444; /* Darker border */
+            padding-bottom: 15px;
+        }
+
+        #viewPageBody {
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        #viewPageBody, #viewPageBody p, #viewPageBody div, #viewPageBody span,
+        #viewPageBody h1, #viewPageBody h2, #viewPageBody h3, #viewPageBody h4,
+        #viewPageBody h5, #viewPageBody h6, #viewPageBody li, #viewPageBody td, #viewPageBody th {
+            color: #d4d4d4; /* Cor de texto padrão para o conteúdo do documento */
+        }
+        #viewPageBody p, #viewPageBody div {
+            margin-bottom: 0.75em;
+        }
+        #viewPageBody a { /* Links genéricos dentro do corpo, se houver */
+            color: #6fa3d0;
+        }
+        #viewPageBody a:hover {
+            color: #87cefa;
+        }
+
+        #viewPageReferencesContainer {
+            margin-top: 40px;
+            border-top: 1px solid #444; /* Darker border */
+            padding-top: 20px;
+        }
+        #viewPageReferencesContainer h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #c0c0c0; /* Lighter subheading */
+        }
+        #viewPageReferencesList {
+            list-style: none;
+            padding: 0;
+        }
+        #viewPageReferencesList li {
+            background: #353535; /* Darker list item bg */
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #484848; /* Darker border */
+        }
+        #viewPageReferencesList li .ref-title-view {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            color: #b0c4de;
+            cursor: pointer; /* Adicionado para indicar clicabilidade */
+        }
+        #viewPageReferencesList li .ref-title-view:hover {
+            text-decoration: underline; /* Feedback visual no hover */
+        }
+        #viewPageReferencesList li .ref-url-item {
+            display: block;
+            margin-bottom: 4px;
+        }
+        #viewPageReferencesList li .ref-url-item a {
+            text-decoration: none;
+            color: #7aa0c7;
+            word-break: break-all;
+        }
+        #viewPageReferencesList li .ref-url-item a:hover {
+            text-decoration: underline;
+            color: #87cefa;
+        }
+
+        /* Estilo para texto referenciado */
+        #viewPageBody .referenced-text {
+            cursor: pointer;
+            background-color: #384858; /* Cor de destaque sutil como no editor */
+            padding: 1px 2px;
+            border-radius: 3px;
+            color: #a8c8e8;
+        }
+        #viewPageBody .referenced-text:hover {
+            background-color: #4a5c6e;
+            text-decoration: none;
+        }
+
+        /* Destaques de rolagem */
+        .view-highlight-scroll {
+            background-color: #2c3e50 !important;
+            transition: background-color 0.3s ease-out;
+            border-radius: 3px;
+            color: #e0efff !important;
+        }
+        #viewPageReferencesList li.view-highlight-scroll { /* Aplicar à tag <li> */
+            background-color: #5a512e !important;
+        }
+
+        .error-message {
+            color: #f8d7da;
+            text-align: center;
+            font-size: 1.2em;
+            padding: 20px;
+            border: 1px solid #c9302c;
+            background-color: #d9534f;
+            border-radius: 4px;
+        }
+
+        /* REMOVIDOS os estilos de fundo/cor para .person-text, .event-text, .location-text
+           para que não se destaquem visualmente no corpo da view.html.
+           Os spans ainda podem existir no HTML se vierem do editor, mas não terão estilo visual aqui.
+        */
+        /*
+        #viewPageBody .person-text { background-color: #2a3a3a; color: #b0e0d0; padding: 1px 2px; border-radius: 3px;}
+        #viewPageBody .event-text { background-color: #3a3a2a; color: #e0c090; padding: 1px 2px; border-radius: 3px;}
+        #viewPageBody .location-text { background-color: #3a2a3a; color: #e0b0e0; padding: 1px 2px; border-radius: 3px;}
+        */
     </style>
 </head>
 <body>
@@ -44,18 +161,21 @@
     </div>
 
     <script>
-        function escapeHTML(str) {
-            if (typeof str !== 'string') return '';
-            // Garantir que as aspas dentro do objeto de mapeamento são retas
-            return str.replace(/[&<>"'`]/g, tag => ({
-                '&': '&', 
-                '<': '<', 
-                '>': '>', 
-                '"': '"', 
-            }[tag] || tag));
-        }
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            const map = { 
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;', 
+                '"': '&quot;',
+                "'": '&apos;',
+                '`': '&#96;'
+            };
+            return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; });
+        }
 
         function applyDefaultStylesToBlocks(container, targetFontSize, targetLineHeight) {
+            if (!container) return;
             container.querySelectorAll('p, div').forEach(el => {
                 if (!el.style.fontSize) el.style.fontSize = targetFontSize;
                 if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
@@ -70,20 +190,28 @@
             const errorMessageEl = document.getElementById('viewErrorMessage');
 
             const dataString = sessionStorage.getItem('documentToView');
-            // sessionStorage.removeItem('documentToView'); 
+            // sessionStorage.removeItem('documentToView'); // Descomente se quiser que os dados sejam removidos após a primeira visualização
 
             if (dataString) {
                 try {
                     const docData = JSON.parse(dataString);
-
-                    // Esta é a linha que seria aproximadamente a linha 50-57 no contexto do script
-                    // Certifique-se de que as aspas em "Documento Sem Título" são retas: "
                     const pageTitle = docData.titulo ? escapeHTML(docData.titulo) : "Documento Sem Título";
                     
                     titleEl.textContent = pageTitle;
                     document.title = pageTitle; 
 
-                    bodyEl.innerHTML = docData.corpo || "<p>Conteúdo do documento vazio.</p>";
+                    bodyEl.innerHTML = ""; 
+                    
+                    const chapterDelimiterVisual = '<hr style="border:0; border-top:1px dashed #555; margin: 20px 0;">';
+                    let fullBodyHtml = "";
+                    if (Array.isArray(docData.corpo) && docData.corpo.length > 0) {
+                        fullBodyHtml = docData.corpo[0].split('<hr class="chapter-break-for-storage" style="display:none;">').join(chapterDelimiterVisual);
+                    } else if (typeof docData.corpo === 'string') { 
+                        fullBodyHtml = docData.corpo;
+                    } else {
+                        fullBodyHtml = "<p>Conteúdo do documento vazio.</p>";
+                    }
+                    bodyEl.innerHTML = fullBodyHtml;
                     
                     bodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
 
@@ -98,8 +226,9 @@
 
                     const references = docData.referencias || [];
                     if (references.length === 0) {
-                        referencesListEl.innerHTML = "<li>Nenhuma referência neste documento.</li>";
+                        referencesContainerEl.style.display = 'none'; // Esconde a seção de referências se não houver nenhuma
                     } else {
+                        referencesContainerEl.style.display = 'block'; // Garante que está visível
                         referencesListEl.innerHTML = ""; 
                         references.forEach(ref => {
                             const li = document.createElement('li');
@@ -107,28 +236,72 @@
                             li.setAttribute('data-ref-id', ref.id);
 
                             const titleSpan = document.createElement('span');
-                            titleSpan.className = 'ref-title';
-                            titleSpan.textContent = `${escapeHTML(ref.tituloReferencia)}: `;
+                            titleSpan.className = 'ref-title-view';
+                            titleSpan.textContent = escapeHTML(ref.tituloReferencia);
+                            titleSpan.setAttribute('data-navigate-ref-id', ref.id);
                             li.appendChild(titleSpan);
 
-                            const a = document.createElement('a');
-                            a.href = ref.urlReferencia;
-                            a.textContent = escapeHTML(ref.urlReferencia);
-                            a.target = "_blank"; 
-                            li.appendChild(a);
-                            
+                            if (ref.urls && Array.isArray(ref.urls) && ref.urls.length > 0) {
+                                ref.urls.forEach(url => {
+                                    const urlItemDiv = document.createElement('div');
+                                    urlItemDiv.className = 'ref-url-item';
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.textContent = escapeHTML(url);
+                                    a.target = "_blank";
+                                    urlItemDiv.appendChild(a);
+                                    li.appendChild(urlItemDiv);
+                                });
+                            } else if (ref.urlReferencia) { 
+                                const urlItemDiv = document.createElement('div');
+                                urlItemDiv.className = 'ref-url-item';
+                                const a = document.createElement('a');
+                                a.href = ref.urlReferencia;
+                                a.textContent = escapeHTML(ref.urlReferencia);
+                                a.target = "_blank";
+                                urlItemDiv.appendChild(a);
+                                li.appendChild(urlItemDiv);
+                            }
                             referencesListEl.appendChild(li);
+                        });
+
+                        // Event listener para os títulos das referências
+                        referencesListEl.addEventListener('click', (event) => {
+                            const clickedTitle = event.target.closest('span.ref-title-view[data-navigate-ref-id]');
+                            if (clickedTitle) {
+                                const refIdToNavigate = clickedTitle.getAttribute('data-navigate-ref-id');
+                                const targetSpanInBody = bodyEl.querySelector(`span.referenced-text[data-ref-id="${refIdToNavigate}"]`);
+
+                                bodyEl.querySelectorAll('.view-highlight-scroll').forEach(el => el.classList.remove('view-highlight-scroll'));
+                                referencesListEl.querySelectorAll('li.view-highlight-scroll').forEach(el => el.classList.remove('view-highlight-scroll'));
+
+                                if (targetSpanInBody) {
+                                    targetSpanInBody.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    targetSpanInBody.classList.add('view-highlight-scroll');
+                                    
+                                    const refListItem = clickedTitle.closest('li.reference-item');
+                                    if (refListItem) {
+                                        refListItem.classList.add('view-highlight-scroll');
+                                    }
+
+                                    setTimeout(() => {
+                                        if (targetSpanInBody) targetSpanInBody.classList.remove('view-highlight-scroll');
+                                        if (refListItem) refListItem.classList.remove('view-highlight-scroll');
+                                    }, 3000);
+                                }
+                            }
                         });
                     }
 
+                    // Event listener para clicar em texto referenciado no corpo
                     bodyEl.addEventListener('click', (event) => {
-                        const targetSpan = event.target.closest('span.referenced-text');
+                        const targetSpan = event.target.closest('span.referenced-text[data-ref-id]');
                         if (targetSpan && targetSpan.dataset.refId) {
                             const refId = targetSpan.dataset.refId;
                             const refListItemInView = referencesListEl.querySelector(`li.reference-item[data-ref-id="${refId}"]`);
 
                             bodyEl.querySelectorAll('.view-highlight-scroll').forEach(el => el.classList.remove('view-highlight-scroll'));
-                            referencesListEl.querySelectorAll('.view-highlight-scroll').forEach(el => el.classList.remove('view-highlight-scroll'));
+                            referencesListEl.querySelectorAll('li.view-highlight-scroll').forEach(el => el.classList.remove('view-highlight-scroll'));
 
                             if (refListItemInView) {
                                 refListItemInView.scrollIntoView({ behavior: 'smooth', block: 'center' });

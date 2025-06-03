@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Documentos Simplificado</title>
+    <style>
+        :root {
+            color-scheme: dark light;
+        }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        #initialScreen { text-align: center; padding: 40px 20px; }
+        #initialScreen h1 { margin-bottom: 30px; color: #e0e0e0; }
+        .initial-actions button { padding: 12px 25px; font-size: 1.1em; cursor: pointer; border: 1px solid #3a7ca5; background-color: #3a7ca5; color: white; border-radius: 5px; margin: 0 10px 20px 10px; }
+        .initial-actions button:hover { background-color: #4a90c2; border-color: #4a90c2; }
+        
+        #docTitle { width: calc(100% - 22px); padding: 10px; font-size: 1.5em; margin-bottom: 10px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4 !important; }
+        #docTitle::placeholder { color: #777; }
+
+        /* --- ESTILOS PARA CAPÍTULOS E SUAS TOOLBARS --- */
+        .chapter-wrapper {
+            position: relative;
+            margin-bottom: 25px;
+            padding-top: 40px; /* Espaço para a toolbar acima */
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            background-color: #252525;
+        }
+        .chapter-wrapper.active-chapter-wrapper {
+             border-color: #5a90c2;
+             box-shadow: 0 0 0 1px rgba(58, 124, 165, 0.25);
+        }
+        .chapter-toolbar {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 6px;
+            background-color: rgba(56, 56, 56, 0.85);
+            padding: 5px;
+            border-radius: 4px;
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .chapter-toolbar button {
+            background: none;
+            border: 1px solid #666;
+            color: #c0c0c0;
+            font-size: 1.1em;
+            padding: 2px 6px;
+            cursor: pointer;
+            border-radius: 3px;
+            line-height: 1;
+        }
+        .chapter-toolbar button:hover {
+            background-color: #4f4f4f;
+            border-color: #777;
+            color: #e0e0e0;
+        }
+        .chapter-toolbar button:disabled {
+            color: #777 !important;
+            cursor: not-allowed !important;
+            background-color: #383838 !important;
+            border-color: #555 !important;
+            opacity: 0.6;
+        }
+        #editorsContainer .text-editor-chapter {
+            min-height: 100px; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 0; 
+            margin-bottom: 0; 
+            outline: none;
+            line-height: 1.6; /* Será sobrescrito por JS se necessário */
+            background-color: transparent; 
+            color: #d4d4d4;
+        }
+        #editorsContainer .text-editor-chapter:focus {
+            border-color: transparent; 
+            box-shadow: none;
+        }
+        #editorsContainer .text-editor-chapter p, #editorsContainer .text-editor-chapter div { 
+            margin-bottom: 0.5em; 
+            color: inherit; 
+        }
+        /* --- FIM DOS ESTILOS PARA CAPÍTULOS --- */
+
+        #editorsContainer .text-editor-chapter .referenced-text { 
+            background-color: #384858; padding: 1px 2px; border-radius: 3px; 
+            cursor: default; color: #a8c8e8; 
+        }
+        /* Não precisamos mais de .person-text, .event-text, etc. */
+
+        .toolbar { position: absolute; background: #444; color: white; padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 1000; display: flex; gap: 5px; }
+        .toolbar button { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; padding: 5px; }
+        .toolbar button:hover { background-color: #555; }
+        
+        .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1001; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
+        .popup-content { background: #333; color: #d4d4d4; padding: 25px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 450px; max-height: 80vh; display: flex; flex-direction: column; }
+        .popup-content h3 { margin-top: 0; margin-bottom: 15px; color: #e0e0e0; }
+        .popup-content input[type="text"], .popup-content input[type="url"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4 !important; }
+        .popup-content input[type="text"]::placeholder, .popup-content input[type="url"]::placeholder { color: #777; }
+        .popup-content button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .popup-content .popup-actions { margin-top: auto; padding-top: 15px; border-top: 1px solid #444; text-align: right; }
+        .popup-content .popup-actions button { background-color: #5a6268; color: white; }
+        .popup-content .popup-actions button:hover { background-color: #6c757d; }
+        .popup-content .popup-actions button.danger-btn { background-color: #d9534f; }
+        .popup-content .popup-actions button.danger-btn:hover { background-color: #c9302c; }
+        .popup-content .popup-actions button.save-btn { background-color: #4CAF50; }
+        .popup-content .popup-actions button.save-btn:hover { background-color: #5cb85c; }
+        
+        #referencesSection { margin-top: 30px; border-top: 1px solid #444; padding-top: 20px; }
+        #referencesSection h2 { color: #c0c0c0; }
+        #referencesList { list-style: none; padding: 0; }
+        #referencesList li { background: #353535; padding: 10px 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #484848; position: relative; }
+        #referencesList li .ref-content { padding-right: 30px; } /* Espaço para botão editar */
+        #referencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 3px; cursor: pointer; color: #b0c4de;}
+        #referencesList li .ref-title:hover { color: #87cefa; text-decoration: underline; }
+        #referencesList li a { text-decoration: none; color: #7aa0c7; word-break: break-all; }
+        #referencesList li a:hover { text-decoration: underline; color: #87cefa; }
+        .edit-ref-btn { position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 1em; cursor: pointer; padding: 5px; color: #999; }
+        .edit-ref-btn:hover { color: #bbb; }
+
+        #loadDocumentPopup .popup-content { background: #333; }
+        #documentsListContainer ul li button { background-color: #3a7ca5; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 10px; }
+        #documentsListContainer ul li button:hover { background-color: #4a90c2; }
+        #documentsListContainer ul li { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #404040; color: #d4d4d4; }
+        #documentsListContainer ul li:last-child { border-bottom: none; }
+        #documentsListContainer ul li span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #documentsListContainer p { color: #999; }
+
+        .url-input-group { display: flex; align-items: center; margin-bottom: 10px; }
+        .url-input-group .ref-url-input { flex-grow: 1; padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4; }
+        .url-input-group .ref-url-input::placeholder { color: #777; }
+        .url-input-group button[type="button"] { padding: 10px 15px; border: none; border-radius: 4px; background-color: #d9534f; color: white; cursor: pointer; flex-shrink: 0; margin-left: 10px; }
+        #addMoreUrlsToAddPopupBtn, #addMoreUrlsToEditPopupBtn { padding: 8px 12px; font-size:0.9em; margin-bottom: 15px; background-color: #5a6268; color:white; border:none; border-radius:4px; cursor:pointer; }
+        #addMoreUrlsToAddPopupBtn:hover, #addMoreUrlsToEditPopupBtn:hover { background-color: #6c757d; }
+         .highlight-scroll { background-color: #2c3e50 !important; } /* Para destacar referência no editor */
+        .reference-item.highlight-scroll { background-color: #5a512e !important; } /* Para destacar referência na lista */
+
+    </style>
+</head>
+<body>
+    <div id="initialScreen">
+        <h1>Meu Editor de Documentos</h1>
+        <div class="initial-actions">
+            <button id="initNewDocBtn">Novo Documento</button>
+            <button id="initLoadDocBtn">Carregar Documento</button>
+        </div>
+        <!-- Seção de Documentos Recentes Removida para Simplificar o Foco no Carregamento -->
+    </div>
+
+    <div id="editorInterface" style="display: none;">
+        <div class="container">
+             <!-- Doc actions simplificado -->
+            <div class="doc-actions" style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="backToInitialScreenBtn" title="Voltar à Tela Inicial">Voltar</button>
+            </div>
+            <input type="text" id="docTitle" placeholder="Título do Documento">
+            
+            <!-- Toolbar Principal Removida/Simplificada (não há botões específicos por enquanto) -->
+
+            <div id="editorsContainer">
+                <!-- Capítulos serão inseridos aqui dinamicamente -->
+            </div>
+            <button id="addChapterBtn" style="margin-top: 15px; padding: 8px 15px; font-size: 0.9em; cursor: pointer; background-color: #3a7ca5; color:white; border:none; border-radius:4px;">+ Adicionar Novo Capítulo</button>
+            
+            <div id="floatingToolbar" class="toolbar" style="display: none;">
+                <button id="attachLinkBtn" title="Anexar Link/Referência">🔗</button>
+                <!-- Outros botões de entidade removidos -->
+            </div>
+            
+            <div id="referencesSection">
+                <h2>Referências</h2>
+                <ul id="referencesList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pop-up para Adicionar Referência -->
+    <div id="addReferencePopup" class="popup">
+        <div class="popup-content">
+            <h3>Adicionar Referência</h3>
+            <input type="text" id="refTitleInput" placeholder="Título da Referência">
+            <label style="display:block; margin-bottom:5px; margin-top:10px; color: #c0c0c0;">URLs do Link:</label>
+            <div id="addRefUrlsContainer" style="margin-bottom: 10px;">
+                <!-- URL inputs serão adicionados aqui por JS -->
+            </div>
+            <button type="button" id="addMoreUrlsToAddPopupBtn">+ Adicionar Outro Link</button>
+            <div class="popup-actions">
+                <button id="saveNewRefBtnElement" class="save-btn">Salvar Referência</button>
+                <button id="cancelNewRefBtn" class="close-popup-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pop-up para Editar Referência -->
+    <div id="editReferencePopup" class="popup">
+        <div class="popup-content">
+            <h3>Editar Referência</h3>
+            <input type="text" id="editRefTitleInput" placeholder="Título da Referência">
+            <label style="display:block; margin-bottom:5px; margin-top:10px; color: #c0c0c0;">URLs do Link:</label>
+            <div id="editRefUrlsContainer" style="margin-bottom: 10px;">
+                 <!-- URL inputs serão adicionados aqui por JS -->
+            </div>
+            <button type="button" id="addMoreUrlsToEditPopupBtn">+ Adicionar Outro Link</button>
+            <input type="hidden" id="editingRefIdInput">
+            <div class="popup-actions">
+                <button id="saveEditedRefBtn" class="save-btn">Salvar Alterações</button>
+                <button id="deleteRefBtn" class="danger-btn">Excluir Referência</button>
+                <button id="cancelEditRefBtn" class="close-popup-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pop-up para Carregar Documento -->
+    <div id="loadDocumentPopup" class="popup">
+        <div class="popup-content">
+            <h3>Carregar Documento Existente</h3>
+            <div id="documentsListContainer">
+                <p>Carregando lista de documentos...</p>
+                <ul></ul>
+            </div>
+            <div class="popup-actions">
+                <button id="closeLoadDocPopupBtn" class="close-popup-btn">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Outros pop-ups (Pessoas, Eventos, Locais, Índice, Contexto, Sugestões, etc.) foram removidos -->
+
+<script type="module">
+     // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
+     const firebaseConfig = {
+      apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY",
+      authDomain: "bibliacontexto.firebaseapp.com",
+      projectId: "bibliacontexto",
+      storageBucket: "bibliacontexto.firebasestorage.app",
+      messagingSenderId: "266293600679",
+      appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+        getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, where, orderBy, serverTimestamp,
+        arrayUnion
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let app;
+    let db;
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        console.log("Firebase inicializado com sucesso! Project ID:", firebaseConfig.projectId);
+    } catch (error) {
+        console.error("ERRO CRÍTICO AO INICIALIZAR O FIREBASE:", error);
+        alert("Falha crítica ao conectar com o Firebase. Verifique o console para detalhes, confirme suas credenciais em 'firebaseConfig' e se o projeto Firebase está acessível.");
+        throw new Error("Falha na inicialização do Firebase. O aplicativo não pode continuar.");
+    }
+
+    // IDs dos Elementos (Simplificado)
+    const initialScreenDiv = document.getElementById('initialScreen');
+    const editorInterfaceDiv = document.getElementById('editorInterface');
+    const initNewDocBtn = document.getElementById('initNewDocBtn');
+    const initLoadDocBtn = document.getElementById('initLoadDocBtn');
+    const backToInitialScreenBtn = document.getElementById('backToInitialScreenBtn');
+
+    const editorsContainer = document.getElementById('editorsContainer');
+    const addChapterBtn = document.getElementById('addChapterBtn');
+    const floatingToolbar = document.getElementById('floatingToolbar');
+    const attachLinkBtn = document.getElementById('attachLinkBtn');
+    
+    const docTitleInput = document.getElementById('docTitle');
+    const referencesListUl = document.getElementById('referencesList');
+    
+    const addReferencePopup = document.getElementById('addReferencePopup');
+    const refTitleInput = document.getElementById('refTitleInput');
+    const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
+    const cancelNewRefBtn = document.getElementById('cancelNewRefBtn');
+    
+    const editReferencePopup = document.getElementById('editReferencePopup');
+    const editRefTitleInput = document.getElementById('editRefTitleInput');
+    const editingRefIdInput = document.getElementById('editingRefIdInput');
+    const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
+    const deleteRefBtn = document.getElementById('deleteRefBtn');
+    
+    const loadDocumentPopup = document.getElementById('loadDocumentPopup');
+    const documentsListContainerUl = document.querySelector('#documentsListContainer ul');
+    const documentsListContainerMsg = document.querySelector('#documentsListContainer p');
+
+    const addMoreUrlsToAddPopupBtn = document.getElementById('addMoreUrlsToAddPopupBtn');
+    const addMoreUrlsToEditPopupBtn = document.getElementById('addMoreUrlsToEditPopupBtn');
+
+
+    // Variáveis de Estado Global (Simplificado)
+    let currentDocId = null;
+    let currentDocumentData = null; 
+    let debounceTimer;
+    let currentSelectionRange = null;
+    let rangeForPendingReference = null;
+    let activeEditorElement = null; 
+    
+    // Constantes Globais
+    const DEFAULT_FONT_SIZE = '16px'; 
+    const DEFAULT_LINE_HEIGHT = '1.6'; 
+    const CURSOR_PLACEHOLDER_ID = "___cursor_placeholder_temp___";
+
+
+    // Funções Utilitárias
+    function generateId(prefix = 'entity-') { return prefix + Date.now() + '-' + Math.random().toString(36).substring(2, 7); }
+    function showPopup(popupElement) { if (popupElement) popupElement.classList.add('active'); }
+    function hidePopup(popupElement) { if (popupElement) popupElement.classList.remove('active'); }
+    function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) { 
+        if (!container) return; 
+        container.querySelectorAll('p, div').forEach(el => { 
+            if (!el.style.fontSize) el.style.fontSize = targetFontSizeCSS; 
+            if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight; 
+        }); 
+    }
+    function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }
+    function getFirstSentence(htmlString) { if (!htmlString) return ""; const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlString; let textContent = (tempDiv.textContent || "").trim(); const firstPeriodIndex = textContent.indexOf('.'); if (firstPeriodIndex !== -1) { return textContent.substring(0, firstPeriodIndex + 1); } return textContent.substring(0, 100) + (textContent.length > 100 ? "..." : ""); }
+    function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) { const container = document.getElementById(containerId); if (!container) return null; const inputGroup = document.createElement('div'); inputGroup.className = 'url-input-group'; const urlInput = document.createElement('input'); urlInput.type = 'url'; urlInput.className = 'ref-url-input'; urlInput.placeholder = 'URL do Link'; urlInput.value = urlValue; inputGroup.appendChild(urlInput); if (canBeRemoved) { urlInput.style.marginRight = '10px'; const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = 'Remover'; removeBtn.addEventListener('click', () => { inputGroup.remove(); if (container.childElementCount === 0) { createUrlInputEntry(container.id, '', false); } }); inputGroup.appendChild(removeBtn); } container.appendChild(inputGroup); return urlInput; }
+
+
+    // Funções de Toolbar (Simplificado)
+    function hideFloatingToolbar(){ if(floatingToolbar) floatingToolbar.style.display='none'; }
+    function showFloatingToolbar(){ if(!currentSelectionRange || !activeEditorElement || !floatingToolbar) return; if (floatingToolbar.style.display === 'flex' && currentSelectionRange.collapsed) return; const rect = currentSelectionRange.getBoundingClientRect(); floatingToolbar.style.left = `${rect.left + window.scrollX + (rect.width/2) - (floatingToolbar.offsetWidth/2)}px`; floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; floatingToolbar.style.display = 'flex'; }
+    
+    // --- Funções de Capítulo (Simplificado) ---
+    function generateChapterId() { return 'chptr-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9); }
+
+    function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterCreation = false) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'chapter-wrapper';
+        wrapper.dataset.chapterId = chapterId || generateChapterId();
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'chapter-toolbar';
+        // ... (código dos botões da toolbar do capítulo permanece o mesmo) ...
+        const moveUpBtn = document.createElement('button');
+        moveUpBtn.innerHTML = '🔼';
+        moveUpBtn.title = 'Mover Capítulo Para Cima';
+        moveUpBtn.addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'up'); });
+
+        const moveDownBtn = document.createElement('button');
+        moveDownBtn.innerHTML = '🔽';
+        moveDownBtn.title = 'Mover Capítulo Para Baixo';
+        moveDownBtn.addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'down'); });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '🗑️';
+        removeBtn.title = 'Remover Capítulo';
+        removeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleRemoveChapter(wrapper); });
+
+        toolbar.appendChild(moveUpBtn);
+        toolbar.appendChild(moveDownBtn);
+        toolbar.appendChild(removeBtn);
+        wrapper.appendChild(toolbar);
+
+
+        const chapterDiv = document.createElement('div');
+        chapterDiv.className = 'text-editor-chapter';
+        chapterDiv.setAttribute('contenteditable', 'true');
+        
+        chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
+        applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+       
+        chapterDiv.addEventListener('focus', () => {
+            activeEditorElement = chapterDiv;
+            document.querySelectorAll('.chapter-wrapper.active-chapter-wrapper').forEach(w => w.classList.remove('active-chapter-wrapper'));
+            wrapper.classList.add('active-chapter-wrapper');
+        });
+
+        chapterDiv.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (activeEditorElement === chapterDiv) { 
+                    // A função applyDefaultStylesToBlocks também pode ser chamada aqui se necessário,
+                    // mas o principal é no paste.
+                    applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+                    saveDocumentBody(true); 
+                }
+            }, 1200); 
+        });
+
+        // ***** NOVO: Manipulador de Evento PASTE *****
+        chapterDiv.addEventListener('paste', (event) => {
+            event.preventDefault(); // Impede a colagem padrão com formatação
+            
+            // Obter o texto como texto simples
+            const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
+            
+            if (plainText) {
+                // Inserir o texto simples. document.execCommand é mais simples para contenteditable.
+                // Embora execCommand esteja "obsoleto", é a maneira mais direta de inserir texto simples
+                // em um contenteditable e geralmente funciona bem para este caso.
+                document.execCommand('insertText', false, plainText);
+
+                // Pequeno timeout para garantir que o DOM foi atualizado pelo execCommand
+                // antes de aplicar estilos e salvar.
+                setTimeout(() => {
+                    if (activeEditorElement) { // Garante que temos um editor ativo
+                        applyDefaultStylesToBlocks(activeEditorElement, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+                    }
+                    saveDocumentBody(true); // Salva o documento com o texto colado
+                }, 0);
+            }
+        });
+        // ***** FIM DO NOVO Manipulador de Evento PASTE *****
+
+
+        wrapper.appendChild(chapterDiv);
+        if (editorsContainer) editorsContainer.appendChild(wrapper);
+       
+        updateChapterActionButtonsState();
+
+        if (focusAfterCreation && document.activeElement !== chapterDiv) {
+            placeCursorAtEndOf(chapterDiv);
+            chapterDiv.focus({ preventScroll: true }); 
+            activeEditorElement = chapterDiv;
+        }
+        return wrapper;
+    }
+
+    function updateChapterActionButtonsState() {
+        if (!editorsContainer) return;
+        const chapterWrappers = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));
+        const totalChapters = chapterWrappers.length;
+        chapterWrappers.forEach((wrapper, index) => {
+            const upBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(1)'); 
+            const downBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(2)'); 
+            const removeBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(3)'); 
+            if (upBtn) upBtn.disabled = (index === 0);
+            if (downBtn) downBtn.disabled = (index === totalChapters - 1);
+            if (removeBtn) removeBtn.disabled = (totalChapters <= 1);
+        });
+    }
+
+    function handleRemoveChapter(chapterWrapperElement) {
+        if (!editorsContainer || !chapterWrapperElement) return;
+        
+        if (editorsContainer.querySelectorAll('.chapter-wrapper').length <= 1) {
+            alert("Não é possível remover o único capítulo.");
+            return;
+        }
+        if (window.confirm(`Tem certeza de que deseja remover este capítulo?`)) { 
+            chapterWrapperElement.remove();
+            if (activeEditorElement && chapterWrapperElement.contains(activeEditorElement)) {
+                activeEditorElement = null; currentSelectionRange = null;
+            }
+            updateChapterActionButtonsState();
+            saveDocumentBody(true); 
+        }
+    }
+
+    function handleMoveChapter(chapterWrapperElement, direction) {
+        if (!editorsContainer || !chapterWrapperElement) return;
+        const parent = chapterWrapperElement.parentNode; 
+        if (direction === 'up' && chapterWrapperElement.previousElementSibling) {
+            parent.insertBefore(chapterWrapperElement, chapterWrapperElement.previousElementSibling);
+        } else if (direction === 'down' && chapterWrapperElement.nextElementSibling) {
+            parent.insertBefore(chapterWrapperElement.nextElementSibling, chapterWrapperElement);
+        } else {
+            return; 
+        }
+        updateChapterActionButtonsState();
+        saveDocumentBody(true); 
+    }
+
+    // --- Funções do Editor e Documento (Simplificado) ---
+    function placeCursorAtEndOf(element) {
+        const sel = window.getSelection();
+        if (sel && element) {
+            const range = document.createRange();
+            if (!element.firstChild || (element.firstChild.nodeName === 'BR' && !element.firstChild.nextSibling)) {
+                element.innerHTML = `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`;
+            }
+            let targetNode = element.lastChild;
+            while(targetNode && targetNode.nodeType === Node.ELEMENT_NODE && targetNode.lastChild) {
+                targetNode = targetNode.lastChild;
+            }
+            if (targetNode && targetNode.nodeType === Node.TEXT_NODE) {
+                range.setStart(targetNode, targetNode.length);
+            } else if (targetNode && targetNode.nodeType === Node.ELEMENT_NODE && targetNode.childNodes.length > 0) {
+                range.selectNodeContents(targetNode); 
+                range.collapse(false); 
+            } else if (targetNode && targetNode.nodeType === Node.ELEMENT_NODE) { 
+                range.setStartAfter(targetNode);
+            } else { 
+                range.selectNodeContents(element);
+                range.collapse(false);
+            }
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+        if (element && document.hasFocus() && document.activeElement !== element && (!document.activeElement || !element.contains(document.activeElement))) {
+            element.focus({ preventScroll: true });
+        }
+    }
+
+    function showEditorInterfaceScreen() { 
+        if (initialScreenDiv) initialScreenDiv.style.display = 'none'; 
+        if (editorInterfaceDiv) editorInterfaceDiv.style.display = 'block'; 
+    }
+    
+    async function showInitialScreen() {
+        if (editorInterfaceDiv) editorInterfaceDiv.style.display = 'none';
+        if (initialScreenDiv) initialScreenDiv.style.display = 'block';
+        currentDocId = null; currentDocumentData = null;
+        if (docTitleInput) docTitleInput.value = '';
+        if (editorsContainer) editorsContainer.innerHTML = '';
+        activeEditorElement = null; currentSelectionRange = null; rangeForPendingReference = null;
+        if (referencesListUl) referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
+        hideFloatingToolbar();
+        updateChapterActionButtonsState();
+    }
+   
+    async function createNewDocument() {
+        showEditorInterfaceScreen();
+        currentDocId = generateId('doc-');
+        const initialChapterId = generateChapterId();
+        const initialChapterHTML = `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`;
+        
+        currentDocumentData = {
+            titulo: "Novo Documento Sem Título",
+            corpo: [{ id: initialChapterId, html: initialChapterHTML }],
+            referencias: [],
+            ativo: true, 
+            criadoEm: serverTimestamp(),
+            atualizadoEm: serverTimestamp()
+        };
+        try {
+            await setDoc(doc(db, "documentos", currentDocId), currentDocumentData);
+            displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
+            if (editorsContainer && editorsContainer.firstChild && editorsContainer.firstChild.querySelector('.text-editor-chapter')) {
+                 setTimeout(() => { 
+                    const firstEditor = editorsContainer.firstChild.querySelector('.text-editor-chapter');
+                    placeCursorAtEndOf(firstEditor);
+                    if(firstEditor) firstEditor.focus({preventScroll: true});
+                }, 0);
+            }
+        } catch (e) { console.error("Erro ao criar novo documento:", e); alert("Erro ao criar documento."); }
+    }
+
+    async function loadDocument(id) { 
+        if (!id) return; 
+        showEditorInterfaceScreen(); 
+        if(editorsContainer) editorsContainer.innerHTML = "<p>Carregando...</p>"; 
+        if(docTitleInput) docTitleInput.value = "Carregando..."; 
+        if(referencesListUl) referencesListUl.innerHTML = "<li>Carregando...</li>"; 
+        currentDocId = id; 
+        try { 
+            const docRef = doc(db, "documentos", currentDocId); 
+            const docSnap = await getDoc(docRef); 
+            if (docSnap.exists()) { 
+                currentDocumentData = docSnap.data(); 
+                displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias); 
+            } else { 
+                alert("Documento não encontrado."); 
+                await showInitialScreen(); 
+            } 
+        } catch (e) { 
+            console.error("Erro ao carregar documento:", e); 
+            alert("Erro ao carregar o documento."); 
+            await showInitialScreen();
+        } 
+    }
+   
+    function displayDocumentContent(title, corpoDataFromFirebase, references = []) {
+        if(docTitleInput) docTitleInput.value = title || "";
+        if(editorsContainer) editorsContainer.innerHTML = '';
+        activeEditorElement = null; currentSelectionRange = null;
+
+        let chaptersToRender = [];
+        if (Array.isArray(corpoDataFromFirebase) && corpoDataFromFirebase.length > 0 && typeof corpoDataFromFirebase[0] === 'object' && corpoDataFromFirebase[0] !== null && corpoDataFromFirebase[0].hasOwnProperty('id') && corpoDataFromFirebase[0].hasOwnProperty('html')) {
+            chaptersToRender = corpoDataFromFirebase;
+        } else { 
+            console.warn("Formato do corpo do documento inesperado. Criando capítulo inicial.");
+            chaptersToRender.push({ id: generateChapterId(), html: `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` });
+            if(currentDocumentData) currentDocumentData.corpo = chaptersToRender; 
+        }
+
+        if (chaptersToRender.length > 0) {
+            chaptersToRender.forEach((chapterObj, index) => {
+                const isLastChapter = index === chaptersToRender.length - 1;
+                const shouldFocus = (chaptersToRender.length === 1 && chapterObj.html.includes('<br>')) ||
+                                    (isLastChapter && chapterObj.html.includes('<br>'));
+                createNewChapterElement(chapterObj.html, chapterObj.id, shouldFocus);
+            });
+        } else { 
+            createNewChapterElement('', null, true);
+        }
+       
+        updateChapterActionButtonsState();
+        renderReferences(references);
+    }
+
+    async function saveDocumentBody(forceImmediateSave = false) {
+        if (!currentDocId || !editorsContainer) return;
+        if (!forceImmediateSave) { 
+            clearTimeout(debounceTimer); 
+            debounceTimer = setTimeout(() => saveDocumentBody(true), 1500); 
+            return; 
+        }
+
+        let scrollElement = document.querySelector('.container') || document.documentElement;
+        if (scrollElement.scrollHeight <= scrollElement.clientHeight && document.body.scrollHeight > document.body.clientHeight) scrollElement = document.body;
+        const scrollPositionsToRestore = { element: scrollElement, scrollTop: scrollElement.scrollTop };
+
+        const chapterDataForSave = [];
+        let activeChapterWrapperFound = null; 
+        let selectionDetails = null;
+
+        const chapterWrappers = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));
+        chapterWrappers.forEach((wrapper) => {
+            const chapterDiv = wrapper.querySelector('.text-editor-chapter');
+            const chapterId = wrapper.dataset.chapterId;
+            if (!chapterDiv || !chapterId) return;
+            let currentChapterHTML = chapterDiv.innerHTML; 
+
+            if (activeEditorElement === chapterDiv) {
+                activeChapterWrapperFound = wrapper;
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    if (chapterDiv.contains(range.commonAncestorContainer)) {
+                        const placeholderString = `<span id="${CURSOR_PLACEHOLDER_ID}"></span>`;
+                        selectionDetails = {
+                            startContainerPath: getNodePath(range.startContainer, chapterDiv),
+                            startOffset: range.startOffset,
+                            endContainerPath: getNodePath(range.endContainer, chapterDiv),
+                            endOffset: range.endOffset,
+                            isCollapsed: range.collapsed,
+                            placeholderWasInserted: false
+                        };
+                        if (range.collapsed) {
+                            const placeholderNode = document.createElement('span');
+                            placeholderNode.id = CURSOR_PLACEHOLDER_ID;
+                            try {
+                                range.insertNode(placeholderNode);
+                                currentChapterHTML = chapterDiv.innerHTML; 
+                                placeholderNode.remove(); 
+                                selectionDetails.placeholderWasInserted = true;
+                            } catch(e) {
+                                console.warn("Erro ao inserir/remover placeholder DOM para pegar HTML", e);
+                                selectionDetails.placeholderWasInserted = false;
+                            }
+                        }
+                    }
+                }
+            }
+            chapterDataForSave.push({ id: chapterId, html: currentChapterHTML });
+        });
+       
+        if (currentDocumentData) {
+            currentDocumentData.corpo = chapterDataForSave;
+        }
+
+        try {
+            await updateDoc(doc(db, "documentos", currentDocId), {
+                corpo: chapterDataForSave,
+                atualizadoEm: serverTimestamp()
+            });
+           
+            const oldActiveChapterId = activeChapterWrapperFound ? activeChapterWrapperFound.dataset.chapterId : null;
+            editorsContainer.innerHTML = '';
+            activeEditorElement = null; currentSelectionRange = null;
+
+            const newRenderedWrappersList = [];
+            if (currentDocumentData && Array.isArray(currentDocumentData.corpo)) {
+                currentDocumentData.corpo.forEach(chapterObj => {
+                    if (chapterObj && chapterObj.id && typeof chapterObj.html === 'string') {
+                        newRenderedWrappersList.push(createNewChapterElement(chapterObj.html, chapterObj.id, false));
+                    }
+                });
+            }
+
+            requestAnimationFrame(() => { 
+                if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
+                let wrapperToRestoreFocus = null;
+                if (oldActiveChapterId) {
+                     wrapperToRestoreFocus = newRenderedWrappersList.find(w => w.dataset.chapterId === oldActiveChapterId);
+                }
+                if (!wrapperToRestoreFocus && chapterWrappers.indexOf(activeChapterWrapperFound) !== -1 && newRenderedWrappersList[chapterWrappers.indexOf(activeChapterWrapperFound)]) {
+                    wrapperToRestoreFocus = newRenderedWrappersList[chapterWrappers.indexOf(activeChapterWrapperFound)];
+                } else if (!wrapperToRestoreFocus && newRenderedWrappersList.length > 0) {
+                    wrapperToRestoreFocus = newRenderedWrappersList[0];
+                }
+
+                if (wrapperToRestoreFocus) {
+                    const chapterDivToFocus = wrapperToRestoreFocus.querySelector('.text-editor-chapter');
+                    if (chapterDivToFocus) {
+                        activeEditorElement = chapterDivToFocus; 
+                        if (selectionDetails) {
+                             setTimeout(() => { 
+                                tryRestoreSelection(activeEditorElement, selectionDetails, true, CURSOR_PLACEHOLDER_ID, selectionDetails.placeholderWasInserted);
+                            }, 0);
+                        } else {
+                             setTimeout(() => {
+                                placeCursorAtEndOf(activeEditorElement);
+                                activeEditorElement.focus({ preventScroll: true });
+                            }, 0);
+                        }
+                    }
+                }
+            });
+            updateChapterActionButtonsState();
+        } catch (e) {
+            console.error("Erro ao salvar corpo do documento ou atualizar DOM:", e);
+            if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
+        }
+    }
+
+    function getNodePath(node, relativeTo) { const path = []; let current = node; while (current && current !== relativeTo) { const parent = current.parentNode; if (!parent) break; const index = Array.from(parent.childNodes).indexOf(current); path.unshift(index); current = parent; } return path; }
+    function getNodeFromPath(root, path) { let current = root; for (const index of path) { if (!current || !current.childNodes || typeof current.childNodes[index] === 'undefined') return null; current = current.childNodes[index]; } return current; }
+    function tryRestoreSelection(editor, details, preventScrollForFocus = false, cursorPlaceholderId = null, placeholderWasUsed = false) {
+        const sel = window.getSelection();
+        if (!sel || !editor) { if (editor && typeof editor.focus === 'function') editor.focus({ preventScroll: preventScrollForFocus }); return false; }
+        sel.removeAllRanges(); let successfullyRestored = false;
+
+        if (details.isCollapsed && placeholderWasUsed && cursorPlaceholderId) {
+            const placeholderNode = editor.querySelector(`#${cursorPlaceholderId}`);
+            if (placeholderNode) {
+                const range = document.createRange();
+                let focusNode = document.createTextNode('\u200B'); 
+                if (placeholderNode.parentNode) {
+                    placeholderNode.parentNode.insertBefore(focusNode, placeholderNode.nextSibling);
+                    range.setStart(focusNode, 0); 
+                    placeholderNode.parentNode.removeChild(placeholderNode);
+                } else { 
+                    editor.appendChild(focusNode); 
+                    range.setStart(focusNode, 0);
+                }
+                range.collapse(true);
+                sel.addRange(range);
+                successfullyRestored = true;
+            }
+        }
+
+        if (!successfullyRestored) {
+            try {
+                let startNode = getNodeFromPath(editor, details.startContainerPath);
+                let endNode = details.isCollapsed ? startNode : getNodeFromPath(editor, details.endContainerPath);
+                if (!startNode) { placeCursorAtEndOf(editor); return false; }
+                if (!details.isCollapsed && !endNode) endNode = startNode; 
+                let startOffset = details.startOffset;
+                let endOffset = details.isCollapsed ? startOffset : details.endOffset;
+                if (startNode.nodeType === Node.TEXT_NODE) startOffset = Math.min(startOffset, startNode.nodeValue.length);
+                else if (startNode.nodeType === Node.ELEMENT_NODE) startOffset = Math.min(startOffset, startNode.childNodes.length);
+                if (!details.isCollapsed && endNode) {
+                    if (endNode.nodeType === Node.TEXT_NODE) endOffset = Math.min(endOffset, endNode.nodeValue.length);
+                    else if (endNode.nodeType === Node.ELEMENT_NODE) endOffset = Math.min(endOffset, endNode.childNodes.length);
+                } else { endOffset = startOffset; }
+                const range = document.createRange(); range.setStart(startNode, startOffset);
+                if (details.isCollapsed || !endNode) range.collapse(true);
+                else range.setEnd(endNode, endOffset);
+                sel.addRange(range); successfullyRestored = true;
+            } catch (e) { console.error("tryRestoreSelection: Error path-based:", e); placeCursorAtEndOf(editor); }
+        }
+        if (typeof editor.focus === 'function') editor.focus({ preventScroll: preventScrollForFocus });
+        return successfullyRestored;
+    }
+
+    async function saveDocumentTitle() { 
+        if (!currentDocId || !docTitleInput) return; 
+        const newTitle = docTitleInput.value.trim() || "Documento Sem Título"; 
+        try { 
+            await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() }); 
+            if(currentDocumentData) currentDocumentData.titulo = newTitle; 
+        } catch (e) { 
+            console.error("Erro ao salvar título do documento:", e); 
+            alert("Falha ao salvar o título."); 
+        } 
+    }
+   
+    async function addReferenceToDocument(title) {
+        if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; }
+        const liveRange = rangeForPendingReference; 
+        if (!liveRange) { alert("Nenhuma seleção válida foi armazenada."); rangeForPendingReference = null; return; }
+        if (!activeEditorElement.contains(liveRange.commonAncestorContainer)) { alert("A seleção armazenada não é válida para o editor ativo."); rangeForPendingReference = null; return; }
+        if (!currentDocId || !title) { alert("ID do documento ou título da referência ausente."); return; }
+        
+        const urlInputs = document.querySelectorAll('#addRefUrlsContainer .ref-url-input'); 
+        const urls = [];
+        let allUrlsValid = true; 
+        let atLeastOneUrlProvided = false;
+        urlInputs.forEach(input => { 
+            const urlVal = input.value.trim(); 
+            if (urlVal) { 
+                atLeastOneUrlProvided = true; 
+                try { new URL(urlVal); urls.push(urlVal); } catch (_) { allUrlsValid = false; } 
+            } 
+        });
+        if (!atLeastOneUrlProvided) { alert("Pelo menos uma URL é obrigatória."); return; }
+        if (!allUrlsValid) { alert("Uma ou mais URLs fornecidas são inválidas."); return; }
+
+        const refId = generateId('ref-'); 
+        let selTxt = "";
+        if (liveRange && !liveRange.collapsed) selTxt = liveRange.toString().trim();
+        
+        const span = document.createElement('span'); 
+        span.className = 'referenced-text'; 
+        span.setAttribute('data-ref-id', refId);
+        
+        try {
+            if (!liveRange.collapsed) { 
+                const selectedContents = liveRange.extractContents(); 
+                span.appendChild(selectedContents); 
+            } 
+            liveRange.insertNode(span);
+            const newRangeForCursor = document.createRange();
+            const spaceNode = document.createTextNode('\u00A0'); 
+            if (span.parentNode) {
+                span.parentNode.insertBefore(spaceNode, span.nextSibling);
+                newRangeForCursor.setStart(spaceNode, 1); 
+                newRangeForCursor.collapse(true);
+                const sel = window.getSelection(); 
+                if (sel) { sel.removeAllRanges(); sel.addRange(newRangeForCursor); }
+            }
+            if(activeEditorElement) activeEditorElement.focus({ preventScroll: true }); 
+        } catch (e) { 
+            console.error("Erro ao envolver texto com span de referência:", e.message); 
+            alert("Ocorreu um erro ao criar a referência no texto."); 
+        }
+        
+        const newRef = { id: refId, tituloReferencia: title, urls: urls, textoSelecionadoOriginal: selTxt };
+        try {
+            if (!currentDocumentData.referencias) currentDocumentData.referencias = [];
+            currentDocumentData.referencias.push(newRef);
+            await updateDoc(doc(db, "documentos", currentDocId), { 
+                referencias: arrayUnion(newRef), 
+                atualizadoEm: serverTimestamp() 
+            });
+            renderReferences(currentDocumentData.referencias);
+            if(addReferencePopup) hidePopup(addReferencePopup);
+            await saveDocumentBody(true); 
+        } catch (e) { 
+            console.error("Erro ao adicionar referência ao Firebase:", e); 
+            alert("Falha ao adicionar referência ao banco de dados."); 
+        }
+        finally {
+            rangeForPendingReference = null; 
+        }
+    }
+
+    function renderReferences(refsInput = []) { 
+        if(!referencesListUl) return; 
+        referencesListUl.innerHTML = ""; 
+        if (!currentDocId || !editorsContainer) { 
+            referencesListUl.innerHTML = "<li>Nenhuma referência (editor/documento não carregado).</li>"; 
+            return; 
+        } 
+        
+        const allRefsInCurrentDoc = refsInput.length > 0 ? refsInput : (currentDocumentData ? currentDocumentData.referencias : []);
+        
+        if (!allRefsInCurrentDoc || allRefsInCurrentDoc.length === 0) { 
+            referencesListUl.innerHTML = "<li>Nenhuma referência adicionada a este documento.</li>"; 
+            return; 
+        } 
+        
+        const refSpansInEditor = [];
+        editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id]').forEach(s => refSpansInEditor.push(s));
+        const orderedRefIdsFromEditor = refSpansInEditor.map(span => span.dataset.refId)
+                                                      .filter((id, index, self) => self.indexOf(id) === index); 
+
+        const refMap = new Map();
+        allRefsInCurrentDoc.forEach(ref => refMap.set(ref.id, ref));
+
+        const sortedReferencesToDisplay = [];
+        orderedRefIdsFromEditor.forEach(id => {
+            if (refMap.has(id)) {
+                sortedReferencesToDisplay.push(refMap.get(id));
+            }
+        });
+
+        if (sortedReferencesToDisplay.length === 0 && allRefsInCurrentDoc.length > 0) {
+             // Se nenhuma referência ordenada foi encontrada mas existem referências, mostra todas (pode ser um fallback)
+             // Isso pode acontecer se as referências foram adicionadas mas os spans não foram criados corretamente no editor
+             console.warn("Nenhuma referência ordenada encontrada no editor, mas referências existem nos dados. Mostrando todas.");
+             allRefsInCurrentDoc.forEach(ref => sortedReferencesToDisplay.push(ref));
+        }
+
+        if (sortedReferencesToDisplay.length === 0) {
+             referencesListUl.innerHTML = "<li>Nenhuma referência encontrada no texto do documento ou nos dados.</li>";
+             return;
+        }
+        
+        sortedReferencesToDisplay.forEach(ref => { 
+            const li = document.createElement('li'); 
+            li.className = 'reference-item';
+            li.setAttribute('data-ref-id', ref.id);
+
+            const cDiv = document.createElement('div'); 
+            cDiv.className = 'ref-content'; 
+            
+            const tS = document.createElement('span'); 
+            tS.className = 'ref-title'; 
+            tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `; 
+            tS.dataset.refId = ref.id;
+            tS.addEventListener('click', navigateToReferencedTextInEditor);
+            cDiv.appendChild(tS); 
+            
+            const urlsToDisplay = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
+            if (urlsToDisplay.length > 0) {
+                const urlsContainer = document.createElement('div');
+                urlsContainer.style.marginTop = '3px';
+                urlsToDisplay.forEach(url => {
+                    const a = document.createElement('a'); 
+                    a.href = url; 
+                    a.textContent = escapeHTML(url); 
+                    a.target = "_blank"; 
+                    a.style.display = 'block';
+                    a.style.marginBottom = '2px';
+                    urlsContainer.appendChild(a);
+                });
+                cDiv.appendChild(urlsContainer);
+            }
+            li.appendChild(cDiv); 
+            
+            const eB = document.createElement('button'); 
+            eB.className = 'edit-ref-btn'; 
+            eB.innerHTML = '✎'; 
+            eB.title = "Editar Referência";
+            eB.dataset.refId = ref.id; 
+            eB.addEventListener('click', () => openEditReferencePopup(ref.id)); 
+            li.appendChild(eB); 
+            
+            referencesListUl.appendChild(li); 
+        }); 
+    }
+
+    function openEditReferencePopup(refId) { 
+        if (!currentDocumentData || !currentDocumentData.referencias || !editingRefIdInput || !editRefTitleInput || !editReferencePopup) return; 
+        const ref = currentDocumentData.referencias.find(r => r.id === refId); 
+        if (!ref) { alert("Referência não encontrada."); return; } 
+        editingRefIdInput.value = refId; 
+        editRefTitleInput.value = ref.tituloReferencia; 
+        
+        const editRefUrlsContainer = document.getElementById('editRefUrlsContainer');
+        if(!editRefUrlsContainer) return;
+        editRefUrlsContainer.innerHTML = '';
+        const existingUrls = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
+        if (existingUrls.length > 0) {
+            existingUrls.forEach((url, index) => {
+                createUrlInputEntry('editRefUrlsContainer', url, existingUrls.length > 1 || index > 0);
+            });
+            if (editRefUrlsContainer.childElementCount === 1) {
+                const singleInputGroup = editRefUrlsContainer.firstChild;
+                if(singleInputGroup){
+                    const removeBtn = singleInputGroup.querySelector('button[type="button"]');
+                    if (removeBtn) removeBtn.remove(); 
+                    const urlInputInside = singleInputGroup.querySelector('.ref-url-input');
+                    if (urlInputInside) urlInputInside.style.marginRight = '0'; 
+                }
+            }
+        } else {
+            createUrlInputEntry('editRefUrlsContainer', '', false); 
+        }
+        showPopup(editReferencePopup); 
+    }
+
+    async function saveEditedReference() { 
+        if(!editingRefIdInput || !editRefTitleInput) return; 
+        const id = editingRefIdInput.value; 
+        const title = editRefTitleInput.value.trim(); 
+        if (!id || !title) { alert("Título é obrigatório."); return; } 
+        
+        const editUrlInputs = document.querySelectorAll('#editRefUrlsContainer .ref-url-input'); 
+        const newUrls = [];
+        let allEditedUrlsValid = true; 
+        let atLeastOneUrlProvidedInEdit = false;
+        editUrlInputs.forEach(input => { 
+            const urlVal = input.value.trim(); 
+            if (urlVal) { 
+                atLeastOneUrlProvidedInEdit = true; 
+                try { new URL(urlVal); newUrls.push(urlVal); } catch (_) { allEditedUrlsValid = false; } 
+            } 
+        });
+        if (!atLeastOneUrlProvidedInEdit) { alert("Pelo menos uma URL é obrigatória."); return; }
+        if (!allEditedUrlsValid) { alert("Uma ou mais URLs são inválidas."); return; }
+
+        if (!currentDocumentData || !currentDocumentData.referencias) return; 
+        const idx = currentDocumentData.referencias.findIndex(r => r.id === id); 
+        if (idx === -1) { alert("Referência não encontrada para editar."); return; } 
+        
+        const updatedRefs = [...currentDocumentData.referencias]; 
+        updatedRefs[idx] = { ...updatedRefs[idx], tituloReferencia: title, urls: newUrls }; 
+        delete updatedRefs[idx].urlReferencia; 
+        
+        try { 
+            await updateDoc(doc(db, "documentos", currentDocId), { 
+                referencias: updatedRefs, 
+                atualizadoEm: serverTimestamp() 
+            }); 
+            currentDocumentData.referencias = updatedRefs; 
+            renderReferences(currentDocumentData.referencias); 
+            if(editReferencePopup) hidePopup(editReferencePopup); 
+        } catch (e) { 
+            console.error("Erro ao salvar referência editada:", e); 
+        } 
+    }
+    
+    async function deleteReference(){ 
+        if(!editingRefIdInput) return; 
+        const refId=editingRefIdInput.value; 
+        if(!refId||!window.confirm("Excluir esta referência? Isto removerá a marcação do texto também."))return; 
+        if(!currentDocumentData||!currentDocumentData.referencias)return; 
+        
+        const updatedRefs=currentDocumentData.referencias.filter(r=>r.id!==refId); 
+        let bodyChanged=false; 
+        if(editorsContainer) {
+            editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{ 
+                const frag=document.createDocumentFragment(); 
+                while(spanInEditor.firstChild) { frag.appendChild(spanInEditor.firstChild); } 
+                if(spanInEditor.parentNode) spanInEditor.parentNode.replaceChild(frag,spanInEditor); 
+                bodyChanged=true; 
+            });
+        }
+        try{ 
+            await updateDoc(doc(db,"documentos",currentDocId),{
+                referencias:updatedRefs,
+                atualizadoEm:serverTimestamp()
+            }); 
+            currentDocumentData.referencias=updatedRefs; 
+            renderReferences(currentDocumentData.referencias); 
+            if(editReferencePopup) hidePopup(editReferencePopup); 
+            if(bodyChanged) saveDocumentBody(true); 
+        }catch(e){
+            console.error("Erro ao excluir referência:",e);
+            alert("Erro ao excluir referência.");
+        } 
+    }
+
+    function clearEditorHighlights(){ 
+        if(editorsContainer) editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter .highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')); 
+        if(referencesListUl) referencesListUl.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));
+    }
+
+    function navigateToReferencedTextInEditor(event){
+        const refId=event.target.dataset.refId;
+        if(!refId || !editorsContainer)return;
+        
+        let refSpanInEditor=null;
+        editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="'+refId+'"]').forEach(s=>{
+            if(!refSpanInEditor) refSpanInEditor=s; 
+        });
+        
+        const refListItem=event.target.closest('li.reference-item');
+        clearEditorHighlights();
+        
+        if(refSpanInEditor){
+            refSpanInEditor.scrollIntoView({behavior:'smooth',block:'center'});
+            refSpanInEditor.classList.add('highlight-scroll');
+            if(refListItem) refListItem.classList.add('highlight-scroll');
+            setTimeout(clearEditorHighlights,2500);
+        } else {
+            alert("Marcação da referência não encontrada no texto.");
+        }
+    }
+
+    function showAddReferencePopup() { 
+        if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; } 
+        const rangeToUse = currentSelectionRange;
+        if (!rangeToUse || !activeEditorElement.contains(rangeToUse.commonAncestorContainer)) { 
+            alert("Selecione texto ou posicione o cursor no capítulo onde deseja adicionar a referência."); 
+            rangeForPendingReference = null; 
+            return; 
+        }
+        rangeForPendingReference = rangeToUse.cloneRange(); 
+        
+        if (refTitleInput) refTitleInput.value = ""; 
+        const addRefUrlsContainer = document.getElementById('addRefUrlsContainer');
+        if (addRefUrlsContainer) { 
+            addRefUrlsContainer.innerHTML = ''; 
+            createUrlInputEntry('addRefUrlsContainer', '', false); 
+        } 
+        if (addReferencePopup) { 
+            showPopup(addReferencePopup); 
+            if (refTitleInput) refTitleInput.focus(); 
+        } 
+        hideFloatingToolbar(); 
+    }
+    
+    async function showLoadDocumentsPopup(){ 
+        if(!loadDocumentPopup || !documentsListContainerUl || !documentsListContainerMsg) return; 
+        showPopup(loadDocumentPopup);
+        documentsListContainerUl.innerHTML="";
+        documentsListContainerMsg.textContent="Carregando...";
+        documentsListContainerMsg.style.display='block';
+        try{
+            const q=query(collection(db,"documentos"), orderBy("atualizadoEm","desc"));
+            const snap=await getDocs(q);
+            if(snap.empty){
+                documentsListContainerMsg.textContent="Nenhum documento encontrado.";
+                return;
+            }
+            documentsListContainerMsg.style.display='none';
+            snap.forEach(dS=>{
+                const data=dS.data();
+                const li=document.createElement('li');
+                const ts=document.createElement('span');
+                ts.textContent=escapeHTML(data.titulo)||"Sem Título";
+                ts.title=escapeHTML(data.titulo)||"Sem Título";
+                const eb=document.createElement('button');
+                eb.textContent="Editar";
+                eb.dataset.docId=dS.id;
+                eb.addEventListener('click',e=>{
+                    loadDocument(e.target.dataset.docId);
+                    hidePopup(loadDocumentPopup);
+                });
+                li.appendChild(ts);
+                li.appendChild(eb);
+                documentsListContainerUl.appendChild(li);
+            });
+        }catch(e){
+            console.error("Erro ao buscar documentos para carregar:",e);
+            documentsListContainerMsg.textContent="Erro ao carregar.";
+        }
+    }
+    
+    function safelyAddEventListener(element, eventType, listener, elementName = 'Elemento') { 
+        if (element) { 
+            element.addEventListener(eventType, listener); 
+        } else { 
+            console.warn(`Elemento "${elementName}" não encontrado para adicionar listener.`); 
+        } 
+    }
+
+    // Inicialização da Aplicação
+    window.addEventListener('DOMContentLoaded', async () => {
+        if (initialScreenDiv) initialScreenDiv.style.display = 'block';
+        if (editorInterfaceDiv) editorInterfaceDiv.style.display = 'none';
+
+        safelyAddEventListener(initNewDocBtn, 'click', createNewDocument, 'initNewDocBtn');
+        safelyAddEventListener(initLoadDocBtn, 'click', showLoadDocumentsPopup, 'initLoadDocBtn');
+        safelyAddEventListener(backToInitialScreenBtn, 'click', showInitialScreen, 'backToInitialScreenBtn');
+        
+        safelyAddEventListener(docTitleInput, 'blur', () => { saveDocumentTitle().catch(err => { console.error("Erro de saveDocumentTitle no blur:", err); }); }, 'docTitleInput');
+       
+        safelyAddEventListener(addChapterBtn, 'click', () => {
+            const newWrapper = createNewChapterElement('', null, true); 
+            saveDocumentBody(true); 
+        }, 'addChapterBtn');
+
+        safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup, 'attachLinkBtn');
+        
+        safelyAddEventListener(saveNewRefBtnElement, 'click', () => { 
+            if(refTitleInput) { 
+                const t = refTitleInput.value.trim(); 
+                if (t) addReferenceToDocument(t); 
+                else alert("Título da referência é obrigatório.");
+            } 
+        }, 'saveNewRefBtnElement');
+        
+        safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference, 'saveEditedRefBtn');
+        safelyAddEventListener(deleteRefBtn, 'click', deleteReference, 'deleteRefBtn');
+       
+        document.querySelectorAll('.close-popup-btn').forEach(btn => btn.addEventListener('click', () => {
+            const popupToClose = btn.closest('.popup');
+            if (popupToClose) hidePopup(popupToClose);
+            if (popupToClose && popupToClose.id === 'addReferencePopup') rangeForPendingReference = null;
+        }));
+
+        safelyAddEventListener(editorsContainer, 'click', async e => {
+            const chapterDiv = e.target.closest('.text-editor-chapter');
+            if (chapterDiv) activeEditorElement = chapterDiv; 
+        }, 'editorsContainer (click)');
+
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+            if (!activeEditorElement || !sel || !sel.rangeCount) { 
+                hideFloatingToolbar(); 
+                currentSelectionRange = null; 
+                return; 
+            }
+            const range = sel.getRangeAt(0); 
+            currentSelectionRange = range; 
+            
+            if (activeEditorElement.contains(range.commonAncestorContainer)) {
+                if (!sel.isCollapsed && sel.toString().trim() !== "") {
+                    showFloatingToolbar();
+                } else {
+                    hideFloatingToolbar();
+                }
+            } else { 
+                hideFloatingToolbar();
+                currentSelectionRange = null; 
+            }
+        });
+        
+        document.addEventListener('mousedown', e => { 
+            if (!editorInterfaceDiv || !floatingToolbar ) return; 
+            const isEditorUIDisplayed = editorInterfaceDiv.style.display !== 'none'; 
+            if (!isEditorUIDisplayed) return; 
+            
+            const isClickOnAnyPopup = e.target.closest('.popup');
+            const isClickOnFloatingToolbar = floatingToolbar.contains(e.target);
+            const isClickInsideChapter = e.target.closest('.text-editor-chapter');
+            
+            if (!isClickOnFloatingToolbar && !isClickOnAnyPopup) { 
+                if (!isClickInsideChapter || (isClickInsideChapter && window.getSelection() && window.getSelection().isCollapsed)) { 
+                    if (!isClickOnFloatingToolbar) hideFloatingToolbar(); 
+                } 
+            } 
+        });
+        
+        if (cancelNewRefBtn) { 
+            cancelNewRefBtn.addEventListener('click', () => { 
+                rangeForPendingReference = null; 
+            }); 
+        }
+
+        if (addMoreUrlsToAddPopupBtn) { 
+            addMoreUrlsToAddPopupBtn.addEventListener('click', () => { 
+                const container = document.getElementById('addRefUrlsContainer'); 
+                if(!container) return; 
+                if (container.childElementCount === 1) {
+                    const firstGroup = container.firstChild;
+                    if (firstGroup && !firstGroup.querySelector('button[type="button"]')) { 
+                        const urlInput = firstGroup.querySelector('.ref-url-input');
+                        const val = urlInput ? urlInput.value : '';
+                        firstGroup.remove();
+                        createUrlInputEntry('addRefUrlsContainer', val, true); 
+                    }
+                }
+                createUrlInputEntry('addRefUrlsContainer', '', true); 
+            }); 
+        }
+        if (addMoreUrlsToEditPopupBtn) { 
+            addMoreUrlsToEditPopupBtn.addEventListener('click', () => { 
+                const container = document.getElementById('editRefUrlsContainer'); 
+                if(!container) return; 
+                if (container.childElementCount === 1) {
+                    const firstGroup = container.firstChild;
+                    if (firstGroup && !firstGroup.querySelector('button[type="button"]')) { 
+                        const urlInput = firstGroup.querySelector('.ref-url-input');
+                        const val = urlInput ? urlInput.value : '';
+                        firstGroup.remove();
+                        createUrlInputEntry('editRefUrlsContainer', val, true); 
+                    }
+                }
+                createUrlInputEntry('editRefUrlsContainer', '', true); 
+            }); 
+        }
+
+        await showInitialScreen(); 
+    });
+</script>
+</body>
+</html>

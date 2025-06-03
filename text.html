@@ -36,7 +36,7 @@
         .chapter-wrapper {
             position: relative;
             margin-bottom: 25px;
-            padding-top: 40px; /* Espaço para a toolbar acima */
+            padding-top: 40px; 
             border: 1px solid #3a3a3a;
             border-radius: 4px;
             background-color: #252525;
@@ -86,7 +86,7 @@
             border-radius: 0; 
             margin-bottom: 0; 
             outline: none;
-            line-height: 1.6; /* Será sobrescrito por JS se necessário */
+            line-height: 1.6; 
             background-color: transparent; 
             color: #d4d4d4;
         }
@@ -98,17 +98,38 @@
             margin-bottom: 0.5em; 
             color: inherit; 
         }
-        /* --- FIM DOS ESTILOS PARA CAPÍTULOS --- */
-
+        
         #editorsContainer .text-editor-chapter .referenced-text { 
             background-color: #384858; padding: 1px 2px; border-radius: 3px; 
             cursor: default; color: #a8c8e8; 
         }
-        /* Não precisamos mais de .person-text, .event-text, etc. */
+        #editorsContainer .text-editor-chapter .referenced-text.eye-icon-active { /* Destaque para span com olho ativo */
+            background-color: #304050; 
+            outline: 1px dotted #7aa0c7;
+        }
 
-        .toolbar { position: absolute; background: #444; color: white; padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 1000; display: flex; gap: 5px; }
-        .toolbar button { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; padding: 5px; }
-        .toolbar button:hover { background-color: #555; }
+        .toolbar { 
+            position: absolute; 
+            background: #444; 
+            color: white; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4); 
+            z-index: 1000; 
+            display: flex; 
+            gap: 5px; 
+        }
+        .toolbar button { 
+            background: none; 
+            border: none; 
+            color: white; 
+            font-size: 1.2em; 
+            cursor: pointer; 
+            padding: 5px; 
+        }
+        .toolbar button:hover { 
+            background-color: #555; 
+        }
         
         .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1001; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
         .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
@@ -129,7 +150,7 @@
         #referencesSection h2 { color: #c0c0c0; }
         #referencesList { list-style: none; padding: 0; }
         #referencesList li { background: #353535; padding: 10px 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #484848; position: relative; }
-        #referencesList li .ref-content { padding-right: 30px; } /* Espaço para botão editar */
+        #referencesList li .ref-content { padding-right: 30px; } 
         #referencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 3px; cursor: pointer; color: #b0c4de;}
         #referencesList li .ref-title:hover { color: #87cefa; text-decoration: underline; }
         #referencesList li a { text-decoration: none; color: #7aa0c7; word-break: break-all; }
@@ -151,8 +172,8 @@
         .url-input-group button[type="button"] { padding: 10px 15px; border: none; border-radius: 4px; background-color: #d9534f; color: white; cursor: pointer; flex-shrink: 0; margin-left: 10px; }
         #addMoreUrlsToAddPopupBtn, #addMoreUrlsToEditPopupBtn { padding: 8px 12px; font-size:0.9em; margin-bottom: 15px; background-color: #5a6268; color:white; border:none; border-radius:4px; cursor:pointer; }
         #addMoreUrlsToAddPopupBtn:hover, #addMoreUrlsToEditPopupBtn:hover { background-color: #6c757d; }
-         .highlight-scroll { background-color: #2c3e50 !important; } /* Para destacar referência no editor */
-        .reference-item.highlight-scroll { background-color: #5a512e !important; } /* Para destacar referência na lista */
+        .highlight-scroll { background-color: #2c3e50 !important; } 
+        .reference-item.highlight-scroll { background-color: #5a512e !important; } 
 
     </style>
 </head>
@@ -163,19 +184,15 @@
             <button id="initNewDocBtn">Novo Documento</button>
             <button id="initLoadDocBtn">Carregar Documento</button>
         </div>
-        <!-- Seção de Documentos Recentes Removida para Simplificar o Foco no Carregamento -->
     </div>
 
     <div id="editorInterface" style="display: none;">
         <div class="container">
-             <!-- Doc actions simplificado -->
             <div class="doc-actions" style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;">
                 <button id="backToInitialScreenBtn" title="Voltar à Tela Inicial">Voltar</button>
             </div>
             <input type="text" id="docTitle" placeholder="Título do Documento">
             
-            <!-- Toolbar Principal Removida/Simplificada (não há botões específicos por enquanto) -->
-
             <div id="editorsContainer">
                 <!-- Capítulos serão inseridos aqui dinamicamente -->
             </div>
@@ -183,7 +200,6 @@
             
             <div id="floatingToolbar" class="toolbar" style="display: none;">
                 <button id="attachLinkBtn" title="Anexar Link/Referência">🔗</button>
-                <!-- Outros botões de entidade removidos -->
             </div>
             
             <div id="referencesSection">
@@ -193,6 +209,11 @@
         </div>
     </div>
 
+    <!-- Toolbar do Olho para Referências -->
+    <div id="referenceEyeToolbar" class="toolbar" style="display: none;">
+        <button id="viewReferenceFromToolbarBtn" title="Ver Referência">👁️</button>
+    </div>
+
     <!-- Pop-up para Adicionar Referência -->
     <div id="addReferencePopup" class="popup">
         <div class="popup-content">
@@ -200,7 +221,6 @@
             <input type="text" id="refTitleInput" placeholder="Título da Referência">
             <label style="display:block; margin-bottom:5px; margin-top:10px; color: #c0c0c0;">URLs do Link:</label>
             <div id="addRefUrlsContainer" style="margin-bottom: 10px;">
-                <!-- URL inputs serão adicionados aqui por JS -->
             </div>
             <button type="button" id="addMoreUrlsToAddPopupBtn">+ Adicionar Outro Link</button>
             <div class="popup-actions">
@@ -217,7 +237,6 @@
             <input type="text" id="editRefTitleInput" placeholder="Título da Referência">
             <label style="display:block; margin-bottom:5px; margin-top:10px; color: #c0c0c0;">URLs do Link:</label>
             <div id="editRefUrlsContainer" style="margin-bottom: 10px;">
-                 <!-- URL inputs serão adicionados aqui por JS -->
             </div>
             <button type="button" id="addMoreUrlsToEditPopupBtn">+ Adicionar Outro Link</button>
             <input type="hidden" id="editingRefIdInput">
@@ -243,10 +262,7 @@
         </div>
     </div>
 
-    <!-- Outros pop-ups (Pessoas, Eventos, Locais, Índice, Contexto, Sugestões, etc.) foram removidos -->
-
 <script type="module">
-      
     // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
     const firebaseConfig = {
       apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY",
@@ -275,7 +291,7 @@
         throw new Error("Falha na inicialização do Firebase. O aplicativo não pode continuar.");
     }
 
-    // IDs dos Elementos (Simplificado)
+    // IDs dos Elementos
     const initialScreenDiv = document.getElementById('initialScreen');
     const editorInterfaceDiv = document.getElementById('editorInterface');
     const initNewDocBtn = document.getElementById('initNewDocBtn');
@@ -308,19 +324,22 @@
     const addMoreUrlsToAddPopupBtn = document.getElementById('addMoreUrlsToAddPopupBtn');
     const addMoreUrlsToEditPopupBtn = document.getElementById('addMoreUrlsToEditPopupBtn');
 
+    const referenceEyeToolbar = document.getElementById('referenceEyeToolbar');
+    const viewReferenceFromToolbarBtn = document.getElementById('viewReferenceFromToolbarBtn');
 
-    // Variáveis de Estado Global (Simplificado)
+    // Variáveis de Estado Global
     let currentDocId = null;
     let currentDocumentData = null; 
     let debounceTimer;
     let currentSelectionRange = null;
     let rangeForPendingReference = null;
     let activeEditorElement = null; 
+    let activeReferencedTextSpanForEye = null; 
     
     // Constantes Globais
     const DEFAULT_FONT_SIZE = '16px'; 
     const DEFAULT_LINE_HEIGHT = '1.6'; 
-    const CURSOR_PLACEHOLDER_ID = "___cursor_placeholder_temp___"; // Mantido para tryRestoreSelection
+    const CURSOR_PLACEHOLDER_ID = "___cursor_placeholder_temp___";
 
 
     // Funções Utilitárias
@@ -339,11 +358,36 @@
     function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) { const container = document.getElementById(containerId); if (!container) return null; const inputGroup = document.createElement('div'); inputGroup.className = 'url-input-group'; const urlInput = document.createElement('input'); urlInput.type = 'url'; urlInput.className = 'ref-url-input'; urlInput.placeholder = 'URL do Link'; urlInput.value = urlValue; inputGroup.appendChild(urlInput); if (canBeRemoved) { urlInput.style.marginRight = '10px'; const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = 'Remover'; removeBtn.addEventListener('click', () => { inputGroup.remove(); if (container.childElementCount === 0) { createUrlInputEntry(container.id, '', false); } }); inputGroup.appendChild(removeBtn); } container.appendChild(inputGroup); return urlInput; }
 
 
-    // Funções de Toolbar (Simplificado)
+    // Funções de Toolbar
     function hideFloatingToolbar(){ if(floatingToolbar) floatingToolbar.style.display='none'; }
     function showFloatingToolbar(){ if(!currentSelectionRange || !activeEditorElement || !floatingToolbar) return; if (floatingToolbar.style.display === 'flex' && currentSelectionRange.collapsed) return; const rect = currentSelectionRange.getBoundingClientRect(); floatingToolbar.style.left = `${rect.left + window.scrollX + (rect.width/2) - (floatingToolbar.offsetWidth/2)}px`; floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; floatingToolbar.style.display = 'flex'; }
     
-    // --- Funções de Capítulo (Simplificado) ---
+    function hideReferenceEyeToolbar() {
+        if (referenceEyeToolbar) referenceEyeToolbar.style.display = 'none';
+        if (activeReferencedTextSpanForEye) {
+            activeReferencedTextSpanForEye.classList.remove('eye-icon-active'); 
+            activeReferencedTextSpanForEye = null;
+        }
+    }
+
+    function showReferenceEyeToolbar(targetSpan) {
+        if (!referenceEyeToolbar || !targetSpan) return;
+        hideFloatingToolbar(); 
+        
+        const rect = targetSpan.getBoundingClientRect();
+        referenceEyeToolbar.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (referenceEyeToolbar.offsetWidth / 2)}px`;
+        referenceEyeToolbar.style.top = `${rect.top + window.scrollY - referenceEyeToolbar.offsetHeight - 5}px`; 
+        referenceEyeToolbar.style.display = 'flex';
+        referenceEyeToolbar.dataset.refId = targetSpan.dataset.refId; 
+
+        if (activeReferencedTextSpanForEye && activeReferencedTextSpanForEye !== targetSpan) {
+            activeReferencedTextSpanForEye.classList.remove('eye-icon-active');
+        }
+        activeReferencedTextSpanForEye = targetSpan;
+        activeReferencedTextSpanForEye.classList.add('eye-icon-active'); 
+    }
+
+    // --- Funções de Capítulo ---
     function generateChapterId() { return 'chptr-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9); }
 
     function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterCreation = false) {
@@ -533,6 +577,7 @@
         activeEditorElement = null; currentSelectionRange = null; rangeForPendingReference = null;
         if (referencesListUl) referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
         hideFloatingToolbar();
+        hideReferenceEyeToolbar(); // Esconde também a toolbar do olho
         updateChapterActionButtonsState();
     }
    
@@ -719,14 +764,7 @@
                 });
                 updateChapterActionButtonsState(); 
             } else {
-                // NENHUMA reconstrução do DOM, NENHUMA tentativa de restaurar seleção ou foco explicitamente.
-                // O navegador deve manter o cursor.
-                // Restaurar scroll pode ser útil se for necessário, mas vamos omitir por enquanto para evitar "breaks".
-                // requestAnimationFrame(() => {
-                //     if (scrollPositionsToRestore.element && scrollPositionsToRestore.element.scrollTop !== scrollPositionsToRestore.scrollTop) {
-                //         // scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop; 
-                //     }
-                // });
+                // No DOM reconstruction, no explicit focus/selection restoration for typing/pasting
             }
         } catch (e) {
             console.error("Erro ao salvar corpo do documento:", e);
@@ -738,7 +776,6 @@
     function getNodeFromPath(root, path) { let current = root; for (const index of path) { if (!current || !current.childNodes || typeof current.childNodes[index] === 'undefined') return null; current = current.childNodes[index]; } return current; }
     
     function tryRestoreSelection(editor, details, preventScrollForFocus = false) {
-        // Esta função SÓ é chamada quando isStructuralChange = true em saveDocumentBody
         const sel = window.getSelection();
         if (!sel || !editor) { if (editor && typeof editor.focus === 'function') editor.focus({ preventScroll: preventScrollForFocus }); return false; }
         sel.removeAllRanges(); 
@@ -849,11 +886,8 @@
         try {
             if (!currentDocumentData.referencias) currentDocumentData.referencias = [];
             currentDocumentData.referencias.push(newRef);
-            // A ordenação da lista de referências para exibição é feita em renderReferences
             
             await updateDoc(doc(db, "documentos", currentDocId), { 
-                // Salva a lista de referências como está em currentDocumentData.referencias
-                // A ordenação para persistência pode ser feita aqui se desejado, mas renderReferences já ordena para exibição.
                 referencias: currentDocumentData.referencias, 
                 atualizadoEm: serverTimestamp() 
             });
@@ -1052,7 +1086,7 @@
     }
 
     function clearEditorHighlights(){ 
-        if(editorsContainer) editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter .highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')); 
+        if(editorsContainer) editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter .highlight-scroll, .reference-item.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')); 
         if(referencesListUl) referencesListUl.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));
     }
 
@@ -1183,13 +1217,39 @@
 
         safelyAddEventListener(editorsContainer, 'click', async e => {
             const chapterDiv = e.target.closest('.text-editor-chapter');
-            if (chapterDiv) activeEditorElement = chapterDiv; 
+            if (chapterDiv) {
+                activeEditorElement = chapterDiv;
+            } else {
+                if (!e.target.closest('#referenceEyeToolbar') && !e.target.closest('#floatingToolbar')) {
+                    hideReferenceEyeToolbar();
+                    hideFloatingToolbar();
+                }
+                return; 
+            }
+
+            const clickedReferencedText = e.target.closest('span.referenced-text[data-ref-id]');
+            const selection = window.getSelection();
+
+            if (clickedReferencedText && selection && selection.isCollapsed) {
+                e.stopPropagation(); 
+                showReferenceEyeToolbar(clickedReferencedText);
+                return; 
+            } else if (!e.target.closest('#referenceEyeToolbar')) {
+                hideReferenceEyeToolbar();
+            }
+            
+            if (selection && selection.isCollapsed && floatingToolbar.style.display === 'flex') {
+                if (!e.target.closest('#floatingToolbar')) { 
+                    hideFloatingToolbar();
+                }
+            }
         }, 'editorsContainer (click)');
 
         document.addEventListener('selectionchange', () => {
             const sel = window.getSelection();
             if (!activeEditorElement || !sel || !sel.rangeCount) { 
                 hideFloatingToolbar(); 
+                hideReferenceEyeToolbar(); // Esconder também a toolbar do olho se não houver seleção válida
                 currentSelectionRange = null; 
                 return; 
             }
@@ -1199,31 +1259,62 @@
             if (activeEditorElement.contains(range.commonAncestorContainer)) {
                 if (!sel.isCollapsed && sel.toString().trim() !== "") {
                     showFloatingToolbar();
-                } else {
+                    hideReferenceEyeToolbar(); // Esconder toolbar do olho se estiver selecionando texto
+                } else { // Seleção colapsada (cursor)
                     hideFloatingToolbar();
+                    // Não esconder a toolbar do olho aqui, pois ela pode ter sido ativada por um clique
                 }
             } else { 
                 hideFloatingToolbar();
+                hideReferenceEyeToolbar();
                 currentSelectionRange = null; 
             }
         });
         
         document.addEventListener('mousedown', e => { 
-            if (!editorInterfaceDiv || !floatingToolbar ) return; 
-            const isEditorUIDisplayed = editorInterfaceDiv.style.display !== 'none'; 
-            if (!isEditorUIDisplayed) return; 
+            if (!editorInterfaceDiv || editorInterfaceDiv.style.display === 'none') return; 
             
             const isClickOnAnyPopup = e.target.closest('.popup');
-            const isClickOnFloatingToolbar = floatingToolbar.contains(e.target);
-            const isClickInsideChapter = e.target.closest('.text-editor-chapter');
+            const isClickOnFloatingToolbar = floatingToolbar && floatingToolbar.contains(e.target);
+            const isClickOnEyeToolbar = referenceEyeToolbar && referenceEyeToolbar.contains(e.target);
+            const isClickInsideReferencedText = e.target.closest('span.referenced-text[data-ref-id]');
             
-            if (!isClickOnFloatingToolbar && !isClickOnAnyPopup) { 
-                if (!isClickInsideChapter || (isClickInsideChapter && window.getSelection() && window.getSelection().isCollapsed)) { 
-                    if (!isClickOnFloatingToolbar) hideFloatingToolbar(); 
-                } 
-            } 
+            if (!isClickOnFloatingToolbar && !isClickOnAnyPopup && !isClickOnEyeToolbar) { 
+                hideFloatingToolbar(); 
+            }
+            if (!isClickOnEyeToolbar && !isClickInsideReferencedText && !isClickOnAnyPopup ) {
+                 hideReferenceEyeToolbar();
+            }
         });
         
+        safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', (event) => {
+            event.stopPropagation(); 
+            const targetRefId = referenceEyeToolbar.dataset.refId;
+            if (targetRefId && referencesListUl) {
+                const referenceListItem = referencesListUl.querySelector(`li.reference-item[data-ref-id="${targetRefId}"]`);
+                if (referenceListItem) {
+                    clearEditorHighlights(); 
+                    referenceListItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    referenceListItem.classList.add('highlight-scroll'); 
+                    
+                    const refSpanInEditor = editorsContainer.querySelector(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${targetRefId}"]`);
+                    if (refSpanInEditor) {
+                        refSpanInEditor.classList.add('highlight-scroll');
+                    }
+
+                    setTimeout(() => { 
+                        referenceListItem.classList.remove('highlight-scroll');
+                        if (refSpanInEditor) {
+                            refSpanInEditor.classList.remove('highlight-scroll');
+                        }
+                    }, 2500);
+                } else {
+                    alert("Item da referência não encontrado na lista.");
+                }
+            }
+            hideReferenceEyeToolbar(); 
+        }, 'viewReferenceFromToolbarBtn');
+
         if (cancelNewRefBtn) { 
             cancelNewRefBtn.addEventListener('click', () => { 
                 rangeForPendingReference = null; 
@@ -1265,10 +1356,6 @@
 
         await showInitialScreen(); 
     });
-
-
-
-
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atril de Documentos (Com Sugestões)</title>
+    <title>Atril de Documentos (Com Sugestões e Pop-up de Referência)</title>
     <style>
         :root {
             color-scheme: dark light;
@@ -64,7 +64,7 @@
         #right-column {
             flex: 1;
             padding-left: 30px;
-            position: relative; 
+            position: relative;
         }
         #selected-doc-title {
             font-size: 1.8em;
@@ -84,16 +84,19 @@
         #selected-doc-body li {
             color: #d4d4d4;
         }
+        /* Old .referenced-text style, ensure it doesn't conflict or remove if not needed */
+        /* We now handle styling changes directly in JS when creating sup markers */
         #selected-doc-body .referenced-text {
-            cursor: pointer;
+            /* Styles will be overridden by JS for the new popup behavior */
+            /* cursor: pointer;
             background-color: #384858;
             padding: 1px 2px;
             border-radius: 3px;
-            color: #a8c8e8;
+            color: #a8c8e8; */
         }
-        #selected-doc-body .referenced-text:hover {
+        /* #selected-doc-body .referenced-text:hover {
             background-color: #4a5c6e;
-        }
+        } */
         #selected-doc-references-container {
             margin-top: 40px;
             border-top: 1px solid #444;
@@ -120,11 +123,11 @@
             display: block;
             margin-bottom: 6px;
             color: #b0c4de;
-            cursor: pointer;
+            /* cursor: pointer; */ /* Clicks handled by li now */
         }
-         #selected-doc-references-list li .ref-title-atril:hover {
+         /* #selected-doc-references-list li .ref-title-atril:hover {
             text-decoration: underline;
-        }
+        } */
         #selected-doc-references-list li .ref-url-item-atril a {
             text-decoration: none;
             color: #7aa0c7;
@@ -150,6 +153,10 @@
         #selected-doc-references-list li.atril-highlight-scroll {
             background-color: #5a512e !important;
         }
+        sup.ref-marker-popup.atril-highlight-scroll {
+             background-color: #5a512e !important; /* Example highlight for sup */
+        }
+
         .status-indicator {
             font-size: 0.8em;
             color: #888;
@@ -167,6 +174,39 @@
         @keyframes blink {
             50% { opacity: 0; }
         }
+
+        /* Styles for the new superscript reference markers */
+        sup.ref-marker-popup {
+            cursor: pointer;
+            color: #7aa0c7; /* Wikipedia-like blue */
+            font-size: 0.8em;
+            font-weight: bold;
+            line-height: 1; /* Prevent affecting line height of main text */
+            vertical-align: super;
+            margin: 0 1px; /* Small spacing */
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+        sup.ref-marker-popup a {
+            color: inherit;
+            text-decoration: none;
+        }
+        sup.ref-marker-popup:hover,
+        sup.ref-marker-popup:hover a {
+            background-color: #384858; /* Slight hover background for the sup */
+            color: #a8c8e8;
+            text-decoration: none;
+        }
+
+        /* Style for #referencePopup is mostly inline, but you can add more here */
+        #referencePopupUrls a {
+            text-decoration: none;
+            word-break: break-all;
+        }
+        #referencePopupUrls a:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
@@ -215,12 +255,19 @@
         </div>
     </div>
 
+    <!-- Reference Pop-up Panel -->
+    <div id="referencePopup" style="position: absolute; display: none; background: #3a3a3a; color: #e0e0e0; border: 1px solid #555; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); z-index: 1020; padding: 10px 15px; width: 280px; max-width: 90%; font-size: 0.9em; line-height: 1.4;">
+        <button id="referencePopupCloseBtn" title="Fechar" style="position: absolute; top: 3px; right: 5px; background: none; border: none; color: #aaa; font-size: 1.4em; cursor: pointer; padding: 2px 5px;">×</button>
+        <div id="referencePopupTitle" style="font-weight: bold; margin-bottom: 8px; color: #b0c4de; padding-right: 20px;"></div>
+        <div id="referencePopupUrls"></div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { 
-            getFirestore, collection, getDocs, query, where, orderBy, 
-            doc, onSnapshot, addDoc, serverTimestamp // Adicionado addDoc
+        import {
+            getFirestore, collection, getDocs, query, where, orderBy,
+            doc, onSnapshot, addDoc, serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -232,7 +279,7 @@
             appId: "1:266293600679:web:3b7c264f0b5e35ebea1682" // EXEMPLO - SUBSTITUA
         };
 
-        if (!firebaseConfig || !firebaseConfig.projectId) { 
+        if (!firebaseConfig || !firebaseConfig.projectId) {
             console.error("CONFIGURAÇÃO DO FIREBASE INVÁLIDA OU AUSENTE!");
             alert("ERRO CRÍTICO: Configuração do Firebase não encontrada.");
             throw new Error("Firebase config error: projectId is missing.");
@@ -259,6 +306,11 @@
         const cancelSuggestionBtn = document.getElementById('cancelSuggestionBtn');
         const saveSuggestionBtn = document.getElementById('saveSuggestionBtn');
 
+        // New elements for Reference Popup
+        const referencePopupEl = document.getElementById('referencePopup');
+        const referencePopupTitleEl = document.getElementById('referencePopupTitle');
+        const referencePopupUrlsEl = document.getElementById('referencePopupUrls');
+        const referencePopupCloseBtn = document.getElementById('referencePopupCloseBtn');
 
         const CHAPTER_DELIMITER_STORAGE = '<hr class="chapter-break-for-storage" style="display:none;">';
         const CHAPTER_DELIMITER_VIEW = '<hr style="border:0; border-top:1px dashed #555; margin: 20px 0;">';
@@ -268,23 +320,13 @@
         let currentDocContentListenerUnsubscribe = null;
         let editorCursorListenerUnsubscribe = null;
         let cursorIndicatorEl = null;
-        let displayedDocId = null; // Usado para rastrear qual doc está sendo exibido e escutado
+        let displayedDocId = null;
         let currentAtrilSelectionRange = null;
         let currentAtrilSelectedText = "";
+        let currentDocReferencesMap = {}; // To store { refId: { title, urls, displayNumber } }
 
 
-         function escapeHTML(str) {
-            if (typeof str !== 'string') return '';
-            const map = { 
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;', 
-                '"': '&quot;',
-                "'": '&apos;',
-                '`': '&#96;'
-            };
-            return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; });
-        }        function applyDefaultStylesToBlocks(container, targetFontSize, targetLineHeight) { if (!container) return; container.querySelectorAll('p, div').forEach(el => { if (!el.style.fontSize) el.style.fontSize = targetFontSize; if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight; }); }
+        function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }
 
         async function loadAllDocumentTitlesAndCache() {
             try {
@@ -302,10 +344,10 @@
                     button.addEventListener('click', () => {
                         if (currentActiveTitleButton) { currentActiveTitleButton.classList.remove('active'); }
                         button.classList.add('active'); currentActiveTitleButton = button;
-                        
-                        displayedDocId = docSnap.id; // Define ANTES de escutar
+                        displayedDocId = docSnap.id;
                         listenToDocumentContent(docSnap.id);
                         listenToEditorCursor(docSnap.id);
+                        hideReferencePopup(); // Hide popup when changing documents
                     });
                     li.appendChild(button); docTitlesListEl.appendChild(li);
                 });
@@ -314,11 +356,19 @@
         }
 
         function updateDisplayedDocument(docData) {
-            if (!docData) { /* ... */ return; }
-            const currentScrollTop = selectedDocBodyEl.scrollTop; // Salva scroll antes de mudar innerHTML
+            if (!docData) {
+                noDocSelectedMsgEl.style.display = 'block';
+                selectedDocTitleEl.textContent = "Selecione um Documento";
+                if(liveStatusIndicatorEl) selectedDocTitleEl.appendChild(liveStatusIndicatorEl);
+                selectedDocBodyEl.innerHTML = '<p id="no-doc-selected">Nenhum documento para exibir.</p>';
+                referencesContainerEl.style.display = 'none';
+                hideReferencePopup(); // Hide any active popup
+                return;
+            }
+            const currentScrollTop = selectedDocBodyEl.scrollTop;
 
             noDocSelectedMsgEl.style.display = 'none';
-            // Atualiza título, mas preserva o span do indicador de status se existir
+            
             let titleTextNode = null;
             for(const node of selectedDocTitleEl.childNodes) {
                 if(node.nodeType === Node.TEXT_NODE) {
@@ -328,34 +378,159 @@
             }
             if(titleTextNode) {
                 titleTextNode.textContent = escapeHTML(docData.titulo) || "Documento Sem Título";
-            } else { // Fallback se não houver nó de texto (ex: primeira carga)
+            } else {
                 selectedDocTitleEl.textContent = escapeHTML(docData.titulo) || "Documento Sem Título";
-                if(liveStatusIndicatorEl) selectedDocTitleEl.appendChild(liveStatusIndicatorEl); // Re-anexa o indicador
+                if(liveStatusIndicatorEl) selectedDocTitleEl.appendChild(liveStatusIndicatorEl);
             }
 
+            // Reset and rebuild the references map for the current document
+            currentDocReferencesMap = {};
+            let referenceDisplayCounter = 1;
+            const encounteredRefIdsForNumbering = {}; // Tracks ref IDs to assign unique numbers [1], [2]
+
+            if (docData.referencias && Array.isArray(docData.referencias)) {
+                docData.referencias.forEach(ref => {
+                    if (ref && ref.id) {
+                        currentDocReferencesMap[ref.id] = {
+                            titulo: ref.tituloReferencia || "Referência sem título",
+                            urls: (ref.urls && Array.isArray(ref.urls)) ? ref.urls.filter(u => typeof u === 'string' && u.trim() !== '') 
+                                  : (ref.urlReferencia && typeof ref.urlReferencia === 'string' && ref.urlReferencia.trim() !== '' ? [ref.urlReferencia] : []),
+                            displayNumber: 0 // Will be set as we find them in body
+                        };
+                    }
+                });
+            }
 
             let fullBodyHtml = "";
-            if (Array.isArray(docData.corpo) && docData.corpo.length > 0) {
-                fullBodyHtml = docData.corpo[0].split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
-            } else if (typeof docData.corpo === 'string') {
+            const docIdentifier = escapeHTML(docData.titulo || (docData.id ? `ID: ${docData.id}` : 'Desconhecido'));
+
+            if (typeof docData.corpo === 'string') {
                 fullBodyHtml = docData.corpo.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
-            } else {
-                fullBodyHtml = "<p>Conteúdo vazio.</p>";
+            } else if (Array.isArray(docData.corpo)) {
+                if (docData.corpo.length > 0) {
+                    const firstItem = docData.corpo[0];
+                    if (typeof firstItem === 'string') {
+                        fullBodyHtml = firstItem.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
+                    } else if (typeof firstItem === 'object' && firstItem !== null) {
+                        console.warn(`Conteúdo do documento '${docIdentifier}' (ID: ${docData.id || 'N/A'}) em docData.corpo[0] é um objeto. Tentando encontrar texto... Conteúdo:`, firstItem);
+                        let foundTextInObject = null;
+                        const commonTextProperties = ['text', 'content', 'html', 'body', 'value', 'textContent', 'innerHTML']; 
+                        for (const prop of commonTextProperties) {
+                            if (typeof firstItem[prop] === 'string') {
+                                foundTextInObject = firstItem[prop];
+                                console.log(`Texto encontrado na propriedade '${prop}' do objeto para o documento '${docIdentifier}'.`);
+                                break;
+                            }
+                        }
+                        if (foundTextInObject) {
+                            fullBodyHtml = foundTextInObject.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
+                        } else {
+                            console.error(`Não foi possível encontrar uma propriedade de texto esperada no objeto do documento '${docIdentifier}'. Estrutura do objeto:`, firstItem);
+                            fullBodyHtml = `<p>Formato de conteúdo inválido para o documento '${docIdentifier}'. O conteúdo principal é um objeto com estrutura não reconhecida.</p>`;
+                        }
+                    } else {
+                        console.warn(`Conteúdo do documento '${docIdentifier}' (ID: ${docData.id || 'N/A'}) em docData.corpo[0] não é uma string nem um objeto. Tipo: ${typeof firstItem}. Conteúdo:`, firstItem);
+                        fullBodyHtml = `<p>Formato de conteúdo inválido para o documento '${docIdentifier}': o conteúdo principal tem um tipo inesperado (${typeof firstItem}).</p>`;
+                    }
+                } else { 
+                    fullBodyHtml = `<p>Conteúdo vazio para o documento '${docIdentifier}' (array 'corpo' está vazio).</p>`;
+                }
+            } else if (docData.corpo === null || docData.corpo === undefined) {
+                fullBodyHtml = `<p>Conteúdo não disponível para o documento '${docIdentifier}'.</p>`;
+            } else { 
+                console.warn(`Conteúdo do documento '${docIdentifier}' (ID: ${docData.id || 'N/A'}) tem tipo inesperado para 'corpo': ${typeof docData.corpo}. Conteúdo:`, docData.corpo);
+                fullBodyHtml = `<p>Formato de conteúdo inesperado para o documento '${docIdentifier}': tipo de dado '${typeof docData.corpo}' não suportado para 'corpo'.</p>`;
             }
-            selectedDocBodyEl.innerHTML = fullBodyHtml;
-            cursorIndicatorEl = null; 
             
+            selectedDocBodyEl.innerHTML = fullBodyHtml; // Set the main content
+
+            // --- Process content to insert superscript reference markers ---
+            const refTextSpans = Array.from(selectedDocBodyEl.querySelectorAll('span.referenced-text[data-ref-id]'));
+            refTextSpans.forEach(span => {
+                const refId = span.dataset.refId;
+                if (currentDocReferencesMap[refId]) {
+                    if (!encounteredRefIdsForNumbering[refId]) {
+                        encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
+                        currentDocReferencesMap[refId].displayNumber = encounteredRefIdsForNumbering[refId];
+                    }
+                    const displayNumber = encounteredRefIdsForNumbering[refId];
+
+                    const supElement = document.createElement('sup');
+                    supElement.className = 'ref-marker-popup';
+                    supElement.dataset.refId = refId;
+                    supElement.innerHTML = `[<a>${displayNumber}</a>]`;
+
+                    span.parentNode.insertBefore(supElement, span.nextSibling);
+
+                    span.style.backgroundColor = 'transparent';
+                    span.style.padding = '0';
+                    span.style.borderRadius = '0';
+                    span.style.color = 'inherit';
+                    span.style.cursor = 'default';
+                    // span.classList.remove('referenced-text'); // Optional
+                } else {
+                    console.warn(`Referência com ID '${refId}' (em span.referenced-text) não encontrada nos dados de referência.`);
+                }
+            });
+            
+            const placeholderRefTags = Array.from(selectedDocBodyEl.querySelectorAll('ref[data-ref-id]')); // Example for <ref> tags
+            placeholderRefTags.forEach(tag => {
+                const refId = tag.dataset.refId;
+                if (currentDocReferencesMap[refId]) {
+                    if (!encounteredRefIdsForNumbering[refId]) {
+                        encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
+                        currentDocReferencesMap[refId].displayNumber = encounteredRefIdsForNumbering[refId];
+                    }
+                    const displayNumber = encounteredRefIdsForNumbering[refId];
+
+                    const supElement = document.createElement('sup');
+                    supElement.className = 'ref-marker-popup';
+                    supElement.dataset.refId = refId;
+                    supElement.innerHTML = `[<a>${displayNumber}</a>]`;
+                    tag.parentNode.replaceChild(supElement, tag);
+                } else {
+                    console.warn(`Referência com ID '${refId}' (em placeholder tag) não encontrada.`);
+                    tag.remove();
+                }
+            });
+
+            cursorIndicatorEl = null; 
             selectedDocBodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
             applyDefaultStylesToBlocks(selectedDocBodyEl, '1.1em', '1.7');
 
+            // Update the bottom references list
             const references = docData.referencias || [];
-            if (references.length === 0) {
+            if (references.length === 0 || Object.keys(currentDocReferencesMap).length === 0) {
                 referencesContainerEl.style.display = 'none'; referencesListEl.innerHTML = '';
             } else {
                 referencesContainerEl.style.display = 'block'; referencesListEl.innerHTML = "";
-                references.forEach(ref => { const li = document.createElement('li'); li.className = 'reference-item-atril'; li.setAttribute('data-ref-id', ref.id); const titleSpan = document.createElement('span'); titleSpan.className = 'ref-title-atril'; titleSpan.textContent = escapeHTML(ref.tituloReferencia); titleSpan.setAttribute('data-navigate-ref-id', ref.id); li.appendChild(titleSpan); if (ref.urls && Array.isArray(ref.urls)) { ref.urls.forEach(url => { const div = document.createElement('div'); div.className = 'ref-url-item-atril'; const a = document.createElement('a'); a.href = url; a.textContent = escapeHTML(url); a.target = "_blank"; div.appendChild(a); li.appendChild(div); }); } else if (ref.urlReferencia) { const div = document.createElement('div'); div.className = 'ref-url-item-atril'; const a = document.createElement('a'); a.href = ref.urlReferencia; a.textContent = escapeHTML(ref.urlReferencia); a.target = "_blank"; div.appendChild(a); li.appendChild(div); } referencesListEl.appendChild(li); });
+                const sortedRefs = references
+                                   .filter(ref => ref && ref.id && currentDocReferencesMap[ref.id] && currentDocReferencesMap[ref.id].displayNumber > 0)
+                                   .sort((a,b) => currentDocReferencesMap[a.id].displayNumber - currentDocReferencesMap[b.id].displayNumber);
+
+                sortedRefs.forEach(ref => {
+                    const refDetails = currentDocReferencesMap[ref.id];
+                    const li = document.createElement('li'); 
+                    li.className = 'reference-item-atril'; 
+                    li.setAttribute('data-ref-id', escapeHTML(ref.id)); 
+                    
+                    const titleSpan = document.createElement('span'); 
+                    titleSpan.className = 'ref-title-atril'; 
+                    titleSpan.innerHTML = `<sup>[${refDetails.displayNumber}]</sup> ${escapeHTML(refDetails.titulo)}`;
+                    li.appendChild(titleSpan); 
+                    
+                    if (refDetails.urls && refDetails.urls.length > 0) { 
+                        refDetails.urls.forEach(url => { 
+                            const div = document.createElement('div'); 
+                            div.className = 'ref-url-item-atril'; 
+                            const a = document.createElement('a'); a.href = url; a.textContent = escapeHTML(url); a.target = "_blank"; 
+                            div.appendChild(a); li.appendChild(div); 
+                        }); 
+                    } 
+                    referencesListEl.appendChild(li); 
+                });
             }
-            selectedDocBodyEl.scrollTop = currentScrollTop; // Restaura scroll
+            selectedDocBodyEl.scrollTop = currentScrollTop;
         }
 
         function listenToDocumentContent(docId) {
@@ -367,12 +542,18 @@
                     const data = docSnap.data();
                     allDocumentsData[docId] = { id: docId, ...data };
                      if (displayedDocId === docId) {
-                        updateDisplayedDocument(data);
+                        updateDisplayedDocument(allDocumentsData[docId]);
                         liveStatusIndicatorEl.textContent = "Sincronizado";
                         setTimeout(() => { if (liveStatusIndicatorEl.textContent === "Sincronizado") liveStatusIndicatorEl.textContent = ""; }, 3000);
                     }
-                } else { liveStatusIndicatorEl.textContent = "Doc. não encontrado"; }
-            }, (error) => { liveStatusIndicatorEl.textContent = "Erro conexão"; console.error("Erro no listener de conteúdo:", error); });
+                } else { 
+                    liveStatusIndicatorEl.textContent = "Doc. não encontrado"; 
+                    if (displayedDocId === docId) { updateDisplayedDocument(null); }
+                }
+            }, (error) => { 
+                liveStatusIndicatorEl.textContent = "Erro conexão"; 
+                console.error(`Erro no listener de conteúdo para docId ${docId}:`, error); 
+            });
         }
 
         function listenToEditorCursor(docId) {
@@ -389,6 +570,7 @@
         }
 
         function updateCursorIndicator(targetOffset) {
+            // ... (existing updateCursorIndicator code - no changes needed for this feature)
             if (!selectedDocBodyEl || selectedDocBodyEl.textContent.trim() === "" || noDocSelectedMsgEl.style.display !== 'none') return;
             if (cursorIndicatorEl && cursorIndicatorEl.parentNode) {
                 const parent = cursorIndicatorEl.parentNode;
@@ -428,7 +610,16 @@
                         }
                         accumulatedLength += nodeLength;
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.classList.contains('editor-cursor-indicator')) continue;
+                        if (node.classList.contains('editor-cursor-indicator') || node.classList.contains('ref-marker-popup')) {
+                            // Skip indicators and reference popups themselves if they affect offset counting
+                            // Or ensure their textContent is empty or not counted if they are inline
+                            if (node.classList.contains('ref-marker-popup')) {
+                                // If ref markers have text like "[1]" that should be counted,
+                                // this logic might need adjustment. Assuming they are mostly for visual cues.
+                            } else {
+                                continue;
+                            }
+                        }
                         if (accumulatedLength === targetOffset && node.offsetParent !== null) {
                              cursorIndicatorEl = document.createElement('span');
                              cursorIndicatorEl.className = 'editor-cursor-indicator';
@@ -452,20 +643,20 @@
                 selectedDocBodyEl.insertBefore(cursorIndicatorEl, selectedDocBodyEl.firstChild);
             }
         }
-        
+
         // Funções para a Toolbar de Sugestão
         function showAtrilSelectionToolbar(x, y) {
             if (!currentAtrilSelectionRange || currentAtrilSelectionRange.collapsed) {
                 hideAtrilSelectionToolbar(); return;
             }
             atrilSelectionToolbar.style.left = `${x}px`;
-            atrilSelectionToolbar.style.top = `${y - atrilSelectionToolbar.offsetHeight - 10}px`; // Ajuste de posição
+            atrilSelectionToolbar.style.top = `${y - atrilSelectionToolbar.offsetHeight - 10}px`;
             atrilSelectionToolbar.style.display = 'block';
         }
         function hideAtrilSelectionToolbar() { atrilSelectionToolbar.style.display = 'none'; }
         function showSuggestionPopup() {
             originalTextPreview.textContent = currentAtrilSelectedText;
-            suggestedText.value = ''; // Começa vazio
+            suggestedText.value = '';
             suggestedLink.value = '';
             suggestionPopup.style.visibility = 'visible';
             suggestionPopup.style.opacity = '1';
@@ -494,23 +685,127 @@
             } catch (error) { console.error("Erro ao salvar sugestão:", error); alert("Falha ao salvar."); }
         }
 
-        // Event listeners
-        selectedDocBodyEl.addEventListener('click', (event) => { /* ... (navegação de ref no corpo) ... */ const targetSpan = event.target.closest('span.referenced-text[data-ref-id]'); if (targetSpan && targetSpan.dataset.refId) { const refId = targetSpan.dataset.refId; const refListItemInView = referencesListEl.querySelector(`li[data-ref-id="${refId}"]`); selectedDocBodyEl.querySelectorAll('.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll')); referencesListEl.querySelectorAll('li.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll')); if (refListItemInView) { refListItemInView.scrollIntoView({ behavior: 'smooth', block: 'center' }); refListItemInView.classList.add('atril-highlight-scroll'); targetSpan.classList.add('atril-highlight-scroll'); setTimeout(() => { if (targetSpan) targetSpan.classList.remove('atril-highlight-scroll'); if (refListItemInView) refListItemInView.classList.remove('atril-highlight-scroll'); }, 3000); } } });
-        referencesListEl.addEventListener('click', (event) => { /* ... (navegação de título de ref) ... */ const clickedTitle = event.target.closest('span.ref-title-atril[data-navigate-ref-id]'); if (clickedTitle) { const refIdToNavigate = clickedTitle.getAttribute('data-navigate-ref-id'); const targetSpanInBody = selectedDocBodyEl.querySelector(`span.referenced-text[data-ref-id="${refIdToNavigate}"]`); selectedDocBodyEl.querySelectorAll('.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll')); referencesListEl.querySelectorAll('li.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll')); if (targetSpanInBody) { targetSpanInBody.scrollIntoView({ behavior: 'smooth', block: 'center' }); targetSpanInBody.classList.add('atril-highlight-scroll'); const refListItem = clickedTitle.closest('li'); if (refListItem) { refListItem.classList.add('atril-highlight-scroll'); } setTimeout(() => { if (targetSpanInBody) targetSpanInBody.classList.remove('atril-highlight-scroll'); if (refListItem) refListItem.classList.remove('atril-highlight-scroll'); }, 3000); } } });
-        
-        selectedDocBodyEl.addEventListener('mouseup', (event) => {
-            if (atrilSelectionToolbar.contains(event.target) || suggestionPopup.style.visibility === 'visible') return;
+        // --- Reference Popup Logic ---
+        function hideReferencePopup() {
+            referencePopupEl.style.display = 'none';
+        }
+
+        selectedDocBodyEl.addEventListener('click', (event) => {
+            const targetSup = event.target.closest('sup.ref-marker-popup');
+            if (targetSup) {
+                event.preventDefault();
+                event.stopPropagation(); // Prevent other click listeners like body click if any
+
+                const refId = targetSup.dataset.refId;
+                const refData = currentDocReferencesMap[refId];
+
+                if (refData) {
+                    referencePopupTitleEl.innerHTML = `<sup>[${refData.displayNumber}]</sup> ${escapeHTML(refData.titulo)}`;
+                    referencePopupUrlsEl.innerHTML = ''; // Clear previous URLs
+
+                    if (refData.urls && refData.urls.length > 0) {
+                        refData.urls.forEach(url => {
+                            const urlLink = document.createElement('a');
+                            urlLink.href = url;
+                            urlLink.textContent = escapeHTML(url);
+                            urlLink.target = '_blank';
+                            urlLink.style.display = 'block';
+                            urlLink.style.marginBottom = '4px';
+                            urlLink.style.color = '#87cefa';
+                            referencePopupUrlsEl.appendChild(urlLink);
+                        });
+                    } else {
+                        referencePopupUrlsEl.textContent = 'Nenhum link disponível.';
+                    }
+
+                    const supRect = targetSup.getBoundingClientRect();
+                    const bodyRect = document.body.getBoundingClientRect(); // Use document.body for global viewport relative calculations
+
+                    let popupTop = supRect.bottom - bodyRect.top + window.scrollY + 5; // Below sup
+                    let popupLeft = supRect.left - bodyRect.left + window.scrollX;   // Align left with sup
+
+                    referencePopupEl.style.display = 'block'; // Display to get its dimensions
+                    const popupRect = referencePopupEl.getBoundingClientRect();
+
+                    // Adjust if popup goes off-screen right
+                    if (popupLeft + popupRect.width > window.innerWidth + window.scrollX - 10) {
+                        popupLeft = window.innerWidth + window.scrollX - popupRect.width - 10;
+                    }
+                     // Adjust if popup goes off-screen left
+                    if (popupLeft < window.scrollX + 10) {
+                        popupLeft = window.scrollX + 10;
+                    }
+                    // Adjust if popup goes off-screen bottom
+                    if (popupTop + popupRect.height > window.innerHeight + window.scrollY - 10) {
+                        // Try to position above if it goes off bottom
+                        popupTop = supRect.top - bodyRect.top + window.scrollY - popupRect.height - 5;
+                        // If still off top (small screen or large popup), let it be (or center it)
+                         if (popupTop < window.scrollY + 10) {
+                            popupTop = window.scrollY + 10;
+                        }
+                    }
+
+
+                    referencePopupEl.style.top = `${popupTop}px`;
+                    referencePopupEl.style.left = `${popupLeft}px`;
+                } else {
+                    hideReferencePopup();
+                }
+                return; // Important: stop further processing if a ref marker was clicked
+            }
+
+            // Logic for hiding popup if click is on body but not on marker or inside popup handled by global listener
+        });
+
+        referencePopupCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideReferencePopup();
+        });
+
+        referencesListEl.addEventListener('click', (event) => {
+            const clickedListItem = event.target.closest('li.reference-item-atril[data-ref-id]');
+            if (clickedListItem) {
+                const refIdToFind = clickedListItem.dataset.refId;
+                const firstMarkerInBody = selectedDocBodyEl.querySelector(`sup.ref-marker-popup[data-ref-id="${refIdToFind}"]`);
+                
+                if (firstMarkerInBody) {
+                    selectedDocBodyEl.querySelectorAll('.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll'));
+                    referencesListEl.querySelectorAll('li.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll'));
+
+                    firstMarkerInBody.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstMarkerInBody.classList.add('atril-highlight-scroll');
+                    clickedListItem.classList.add('atril-highlight-scroll');
+
+                    // Simulate click to show popup for this marker
+                    // Ensure this click is handled by the selectedDocBodyEl listener
+                    const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+                    firstMarkerInBody.dispatchEvent(clickEvent);
+
+
+                    setTimeout(() => {
+                        if (firstMarkerInBody) firstMarkerInBody.classList.remove('atril-highlight-scroll');
+                        if (clickedListItem) clickedListItem.classList.remove('atril-highlight-scroll');
+                    }, 3000);
+                }
+            }
+        });
+
+        // --- Global event listeners ---
+        selectedDocBodyEl.addEventListener('mouseup', (event) => { // For text selection toolbar
+            if (atrilSelectionToolbar.contains(event.target) || suggestionPopup.style.visibility === 'visible' || referencePopupEl.contains(event.target) || event.target.closest('sup.ref-marker-popup')) {
+                 // Don't show selection toolbar if interacting with suggestion popup, reference popup, or a reference marker
+                return;
+            }
             const selection = window.getSelection();
             if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
                 if (selectedDocBodyEl.contains(range.commonAncestorContainer)) {
                     currentAtrilSelectionRange = range.cloneRange();
                     currentAtrilSelectedText = selection.toString().trim();
-                    if (currentAtrilSelectedText.length > 0) { // Só mostra se houver texto selecionado
+                    if (currentAtrilSelectedText.length > 0) {
                         const rect = range.getBoundingClientRect();
-                        // Posicionamento da toolbar relativo ao viewport, ajustado pela rolagem da coluna
                         const columnRect = selectedDocBodyEl.getBoundingClientRect();
-                        let toolbarX = rect.left; 
+                        let toolbarX = rect.left - columnRect.left; // Relative to selectedDocBodyEl
                         let toolbarY = rect.top - columnRect.top + selectedDocBodyEl.scrollTop;
 
                         showAtrilSelectionToolbar(toolbarX, toolbarY);
@@ -521,17 +816,29 @@
             } else { hideAtrilSelectionToolbar(); }
         });
 
-        document.addEventListener('mousedown', (event) => {
+        document.addEventListener('mousedown', (event) => { // For hiding selection toolbar
             if (suggestionPopup.style.visibility === 'visible') return;
-            if (!selectedDocBodyEl.contains(event.target) && !atrilSelectionToolbar.contains(event.target)) {
+
+            // If click is outside body OR toolbar AND not on a ref marker (to allow popup to show)
+            if (!selectedDocBodyEl.contains(event.target) && 
+                !atrilSelectionToolbar.contains(event.target) &&
+                !event.target.closest('sup.ref-marker-popup')) { // Also check if not clicking a marker
                 const selection = window.getSelection();
-                if (selection && selection.isCollapsed) { // Esconde também se a seleção for desfeita
+                if (selection && selection.isCollapsed) {
                      hideAtrilSelectionToolbar();
-                } else if (!selection || selection.rangeCount === 0){ // Se não houver seleção
+                } else if (!selection || selection.rangeCount === 0){
                     hideAtrilSelectionToolbar();
                 }
             }
         });
+
+        document.addEventListener('click', (event) => { // Global click for hiding reference popup
+            if (referencePopupEl.style.display === 'block') {
+                if (!event.target.closest('sup.ref-marker-popup') && !referencePopupEl.contains(event.target)) {
+                    hideReferencePopup();
+                }
+            }
+        }, true); // Use capture phase
 
         suggestEditBtn.addEventListener('click', () => { if (currentAtrilSelectedText) { showSuggestionPopup(); hideAtrilSelectionToolbar(); } });
         cancelSuggestionBtn.addEventListener('click', hideSuggestionPopup);

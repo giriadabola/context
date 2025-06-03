@@ -246,8 +246,9 @@
     <!-- Outros pop-ups (Pessoas, Eventos, Locais, Índice, Contexto, Sugestões, etc.) foram removidos -->
 
 <script type="module">
-     // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
-     const firebaseConfig = {
+      
+    // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
+    const firebaseConfig = {
       apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY",
       authDomain: "bibliacontexto.firebaseapp.com",
       projectId: "bibliacontexto",
@@ -319,7 +320,7 @@
     // Constantes Globais
     const DEFAULT_FONT_SIZE = '16px'; 
     const DEFAULT_LINE_HEIGHT = '1.6'; 
-    const CURSOR_PLACEHOLDER_ID = "___cursor_placeholder_temp___";
+    const CURSOR_PLACEHOLDER_ID = "___cursor_placeholder_temp___"; // Mantido para tryRestoreSelection
 
 
     // Funções Utilitárias
@@ -329,8 +330,8 @@
     function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) { 
         if (!container) return; 
         container.querySelectorAll('p, div').forEach(el => { 
-            if (!el.style.fontSize) el.style.fontSize = targetFontSizeCSS; 
-            if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight; 
+            if (!el.style.fontSize || el.style.fontSize === "") el.style.fontSize = targetFontSizeCSS; 
+            if (!el.style.lineHeight || el.style.lineHeight === "") el.style.lineHeight = targetLineHeight; 
         }); 
     }
     function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }
@@ -352,7 +353,7 @@
 
         const toolbar = document.createElement('div');
         toolbar.className = 'chapter-toolbar';
-        // ... (código dos botões da toolbar do capítulo permanece o mesmo) ...
+
         const moveUpBtn = document.createElement('button');
         moveUpBtn.innerHTML = '🔼';
         moveUpBtn.title = 'Mover Capítulo Para Cima';
@@ -373,7 +374,6 @@
         toolbar.appendChild(removeBtn);
         wrapper.appendChild(toolbar);
 
-
         const chapterDiv = document.createElement('div');
         chapterDiv.className = 'text-editor-chapter';
         chapterDiv.setAttribute('contenteditable', 'true');
@@ -391,39 +391,25 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 if (activeEditorElement === chapterDiv) { 
-                    // A função applyDefaultStylesToBlocks também pode ser chamada aqui se necessário,
-                    // mas o principal é no paste.
                     applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-                    saveDocumentBody(true); 
+                    saveDocumentBody(true, false); 
                 }
             }, 1200); 
         });
 
-        // ***** NOVO: Manipulador de Evento PASTE *****
         chapterDiv.addEventListener('paste', (event) => {
-            event.preventDefault(); // Impede a colagem padrão com formatação
-            
-            // Obter o texto como texto simples
+            event.preventDefault(); 
             const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
-            
             if (plainText) {
-                // Inserir o texto simples. document.execCommand é mais simples para contenteditable.
-                // Embora execCommand esteja "obsoleto", é a maneira mais direta de inserir texto simples
-                // em um contenteditable e geralmente funciona bem para este caso.
                 document.execCommand('insertText', false, plainText);
-
-                // Pequeno timeout para garantir que o DOM foi atualizado pelo execCommand
-                // antes de aplicar estilos e salvar.
                 setTimeout(() => {
-                    if (activeEditorElement) { // Garante que temos um editor ativo
+                    if (activeEditorElement) { 
                         applyDefaultStylesToBlocks(activeEditorElement, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
                     }
-                    saveDocumentBody(true); // Salva o documento com o texto colado
+                    saveDocumentBody(true, false); 
                 }, 0);
             }
         });
-        // ***** FIM DO NOVO Manipulador de Evento PASTE *****
-
 
         wrapper.appendChild(chapterDiv);
         if (editorsContainer) editorsContainer.appendChild(wrapper);
@@ -460,30 +446,49 @@
             return;
         }
         if (window.confirm(`Tem certeza de que deseja remover este capítulo?`)) { 
+            const chapterIdToRemove = chapterWrapperElement.dataset.chapterId;
             chapterWrapperElement.remove();
             if (activeEditorElement && chapterWrapperElement.contains(activeEditorElement)) {
                 activeEditorElement = null; currentSelectionRange = null;
             }
+            if (currentDocumentData && currentDocumentData.corpo) {
+                currentDocumentData.corpo = currentDocumentData.corpo.filter(ch => ch.id !== chapterIdToRemove);
+            }
             updateChapterActionButtonsState();
-            saveDocumentBody(true); 
+            saveDocumentBody(true, true); 
         }
     }
 
     function handleMoveChapter(chapterWrapperElement, direction) {
         if (!editorsContainer || !chapterWrapperElement) return;
         const parent = chapterWrapperElement.parentNode; 
+        let moved = false;
         if (direction === 'up' && chapterWrapperElement.previousElementSibling) {
             parent.insertBefore(chapterWrapperElement, chapterWrapperElement.previousElementSibling);
+            moved = true;
         } else if (direction === 'down' && chapterWrapperElement.nextElementSibling) {
             parent.insertBefore(chapterWrapperElement.nextElementSibling, chapterWrapperElement);
-        } else {
-            return; 
+            moved = true;
         }
-        updateChapterActionButtonsState();
-        saveDocumentBody(true); 
+        
+        if (moved) {
+            if (currentDocumentData && currentDocumentData.corpo) {
+                const newOrderIds = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(w => w.dataset.chapterId);
+                const reorderedCorpo = [];
+                newOrderIds.forEach(id => {
+                    const chapterData = currentDocumentData.corpo.find(ch => ch.id === id);
+                    if (chapterData) {
+                        reorderedCorpo.push(chapterData);
+                    }
+                });
+                currentDocumentData.corpo = reorderedCorpo;
+            }
+            updateChapterActionButtonsState();
+            saveDocumentBody(true, true); 
+        }
     }
 
-    // --- Funções do Editor e Documento (Simplificado) ---
+    // --- Funções do Editor e Documento ---
     function placeCursorAtEndOf(element) {
         const sel = window.getSelection();
         if (sel && element) {
@@ -611,57 +616,43 @@
         renderReferences(references);
     }
 
-    async function saveDocumentBody(forceImmediateSave = false) {
+    async function saveDocumentBody(forceImmediateSave = false, isStructuralChange = false) {
         if (!currentDocId || !editorsContainer) return;
         if (!forceImmediateSave) { 
             clearTimeout(debounceTimer); 
-            debounceTimer = setTimeout(() => saveDocumentBody(true), 1500); 
+            debounceTimer = setTimeout(() => saveDocumentBody(true, false), 1500);
             return; 
         }
 
         let scrollElement = document.querySelector('.container') || document.documentElement;
         if (scrollElement.scrollHeight <= scrollElement.clientHeight && document.body.scrollHeight > document.body.clientHeight) scrollElement = document.body;
         const scrollPositionsToRestore = { element: scrollElement, scrollTop: scrollElement.scrollTop };
+        
+        let activeChapterWrapperFoundForStructural = null; 
+        let selectionDetailsForStructural = null; 
 
         const chapterDataForSave = [];
-        let activeChapterWrapperFound = null; 
-        let selectionDetails = null;
-
-        const chapterWrappers = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));
-        chapterWrappers.forEach((wrapper) => {
+        const chapterWrappersFromDOM = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')); 
+        
+        chapterWrappersFromDOM.forEach((wrapper) => {
             const chapterDiv = wrapper.querySelector('.text-editor-chapter');
             const chapterId = wrapper.dataset.chapterId;
             if (!chapterDiv || !chapterId) return;
             let currentChapterHTML = chapterDiv.innerHTML; 
 
-            if (activeEditorElement === chapterDiv) {
-                activeChapterWrapperFound = wrapper;
+            if (isStructuralChange && activeEditorElement === chapterDiv) { 
+                activeChapterWrapperFoundForStructural = wrapper;
                 const sel = window.getSelection();
                 if (sel && sel.rangeCount > 0) {
                     const range = sel.getRangeAt(0);
                     if (chapterDiv.contains(range.commonAncestorContainer)) {
-                        const placeholderString = `<span id="${CURSOR_PLACEHOLDER_ID}"></span>`;
-                        selectionDetails = {
+                        selectionDetailsForStructural = {
                             startContainerPath: getNodePath(range.startContainer, chapterDiv),
                             startOffset: range.startOffset,
                             endContainerPath: getNodePath(range.endContainer, chapterDiv),
                             endOffset: range.endOffset,
                             isCollapsed: range.collapsed,
-                            placeholderWasInserted: false
                         };
-                        if (range.collapsed) {
-                            const placeholderNode = document.createElement('span');
-                            placeholderNode.id = CURSOR_PLACEHOLDER_ID;
-                            try {
-                                range.insertNode(placeholderNode);
-                                currentChapterHTML = chapterDiv.innerHTML; 
-                                placeholderNode.remove(); 
-                                selectionDetails.placeholderWasInserted = true;
-                            } catch(e) {
-                                console.warn("Erro ao inserir/remover placeholder DOM para pegar HTML", e);
-                                selectionDetails.placeholderWasInserted = false;
-                            }
-                        }
                     }
                 }
             }
@@ -669,7 +660,7 @@
         });
        
         if (currentDocumentData) {
-            currentDocumentData.corpo = chapterDataForSave;
+            currentDocumentData.corpo = chapterDataForSave; 
         }
 
         try {
@@ -677,102 +668,117 @@
                 corpo: chapterDataForSave,
                 atualizadoEm: serverTimestamp()
             });
-           
-            const oldActiveChapterId = activeChapterWrapperFound ? activeChapterWrapperFound.dataset.chapterId : null;
-            editorsContainer.innerHTML = '';
-            activeEditorElement = null; currentSelectionRange = null;
+            
+            if (isStructuralChange) {
+                const oldActiveChapterId = activeChapterWrapperFoundForStructural ? activeChapterWrapperFoundForStructural.dataset.chapterId : null;
+                editorsContainer.innerHTML = ''; 
+                activeEditorElement = null; currentSelectionRange = null;
 
-            const newRenderedWrappersList = [];
-            if (currentDocumentData && Array.isArray(currentDocumentData.corpo)) {
-                currentDocumentData.corpo.forEach(chapterObj => {
-                    if (chapterObj && chapterObj.id && typeof chapterObj.html === 'string') {
-                        newRenderedWrappersList.push(createNewChapterElement(chapterObj.html, chapterObj.id, false));
+                const newRenderedWrappersList = [];
+                if (currentDocumentData && Array.isArray(currentDocumentData.corpo)) {
+                    currentDocumentData.corpo.forEach(chapterObj => {
+                        if (chapterObj && chapterObj.id && typeof chapterObj.html === 'string') {
+                            newRenderedWrappersList.push(createNewChapterElement(chapterObj.html, chapterObj.id, false));
+                        }
+                    });
+                }
+                
+                requestAnimationFrame(() => { 
+                    if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
+                    let wrapperToRestoreFocus = null;
+                    if (oldActiveChapterId) {
+                        wrapperToRestoreFocus = newRenderedWrappersList.find(w => w.dataset.chapterId === oldActiveChapterId);
                     }
-                });
-            }
-
-            requestAnimationFrame(() => { 
-                if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
-                let wrapperToRestoreFocus = null;
-                if (oldActiveChapterId) {
-                     wrapperToRestoreFocus = newRenderedWrappersList.find(w => w.dataset.chapterId === oldActiveChapterId);
-                }
-                if (!wrapperToRestoreFocus && chapterWrappers.indexOf(activeChapterWrapperFound) !== -1 && newRenderedWrappersList[chapterWrappers.indexOf(activeChapterWrapperFound)]) {
-                    wrapperToRestoreFocus = newRenderedWrappersList[chapterWrappers.indexOf(activeChapterWrapperFound)];
-                } else if (!wrapperToRestoreFocus && newRenderedWrappersList.length > 0) {
-                    wrapperToRestoreFocus = newRenderedWrappersList[0];
-                }
-
-                if (wrapperToRestoreFocus) {
-                    const chapterDivToFocus = wrapperToRestoreFocus.querySelector('.text-editor-chapter');
-                    if (chapterDivToFocus) {
-                        activeEditorElement = chapterDivToFocus; 
-                        if (selectionDetails) {
-                             setTimeout(() => { 
-                                tryRestoreSelection(activeEditorElement, selectionDetails, true, CURSOR_PLACEHOLDER_ID, selectionDetails.placeholderWasInserted);
-                            }, 0);
-                        } else {
-                             setTimeout(() => {
-                                placeCursorAtEndOf(activeEditorElement);
-                                activeEditorElement.focus({ preventScroll: true });
-                            }, 0);
+                    if (!wrapperToRestoreFocus && chapterWrappersFromDOM.length > 0 && newRenderedWrappersList.length > 0) {
+                         const oldActiveWrapperDOM = activeChapterWrapperFoundForStructural || (activeEditorElement ? activeEditorElement.closest('.chapter-wrapper') : null);
+                         const oldActiveIndex = oldActiveWrapperDOM ? chapterWrappersFromDOM.indexOf(oldActiveWrapperDOM) : -1;
+                        
+                        if (oldActiveIndex !== -1 && newRenderedWrappersList[oldActiveIndex]) {
+                             wrapperToRestoreFocus = newRenderedWrappersList[oldActiveIndex];
+                        } else if (newRenderedWrappersList.length > 0) {
+                            wrapperToRestoreFocus = newRenderedWrappersList[0]; 
                         }
                     }
-                }
-            });
-            updateChapterActionButtonsState();
+
+                    if (wrapperToRestoreFocus) {
+                        const chapterDivToFocus = wrapperToRestoreFocus.querySelector('.text-editor-chapter');
+                        if (chapterDivToFocus) {
+                            activeEditorElement = chapterDivToFocus; 
+                            if (selectionDetailsForStructural) {
+                                setTimeout(() => { 
+                                    tryRestoreSelection(activeEditorElement, selectionDetailsForStructural, true);
+                                }, 0);
+                            } else {
+                                setTimeout(() => {
+                                    placeCursorAtEndOf(activeEditorElement);
+                                    activeEditorElement.focus({ preventScroll: true });
+                                }, 0);
+                            }
+                        }
+                    }
+                });
+                updateChapterActionButtonsState(); 
+            } else {
+                // NENHUMA reconstrução do DOM, NENHUMA tentativa de restaurar seleção ou foco explicitamente.
+                // O navegador deve manter o cursor.
+                // Restaurar scroll pode ser útil se for necessário, mas vamos omitir por enquanto para evitar "breaks".
+                // requestAnimationFrame(() => {
+                //     if (scrollPositionsToRestore.element && scrollPositionsToRestore.element.scrollTop !== scrollPositionsToRestore.scrollTop) {
+                //         // scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop; 
+                //     }
+                // });
+            }
         } catch (e) {
-            console.error("Erro ao salvar corpo do documento ou atualizar DOM:", e);
+            console.error("Erro ao salvar corpo do documento:", e);
             if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
         }
     }
 
     function getNodePath(node, relativeTo) { const path = []; let current = node; while (current && current !== relativeTo) { const parent = current.parentNode; if (!parent) break; const index = Array.from(parent.childNodes).indexOf(current); path.unshift(index); current = parent; } return path; }
     function getNodeFromPath(root, path) { let current = root; for (const index of path) { if (!current || !current.childNodes || typeof current.childNodes[index] === 'undefined') return null; current = current.childNodes[index]; } return current; }
-    function tryRestoreSelection(editor, details, preventScrollForFocus = false, cursorPlaceholderId = null, placeholderWasUsed = false) {
+    
+    function tryRestoreSelection(editor, details, preventScrollForFocus = false) {
+        // Esta função SÓ é chamada quando isStructuralChange = true em saveDocumentBody
         const sel = window.getSelection();
         if (!sel || !editor) { if (editor && typeof editor.focus === 'function') editor.focus({ preventScroll: preventScrollForFocus }); return false; }
-        sel.removeAllRanges(); let successfullyRestored = false;
+        sel.removeAllRanges(); 
+        let successfullyRestored = false;
 
-        if (details.isCollapsed && placeholderWasUsed && cursorPlaceholderId) {
-            const placeholderNode = editor.querySelector(`#${cursorPlaceholderId}`);
-            if (placeholderNode) {
-                const range = document.createRange();
-                let focusNode = document.createTextNode('\u200B'); 
-                if (placeholderNode.parentNode) {
-                    placeholderNode.parentNode.insertBefore(focusNode, placeholderNode.nextSibling);
-                    range.setStart(focusNode, 0); 
-                    placeholderNode.parentNode.removeChild(placeholderNode);
-                } else { 
-                    editor.appendChild(focusNode); 
-                    range.setStart(focusNode, 0);
-                }
-                range.collapse(true);
-                sel.addRange(range);
-                successfullyRestored = true;
+        try {
+            let startNode = getNodeFromPath(editor, details.startContainerPath);
+            let endNode = details.isCollapsed ? startNode : getNodeFromPath(editor, details.endContainerPath);
+            
+            if (!startNode) { 
+                placeCursorAtEndOf(editor); 
+                return false; 
             }
-        }
+            if (!details.isCollapsed && !endNode) endNode = startNode; 
+            
+            let startOffset = details.startOffset;
+            let endOffset = details.isCollapsed ? startOffset : details.endOffset;
 
-        if (!successfullyRestored) {
-            try {
-                let startNode = getNodeFromPath(editor, details.startContainerPath);
-                let endNode = details.isCollapsed ? startNode : getNodeFromPath(editor, details.endContainerPath);
-                if (!startNode) { placeCursorAtEndOf(editor); return false; }
-                if (!details.isCollapsed && !endNode) endNode = startNode; 
-                let startOffset = details.startOffset;
-                let endOffset = details.isCollapsed ? startOffset : details.endOffset;
-                if (startNode.nodeType === Node.TEXT_NODE) startOffset = Math.min(startOffset, startNode.nodeValue.length);
-                else if (startNode.nodeType === Node.ELEMENT_NODE) startOffset = Math.min(startOffset, startNode.childNodes.length);
-                if (!details.isCollapsed && endNode) {
-                    if (endNode.nodeType === Node.TEXT_NODE) endOffset = Math.min(endOffset, endNode.nodeValue.length);
-                    else if (endNode.nodeType === Node.ELEMENT_NODE) endOffset = Math.min(endOffset, endNode.childNodes.length);
-                } else { endOffset = startOffset; }
-                const range = document.createRange(); range.setStart(startNode, startOffset);
-                if (details.isCollapsed || !endNode) range.collapse(true);
-                else range.setEnd(endNode, endOffset);
-                sel.addRange(range); successfullyRestored = true;
-            } catch (e) { console.error("tryRestoreSelection: Error path-based:", e); placeCursorAtEndOf(editor); }
+            if (startNode.nodeType === Node.TEXT_NODE) startOffset = Math.min(startOffset, startNode.nodeValue.length);
+            else if (startNode.nodeType === Node.ELEMENT_NODE) startOffset = Math.min(startOffset, startNode.childNodes.length);
+            
+            if (!details.isCollapsed && endNode) {
+                if (endNode.nodeType === Node.TEXT_NODE) endOffset = Math.min(endOffset, endNode.nodeValue.length);
+                else if (endNode.nodeType === Node.ELEMENT_NODE) endOffset = Math.min(endOffset, endNode.childNodes.length);
+            } else { 
+                endOffset = startOffset; 
+            }
+            
+            const range = document.createRange(); 
+            range.setStart(startNode, startOffset);
+            if (details.isCollapsed || !endNode) range.collapse(true);
+            else range.setEnd(endNode, endOffset);
+            
+            sel.addRange(range); 
+            successfullyRestored = true;
+        } catch (e) { 
+            console.error("tryRestoreSelection: Erro ao restaurar seleção baseada em path:", e, "Detalhes:", details); 
+            placeCursorAtEndOf(editor); 
         }
+        
         if (typeof editor.focus === 'function') editor.focus({ preventScroll: preventScrollForFocus });
         return successfullyRestored;
     }
@@ -843,13 +849,17 @@
         try {
             if (!currentDocumentData.referencias) currentDocumentData.referencias = [];
             currentDocumentData.referencias.push(newRef);
+            // A ordenação da lista de referências para exibição é feita em renderReferences
+            
             await updateDoc(doc(db, "documentos", currentDocId), { 
-                referencias: arrayUnion(newRef), 
+                // Salva a lista de referências como está em currentDocumentData.referencias
+                // A ordenação para persistência pode ser feita aqui se desejado, mas renderReferences já ordena para exibição.
+                referencias: currentDocumentData.referencias, 
                 atualizadoEm: serverTimestamp() 
             });
             renderReferences(currentDocumentData.referencias);
             if(addReferencePopup) hidePopup(addReferencePopup);
-            await saveDocumentBody(true); 
+            await saveDocumentBody(true, false); 
         } catch (e) { 
             console.error("Erro ao adicionar referência ao Firebase:", e); 
             alert("Falha ao adicionar referência ao banco de dados."); 
@@ -890,14 +900,11 @@
         });
 
         if (sortedReferencesToDisplay.length === 0 && allRefsInCurrentDoc.length > 0) {
-             // Se nenhuma referência ordenada foi encontrada mas existem referências, mostra todas (pode ser um fallback)
-             // Isso pode acontecer se as referências foram adicionadas mas os spans não foram criados corretamente no editor
-             console.warn("Nenhuma referência ordenada encontrada no editor, mas referências existem nos dados. Mostrando todas.");
-             allRefsInCurrentDoc.forEach(ref => sortedReferencesToDisplay.push(ref));
+             console.warn("Nenhuma referência ordenada encontrada no editor, mas referências existem nos dados. Verifique se os spans estão corretos.");
         }
 
         if (sortedReferencesToDisplay.length === 0) {
-             referencesListUl.innerHTML = "<li>Nenhuma referência encontrada no texto do documento ou nos dados.</li>";
+             referencesListUl.innerHTML = "<li>Nenhuma referência encontrada no texto do documento.</li>";
              return;
         }
         
@@ -999,16 +1006,14 @@
         const idx = currentDocumentData.referencias.findIndex(r => r.id === id); 
         if (idx === -1) { alert("Referência não encontrada para editar."); return; } 
         
-        const updatedRefs = [...currentDocumentData.referencias]; 
-        updatedRefs[idx] = { ...updatedRefs[idx], tituloReferencia: title, urls: newUrls }; 
-        delete updatedRefs[idx].urlReferencia; 
+        currentDocumentData.referencias[idx] = { ...currentDocumentData.referencias[idx], tituloReferencia: title, urls: newUrls }; 
+        delete currentDocumentData.referencias[idx].urlReferencia; 
         
         try { 
             await updateDoc(doc(db, "documentos", currentDocId), { 
-                referencias: updatedRefs, 
+                referencias: currentDocumentData.referencias, 
                 atualizadoEm: serverTimestamp() 
             }); 
-            currentDocumentData.referencias = updatedRefs; 
             renderReferences(currentDocumentData.referencias); 
             if(editReferencePopup) hidePopup(editReferencePopup); 
         } catch (e) { 
@@ -1022,7 +1027,7 @@
         if(!refId||!window.confirm("Excluir esta referência? Isto removerá a marcação do texto também."))return; 
         if(!currentDocumentData||!currentDocumentData.referencias)return; 
         
-        const updatedRefs=currentDocumentData.referencias.filter(r=>r.id!==refId); 
+        currentDocumentData.referencias = currentDocumentData.referencias.filter(r=>r.id!==refId); 
         let bodyChanged=false; 
         if(editorsContainer) {
             editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{ 
@@ -1034,13 +1039,12 @@
         }
         try{ 
             await updateDoc(doc(db,"documentos",currentDocId),{
-                referencias:updatedRefs,
+                referencias: currentDocumentData.referencias, 
                 atualizadoEm:serverTimestamp()
             }); 
-            currentDocumentData.referencias=updatedRefs; 
             renderReferences(currentDocumentData.referencias); 
             if(editReferencePopup) hidePopup(editReferencePopup); 
-            if(bodyChanged) saveDocumentBody(true); 
+            if(bodyChanged) saveDocumentBody(true, false); 
         }catch(e){
             console.error("Erro ao excluir referência:",e);
             alert("Erro ao excluir referência.");
@@ -1155,7 +1159,7 @@
        
         safelyAddEventListener(addChapterBtn, 'click', () => {
             const newWrapper = createNewChapterElement('', null, true); 
-            saveDocumentBody(true); 
+            saveDocumentBody(true, true); 
         }, 'addChapterBtn');
 
         safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup, 'attachLinkBtn');
@@ -1261,6 +1265,10 @@
 
         await showInitialScreen(); 
     });
+
+
+
+
 </script>
 </body>
 </html>

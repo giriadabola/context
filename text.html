@@ -107,6 +107,18 @@
             background-color: #304050; 
             outline: 1px dotted #7aa0c7;
         }
+        /* Style for empty referenced text spans */
+        #editorsContainer .text-editor-chapter .referenced-text.referenced-text-empty {
+            color: #FF6B6B; /* A light red, suitable for dark mode */
+            border-bottom: 1px dashed #FF6B6B; /* Makes it more obvious */
+             padding: 0 1px; /* Small padding to make the border visible even if truly empty */
+        }
+        #editorsContainer .text-editor-chapter .referenced-text.referenced-text-empty::before {
+            content: "[vazio]"; /* Placeholder text */
+            font-style: italic;
+            color: #FF8B8B; /* Slightly different red for the placeholder */
+        }
+
 
         .toolbar { 
             position: absolute; 
@@ -157,6 +169,15 @@
         #referencesList li a:hover { text-decoration: underline; color: #87cefa; }
         .edit-ref-btn { position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 1em; cursor: pointer; padding: 5px; color: #999; }
         .edit-ref-btn:hover { color: #bbb; }
+
+        /* MODIFIED: Style for unlinked reference titles in the list */
+        #referencesList li.reference-item-unlinked .ref-title {
+            color: #FF8B8B; /* A light red, similar to [vazio] placeholder */
+        }
+        #referencesList li.reference-item-unlinked .ref-title:hover {
+             color: #FF6B6B; /* A bit brighter red on hover */
+             text-decoration: underline;
+        }
 
         #loadDocumentPopup .popup-content { background: #333; }
         #documentsListContainer ul li button { background-color: #3a7ca5; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 10px; }
@@ -265,7 +286,7 @@
 <script type="module">
     // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
     const firebaseConfig = {
-      apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY",
+      apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // IMPORTANT: Replace with your actual API key if this is a placeholder
       authDomain: "bibliacontexto.firebaseapp.com",
       projectId: "bibliacontexto",
       storageBucket: "bibliacontexto.firebasestorage.app",
@@ -424,6 +445,7 @@
         
         chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
         applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+        updateEmptyReferenceSpansStyles(chapterDiv); 
        
         chapterDiv.addEventListener('focus', () => {
             activeEditorElement = chapterDiv;
@@ -436,9 +458,10 @@
             debounceTimer = setTimeout(() => {
                 if (activeEditorElement === chapterDiv) { 
                     applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+                    updateEmptyReferenceSpansStyles(chapterDiv); 
                     saveDocumentBody(true, false); 
                 }
-            }, 1200); 
+            }, 300);
         });
 
         chapterDiv.addEventListener('paste', (event) => {
@@ -449,6 +472,7 @@
                 setTimeout(() => {
                     if (activeEditorElement) { 
                         applyDefaultStylesToBlocks(activeEditorElement, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+                        updateEmptyReferenceSpansStyles(activeEditorElement); 
                     }
                     saveDocumentBody(true, false); 
                 }, 0);
@@ -499,6 +523,7 @@
                 currentDocumentData.corpo = currentDocumentData.corpo.filter(ch => ch.id !== chapterIdToRemove);
             }
             updateChapterActionButtonsState();
+            renderReferences(); 
             saveDocumentBody(true, true); 
         }
     }
@@ -577,7 +602,7 @@
         activeEditorElement = null; currentSelectionRange = null; rangeForPendingReference = null;
         if (referencesListUl) referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
         hideFloatingToolbar();
-        hideReferenceEyeToolbar(); // Esconde também a toolbar do olho
+        hideReferenceEyeToolbar(); 
         updateChapterActionButtonsState();
     }
    
@@ -641,7 +666,6 @@
         if (Array.isArray(corpoDataFromFirebase) && corpoDataFromFirebase.length > 0 && typeof corpoDataFromFirebase[0] === 'object' && corpoDataFromFirebase[0] !== null && corpoDataFromFirebase[0].hasOwnProperty('id') && corpoDataFromFirebase[0].hasOwnProperty('html')) {
             chaptersToRender = corpoDataFromFirebase;
         } else { 
-            console.warn("Formato do corpo do documento inesperado. Criando capítulo inicial.");
             chaptersToRender.push({ id: generateChapterId(), html: `<p style="font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` });
             if(currentDocumentData) currentDocumentData.corpo = chaptersToRender; 
         }
@@ -656,16 +680,22 @@
         } else { 
             createNewChapterElement('', null, true);
         }
+        
+        if (editorsContainer) { 
+            editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => {
+                updateEmptyReferenceSpansStyles(editor);
+            });
+        }
        
         updateChapterActionButtonsState();
-        renderReferences(references);
+        renderReferences(); // MODIFIED: Call without argument to use global currentDocumentData.referencias
     }
 
     async function saveDocumentBody(forceImmediateSave = false, isStructuralChange = false) {
         if (!currentDocId || !editorsContainer) return;
         if (!forceImmediateSave) { 
             clearTimeout(debounceTimer); 
-            debounceTimer = setTimeout(() => saveDocumentBody(true, false), 1500);
+            debounceTimer = setTimeout(() => saveDocumentBody(true, false), 1500); 
             return; 
         }
 
@@ -714,6 +744,14 @@
                 atualizadoEm: serverTimestamp()
             });
             
+            // MODIFIED: Always re-render references to update link status and order
+            // This covers both structural and non-structural changes effectively.
+            // If it's a structural change, the full re-render will happen below anyway.
+            // If not, this ensures link status/order is updated.
+             if (!isStructuralChange) {
+                renderReferences(); 
+            }
+            
             if (isStructuralChange) {
                 const oldActiveChapterId = activeChapterWrapperFoundForStructural ? activeChapterWrapperFoundForStructural.dataset.chapterId : null;
                 editorsContainer.innerHTML = ''; 
@@ -727,6 +765,12 @@
                         }
                     });
                 }
+                if (editorsContainer) {
+                    editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => {
+                        updateEmptyReferenceSpansStyles(editor);
+                    });
+                }
+                renderReferences(); // This call handles re-rendering for structural changes
                 
                 requestAnimationFrame(() => { 
                     if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
@@ -763,8 +807,6 @@
                     }
                 });
                 updateChapterActionButtonsState(); 
-            } else {
-                // No DOM reconstruction, no explicit focus/selection restoration for typing/pasting
             }
         } catch (e) {
             console.error("Erro ao salvar corpo do documento:", e);
@@ -891,7 +933,8 @@
                 referencias: currentDocumentData.referencias, 
                 atualizadoEm: serverTimestamp() 
             });
-            renderReferences(currentDocumentData.referencias);
+            renderReferences(); // MODIFIED: No argument needed
+            updateEmptyReferenceSpansStyles(activeEditorElement); 
             if(addReferencePopup) hidePopup(addReferencePopup);
             await saveDocumentBody(true, false); 
         } catch (e) { 
@@ -902,89 +945,137 @@
             rangeForPendingReference = null; 
         }
     }
+    
+    function updateEmptyReferenceSpansStyles(editorOrContainer) {
+        if (!editorOrContainer) {
+            return;
+        }
+        const refSpans = editorOrContainer.matches('.text-editor-chapter') ?
+                         editorOrContainer.querySelectorAll('span.referenced-text[data-ref-id]') :
+                         editorOrContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id]');
 
-    function renderReferences(refsInput = []) { 
-        if(!referencesListUl) return; 
-        referencesListUl.innerHTML = ""; 
-        if (!currentDocId || !editorsContainer) { 
-            referencesListUl.innerHTML = "<li>Nenhuma referência (editor/documento não carregado).</li>"; 
-            return; 
-        } 
-        
-        const allRefsInCurrentDoc = refsInput.length > 0 ? refsInput : (currentDocumentData ? currentDocumentData.referencias : []);
-        
-        if (!allRefsInCurrentDoc || allRefsInCurrentDoc.length === 0) { 
-            referencesListUl.innerHTML = "<li>Nenhuma referência adicionada a este documento.</li>"; 
-            return; 
-        } 
-        
-        const refSpansInEditor = [];
-        editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id]').forEach(s => refSpansInEditor.push(s));
-        const orderedRefIdsFromEditor = refSpansInEditor.map(span => span.dataset.refId)
-                                                      .filter((id, index, self) => self.indexOf(id) === index); 
+        refSpans.forEach(span => {
+            if (span.textContent.trim() === '') {
+                if (!span.classList.contains('referenced-text-empty')) {
+                    span.classList.add('referenced-text-empty');
+                }
+            } else {
+                if (span.classList.contains('referenced-text-empty')) {
+                    span.classList.remove('referenced-text-empty');
+                }
+            }
+        });
+    }
 
-        const refMap = new Map();
-        allRefsInCurrentDoc.forEach(ref => refMap.set(ref.id, ref));
+    // MODIFIED: renderReferences function to sort by appearance in text
+    function renderReferences() {
+        if (!referencesListUl) return;
+        referencesListUl.innerHTML = "";
 
-        const sortedReferencesToDisplay = [];
-        orderedRefIdsFromEditor.forEach(id => {
-            if (refMap.has(id)) {
-                sortedReferencesToDisplay.push(refMap.get(id));
+        if (!currentDocId) {
+            referencesListUl.innerHTML = "<li>Nenhuma referência (documento não carregado).</li>";
+            return;
+        }
+
+        const allRefsInCurrentDoc = currentDocumentData && currentDocumentData.referencias ? [...currentDocumentData.referencias] : [];
+
+        if (allRefsInCurrentDoc.length === 0) {
+            referencesListUl.innerHTML = "<li>Nenhuma referência adicionada a este documento.</li>";
+            return;
+        }
+
+        const refIdsInTextOrder = [];
+        const refIdsFoundInText = new Set();
+
+        if (editorsContainer) {
+            const chapterWrappers = editorsContainer.querySelectorAll('.chapter-wrapper');
+            chapterWrappers.forEach(wrapper => {
+                const chapterDiv = wrapper.querySelector('.text-editor-chapter');
+                if (chapterDiv) {
+                    const refSpansInChapter = chapterDiv.querySelectorAll('span.referenced-text[data-ref-id]');
+                    refSpansInChapter.forEach(span => {
+                        const refId = span.dataset.refId;
+                        if (refId && !refIdsFoundInText.has(refId)) {
+                            refIdsInTextOrder.push(refId);
+                            refIdsFoundInText.add(refId);
+                        }
+                    });
+                }
+            });
+        }
+
+        const sortedLinkedRefs = [];
+        const unlinkedRefs = [];
+
+        refIdsInTextOrder.forEach(idInText => {
+            const ref = allRefsInCurrentDoc.find(r => r.id === idInText);
+            if (ref) {
+                sortedLinkedRefs.push(ref);
             }
         });
 
-        if (sortedReferencesToDisplay.length === 0 && allRefsInCurrentDoc.length > 0) {
-             console.warn("Nenhuma referência ordenada encontrada no editor, mas referências existem nos dados. Verifique se os spans estão corretos.");
-        }
+        allRefsInCurrentDoc.forEach(ref => {
+            if (!refIdsFoundInText.has(ref.id)) {
+                unlinkedRefs.push(ref);
+            }
+        });
 
-        if (sortedReferencesToDisplay.length === 0) {
-             referencesListUl.innerHTML = "<li>Nenhuma referência encontrada no texto do documento.</li>";
-             return;
-        }
-        
-        sortedReferencesToDisplay.forEach(ref => { 
-            const li = document.createElement('li'); 
+        const finalRefsToRender = [...sortedLinkedRefs, ...unlinkedRefs];
+
+        finalRefsToRender.forEach(ref => {
+            const li = document.createElement('li');
             li.className = 'reference-item';
             li.setAttribute('data-ref-id', ref.id);
 
-            const cDiv = document.createElement('div'); 
-            cDiv.className = 'ref-content'; 
-            
-            const tS = document.createElement('span'); 
-            tS.className = 'ref-title'; 
-            tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `; 
+            const isLinked = refIdsFoundInText.has(ref.id);
+
+            const cDiv = document.createElement('div');
+            cDiv.className = 'ref-content';
+
+            const tS = document.createElement('span');
+            tS.className = 'ref-title';
+            tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `;
             tS.dataset.refId = ref.id;
             tS.addEventListener('click', navigateToReferencedTextInEditor);
-            cDiv.appendChild(tS); 
-            
+
+            if (!isLinked) {
+                li.classList.add('reference-item-unlinked'); // For red title CSS
+                tS.title = "Esta referência não está atualmente vinculada no texto do documento.";
+            } else {
+                li.classList.remove('reference-item-unlinked');
+            }
+
+            cDiv.appendChild(tS);
+
             const urlsToDisplay = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
             if (urlsToDisplay.length > 0) {
                 const urlsContainer = document.createElement('div');
                 urlsContainer.style.marginTop = '3px';
                 urlsToDisplay.forEach(url => {
-                    const a = document.createElement('a'); 
-                    a.href = url; 
-                    a.textContent = escapeHTML(url); 
-                    a.target = "_blank"; 
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.textContent = escapeHTML(url);
+                    a.target = "_blank";
                     a.style.display = 'block';
                     a.style.marginBottom = '2px';
                     urlsContainer.appendChild(a);
                 });
                 cDiv.appendChild(urlsContainer);
             }
-            li.appendChild(cDiv); 
-            
-            const eB = document.createElement('button'); 
-            eB.className = 'edit-ref-btn'; 
-            eB.innerHTML = '✎'; 
+            li.appendChild(cDiv);
+
+            const eB = document.createElement('button');
+            eB.className = 'edit-ref-btn';
+            eB.innerHTML = '✎';
             eB.title = "Editar Referência";
-            eB.dataset.refId = ref.id; 
-            eB.addEventListener('click', () => openEditReferencePopup(ref.id)); 
-            li.appendChild(eB); 
-            
-            referencesListUl.appendChild(li); 
-        }); 
+            eB.dataset.refId = ref.id;
+            eB.addEventListener('click', () => openEditReferencePopup(ref.id));
+            li.appendChild(eB);
+
+            referencesListUl.appendChild(li);
+        });
     }
+
 
     function openEditReferencePopup(refId) { 
         if (!currentDocumentData || !currentDocumentData.referencias || !editingRefIdInput || !editRefTitleInput || !editReferencePopup) return; 
@@ -1048,7 +1139,7 @@
                 referencias: currentDocumentData.referencias, 
                 atualizadoEm: serverTimestamp() 
             }); 
-            renderReferences(currentDocumentData.referencias); 
+            renderReferences(); // MODIFIED: No argument needed
             if(editReferencePopup) hidePopup(editReferencePopup); 
         } catch (e) { 
             console.error("Erro ao salvar referência editada:", e); 
@@ -1058,27 +1149,23 @@
     async function deleteReference(){ 
         if(!editingRefIdInput) return; 
         const refId=editingRefIdInput.value; 
-        if(!refId||!window.confirm("Excluir esta referência? Isto removerá a marcação do texto também."))return; 
+        if(!refId||!window.confirm("Excluir esta referência? Isto NÃO removerá a marcação do texto caso exista, mas ela ficará 'vazia' e vermelha se o texto dela for removido. A referência será removida da lista. Deseja continuar?"))return; 
         if(!currentDocumentData||!currentDocumentData.referencias)return; 
         
         currentDocumentData.referencias = currentDocumentData.referencias.filter(r=>r.id!==refId); 
-        let bodyChanged=false; 
-        if(editorsContainer) {
-            editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{ 
-                const frag=document.createDocumentFragment(); 
-                while(spanInEditor.firstChild) { frag.appendChild(spanInEditor.firstChild); } 
-                if(spanInEditor.parentNode) spanInEditor.parentNode.replaceChild(frag,spanInEditor); 
-                bodyChanged=true; 
-            });
-        }
+        
         try{ 
             await updateDoc(doc(db,"documentos",currentDocId),{
                 referencias: currentDocumentData.referencias, 
                 atualizadoEm:serverTimestamp()
             }); 
-            renderReferences(currentDocumentData.referencias); 
+            renderReferences(); // MODIFIED: No argument needed
+            if(editorsContainer) {
+                 editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{
+                    updateEmptyReferenceSpansStyles(spanInEditor.closest('.text-editor-chapter'));
+                 });
+            }
             if(editReferencePopup) hidePopup(editReferencePopup); 
-            if(bodyChanged) saveDocumentBody(true, false); 
         }catch(e){
             console.error("Erro ao excluir referência:",e);
             alert("Erro ao excluir referência.");
@@ -1095,9 +1182,10 @@
         if(!refId || !editorsContainer)return;
         
         let refSpanInEditor=null;
-        editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="'+refId+'"]').forEach(s=>{
-            if(!refSpanInEditor) refSpanInEditor=s; 
-        });
+        const allSpansForRef = editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`);
+        if (allSpansForRef.length > 0) {
+            refSpanInEditor = allSpansForRef[0]; // Take the first one, as list is now sorted by first appearance
+        }
         
         const refListItem=event.target.closest('li.reference-item');
         clearEditorHighlights();
@@ -1108,7 +1196,11 @@
             if(refListItem) refListItem.classList.add('highlight-scroll');
             setTimeout(clearEditorHighlights,2500);
         } else {
-            alert("Marcação da referência não encontrada no texto.");
+            alert("Marcação da referência não encontrada no texto. A referência ainda existe na lista.");
+            if(refListItem) { 
+                 refListItem.classList.add('highlight-scroll');
+                 setTimeout(clearEditorHighlights,2500);
+            }
         }
     }
 
@@ -1249,7 +1341,7 @@
             const sel = window.getSelection();
             if (!activeEditorElement || !sel || !sel.rangeCount) { 
                 hideFloatingToolbar(); 
-                hideReferenceEyeToolbar(); // Esconder também a toolbar do olho se não houver seleção válida
+                hideReferenceEyeToolbar(); 
                 currentSelectionRange = null; 
                 return; 
             }
@@ -1259,10 +1351,9 @@
             if (activeEditorElement.contains(range.commonAncestorContainer)) {
                 if (!sel.isCollapsed && sel.toString().trim() !== "") {
                     showFloatingToolbar();
-                    hideReferenceEyeToolbar(); // Esconder toolbar do olho se estiver selecionando texto
-                } else { // Seleção colapsada (cursor)
+                    hideReferenceEyeToolbar(); 
+                } else { 
                     hideFloatingToolbar();
-                    // Não esconder a toolbar do olho aqui, pois ela pode ter sido ativada por um clique
                 }
             } else { 
                 hideFloatingToolbar();

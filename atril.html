@@ -39,8 +39,8 @@
         }
         #settingsGearBtn {
             cursor: pointer;
-            font-size: 0.9em; /* Adjust as needed */
-            padding: 5px; /* Make it easier to click */
+            font-size: 0.9em;
+            padding: 5px;
         }
         #settingsGearBtn:hover {
             color: #c0c0c0;
@@ -78,7 +78,7 @@
             position: relative;
         }
         #selected-doc-title {
-            font-size: 1.8em;
+            font-size: 1.8em; /* Base size, scaled by applyFontSize */
             margin-top: 0;
             margin-bottom: 20px;
             color: #e0e0e0;
@@ -87,13 +87,12 @@
         }
         #selected-doc-body {
             margin-bottom: 30px;
-            line-height: 1.7; /* Default line height */
-            /* Default font size is now controlled by applyFontSize */
+            line-height: 1.7;
         }
         #selected-doc-body, #selected-doc-body p, #selected-doc-body div,
         #selected-doc-body h1, #selected-doc-body h2, #selected-doc-body h3,
         #selected-doc-body li {
-            color: #d4d4d4; /* Default text color */
+            color: #d4d4d4;
         }
         #selected-doc-references-container {
             margin-top: 40px;
@@ -101,7 +100,7 @@
             padding-top: 20px;
         }
         #selected-doc-references-container h3 {
-            font-size: 1.4em; /* Base size, will be scaled by applyFontSize */
+            /* Base size, scaled by applyFontSize */
             margin-bottom: 15px;
             color: #c0c0c0;
         }
@@ -110,12 +109,13 @@
             padding: 0;
         }
         #selected-doc-references-list li {
-            background: #353535;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            border: 1px solid #484848;
-        }
+    background: #353535;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border: 1px solid #484848;
+}
+
         #selected-doc-references-list li .ref-title-atril {
             font-weight: bold;
             display: block;
@@ -169,7 +169,7 @@
         sup.ref-marker-popup {
             cursor: pointer;
             color: #7aa0c7;
-            font-size: 0.8em;
+            font-size: 0.8em; /* Base size for the [1] marker itself */
             font-weight: bold;
             line-height: 1;
             vertical-align: super;
@@ -187,13 +187,40 @@
             color: #a8c8e8;
             text-decoration: none;
         }
-        #referencePopupUrls a {
-            text-decoration: none;
-            word-break: break-all;
-        }
-        #referencePopupUrls a:hover {
-            text-decoration: underline;
-        }
+
+        /* Styles for the Individual Reference Popup */
+        #referencePopup {
+            font-size: 0.85em; 
+    max-height: 250px; 
+    overflow-y: auto;  
+}
+#referencePopupTitle {
+    font-size: 1.05em;
+}
+#referencePopupUrls a {
+    display: block; /* Garante que cada link ocupe sua própria linha */
+    text-decoration: none;
+    word-break: break-all; 
+    color: #87cefa; 
+    font-size: 0.95em; 
+    line-height: 1.4;   /* Aumenta um pouco o espaçamento da linha do texto do link */
+    padding-top: 8px;     /* Adiciona espaço acima de cada link */
+    padding-bottom: 8px;  /* Adiciona espaço abaixo de cada link (para a borda) */
+    margin-bottom: 0;     /* Remove margem inferior, padding controla o espaço */
+    border-bottom: 1px dotted #5c5c5c; /* Linha separadora sutil */
+    border-radius: 2px; /* Suaviza um pouco o hover */
+    transition: background-color 0.2s ease-in-out; /* Transição suave para o hover */
+}
+
+#referencePopupUrls a:last-child {
+    border-bottom: none;
+}
+
+#referencePopupUrls a:hover {
+    text-decoration: underline;
+    background-color: rgba(255, 255, 255, 0.07); /* Leve destaque no hover */
+}
+
     </style>
 </head>
 <body>
@@ -240,7 +267,8 @@
         </div>
     </div>
 
-    <div id="referencePopup" style="position: absolute; display: none; background: #3a3a3a; color: #e0e0e0; border: 1px solid #555; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); z-index: 1020; padding: 10px 15px; width: 280px; max-width: 90%; font-size: 0.9em; line-height: 1.4;">
+    <!-- Reference Pop-up Panel - Note: some styles moved to <style> block -->
+    <div id="referencePopup" style="position: absolute; display: none; background: #3a3a3a; color: #e0e0e0; border: 1px solid #555; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); z-index: 1020; padding: 10px 15px; width: 280px; max-width: 90%;">
         <button id="referencePopupCloseBtn" title="Fechar" style="position: absolute; top: 3px; right: 5px; background: none; border: none; color: #aaa; font-size: 1.4em; cursor: pointer; padding: 2px 5px;">×</button>
         <div id="referencePopupTitle" style="font-weight: bold; margin-bottom: 8px; color: #b0c4de; padding-right: 20px;"></div>
         <div id="referencePopupUrls"></div>
@@ -345,7 +373,6 @@
         function applyDefaultStylesToBlocks(container, _targetFontSize, targetLineHeight) {
             if (!container) return;
             container.querySelectorAll('p, div').forEach(el => {
-                // Font size is now handled by applyFontSize
                 if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
             });
         }
@@ -370,7 +397,7 @@
                         listenToDocumentContent(docSnap.id);
                         listenToEditorCursor(docSnap.id);
                         hideReferencePopup();
-                        hideSettingsPopup(); // Hide settings popup too if open
+                        hideSettingsPopup();
                     });
                     li.appendChild(button); docTitlesListEl.appendChild(li);
                 });
@@ -421,22 +448,18 @@
             const docIdentifier = escapeHTML(docData.titulo || (docData.id ? `ID: ${docData.id}` : 'Desconhecido'));
             if (typeof docData.corpo === 'string') {
                 fullBodyHtml = docData.corpo;
-                console.log(`Documento '${docIdentifier}': corpo é uma string simples.`);
             } else if (Array.isArray(docData.corpo)) {
-                console.log(`Documento '${docIdentifier}': corpo é um array com ${docData.corpo.length} itens.`);
                 if (docData.corpo.length > 0) {
                     docData.corpo.forEach((item, index) => {
                         let itemHtml = "";
                         if (typeof item === 'string') {
                             itemHtml = item;
                         } else if (typeof item === 'object' && item !== null) {
-                            console.log(`  corpo[${index}]: é um objeto. Estrutura:`, item);
                             const commonTextProperties = ['text', 'texto', 'content', 'html', 'body', 'value', 'textContent', 'innerHTML', 'paragraph', 'paragraphText'];
                             let foundTextInObject = null;
                             for (const prop of commonTextProperties) {
                                 if (typeof item[prop] === 'string') {
                                     foundTextInObject = item[prop];
-                                    console.log(`    -> Texto encontrado na propriedade '${prop}'.`);
                                     break;
                                 }
                             }
@@ -453,13 +476,13 @@
                                     const level = parseInt(item.nivel) || 2;
                                     itemHtml = `<h${level}>${escapeHTML(item.texto)}</h${level}>`;
                                 } else {
-                                    itemHtml = `<div style="border: 1px dashed red; padding: 5px; color: orange; margin-bottom: 10px;">[Bloco (objeto) ${index} não processado. Chaves: ${escapeHTML(Object.keys(item).join(', '))}]</div>`;
-                                    console.warn(`    -> Objeto em corpo[${index}] não processado automaticamente.`);
+                                    itemHtml = `<div style="border:1px dashed red;padding:5px;color:orange;margin-bottom:10px;">[Bloco(obj)${index} Chaves:${escapeHTML(Object.keys(item).join(','))}]</div>`;
+                                    console.warn(` Objeto corpo[${index}] não processado:`, item);
                                 }
                             }
                         } else {
-                             itemHtml = `<p style="color: yellow;">[Conteúdo de tipo inesperado (${typeof item}) em corpo[${index}]]</p>`;
-                             console.warn(`  corpo[${index}] tem tipo inesperado: ${typeof item}. Conteúdo:`, item);
+                             itemHtml = `<p style="color:yellow;">[Conteúdo tipo ${typeof item} corpo[${index}]]</p>`;
+                             console.warn(` corpo[${index}] tipo ${typeof item}:`, item);
                         }
                         fullBodyHtml += itemHtml;
                     });
@@ -469,8 +492,8 @@
             } else if (docData.corpo === null || docData.corpo === undefined) {
                 fullBodyHtml = `<p>Conteúdo não disponível para '${docIdentifier}'.</p>`;
             } else {
-                console.warn(`'${docIdentifier}' tem tipo inesperado para 'corpo': ${typeof docData.corpo}. Conteúdo:`, docData.corpo);
-                fullBodyHtml = `<p>Formato de conteúdo inesperado para '${docIdentifier}'.</p>`;
+                console.warn(`'${docIdentifier}' tipo inesperado 'corpo': ${typeof docData.corpo}`, docData.corpo);
+                fullBodyHtml = `<p>Formato inesperado para '${docIdentifier}'.</p>`;
             }
             if (typeof fullBodyHtml === 'string') {
                  fullBodyHtml = fullBodyHtml.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
@@ -487,13 +510,11 @@
                     }
                     const displayNumber = encounteredRefIdsForNumbering[refId];
                     const supElement = document.createElement('sup');
-                    supElement.className = 'ref-marker-popup';
-                    supElement.dataset.refId = refId;
+                    supElement.className = 'ref-marker-popup'; supElement.dataset.refId = refId;
                     supElement.innerHTML = `[<a>${displayNumber}</a>]`;
                     span.parentNode.insertBefore(supElement, span.nextSibling);
-                    span.style.backgroundColor = 'transparent'; span.style.padding = '0';
-                    span.style.borderRadius = '0'; span.style.color = 'inherit'; span.style.cursor = 'default';
-                } else { console.warn(`Ref ID '${refId}' (span.referenced-text) não encontrada.`); }
+                    span.style.backgroundColor='transparent'; span.style.padding='0'; span.style.borderRadius='0'; span.style.color='inherit'; span.style.cursor='default';
+                } else { console.warn(`Ref ID '${refId}' (span) não encontrada.`); }
             });
             const placeholderRefTags = Array.from(selectedDocBodyEl.querySelectorAll('ref[data-ref-id]'));
             placeholderRefTags.forEach(tag => {
@@ -508,12 +529,12 @@
                     supElement.className = 'ref-marker-popup'; supElement.dataset.refId = refId;
                     supElement.innerHTML = `[<a>${displayNumber}</a>]`;
                     tag.parentNode.replaceChild(supElement, tag);
-                } else { console.warn(`Ref ID '${refId}' (placeholder tag) não encontrada.`); tag.remove(); }
+                } else { console.warn(`Ref ID '${refId}' (tag) não encontrada.`); tag.remove(); }
             });
 
             cursorIndicatorEl = null;
             selectedDocBodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
-            applyDefaultStylesToBlocks(selectedDocBodyEl, null, '1.7'); // Only for line-height
+            applyDefaultStylesToBlocks(selectedDocBodyEl, null, '1.7');
 
             const references = docData.referencias || [];
             if (references.length === 0 || Object.values(currentDocReferencesMap).every(ref => ref.displayNumber === 0)) {
@@ -540,14 +561,13 @@
                     referencesListEl.appendChild(li);
                 });
             }
-            applyFontSize(currentFontSizePercent); // Apply current font size after content is set
+            applyFontSize(currentFontSizePercent);
             selectedDocBodyEl.scrollTop = currentScrollTop;
         }
 
         function listenToDocumentContent(docId) {
             if (currentDocContentListenerUnsubscribe) currentDocContentListenerUnsubscribe();
-            // liveStatusIndicatorEl.textContent = "Carregando..."; // REMOVED as per request
-            liveStatusIndicatorEl.textContent = ""; // Or set to empty if preferred over removing line
+            liveStatusIndicatorEl.textContent = "";
             const docRef = doc(db, "documentos", docId);
             currentDocContentListenerUnsubscribe = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
@@ -564,7 +584,7 @@
                 }
             }, (error) => {
                 liveStatusIndicatorEl.textContent = "Erro conexão";
-                console.error(`Erro no listener de conteúdo para docId ${docId}:`, error);
+                console.error(`Erro listener docId ${docId}:`, error);
             });
         }
 
@@ -578,7 +598,7 @@
                         updateCursorIndicator(editorInfo.cursorOffset);
                     }
                 }
-            }, (error) => { console.error(`Erro ao escutar cursor para ${docId}:`, error); });
+            }, (error) => { console.error(`Erro escutar cursor ${docId}:`, error); });
         }
 
         function updateCursorIndicator(targetOffset) {
@@ -608,8 +628,7 @@
                                 const textAfter = node.textContent.substring(splitOffset);
                                 const parent = node.parentNode;
                                 if (textBefore) parent.insertBefore(document.createTextNode(textBefore), node);
-                                cursorIndicatorEl = document.createElement('span');
-                                cursorIndicatorEl.className = 'editor-cursor-indicator';
+                                cursorIndicatorEl = document.createElement('span'); cursorIndicatorEl.className = 'editor-cursor-indicator';
                                 parent.insertBefore(cursorIndicatorEl, node);
                                 if (textAfter) parent.insertBefore(document.createTextNode(textAfter), node);
                                 parent.removeChild(node); found = true; return;
@@ -624,7 +643,7 @@
                             }
                             findAndPlaceIndicator(node);
                         } else if (node.classList.contains('ref-marker-popup')) {
-                            accumulatedLength += node.textContent.length; // Count text within markers if any
+                            accumulatedLength += node.textContent.length;
                         }
                     }
                 }
@@ -658,8 +677,8 @@
             currentAtrilSelectionRange = null; currentAtrilSelectedText = "";
         }
         async function saveSuggestion() {
-            if (!displayedDocId) { alert("Nenhum documento selecionado."); return; }
-            if (!currentAtrilSelectedText && !suggestedText.value.trim() && !suggestedLink.value.trim()) { alert("Nada para sugerir."); return; }
+            if (!displayedDocId) { alert("Nenhum doc selecionado."); return; }
+            if (!currentAtrilSelectedText && !suggestedText.value.trim() && !suggestedLink.value.trim()) { alert("Nada a sugerir."); return; }
             const suggestionData = {
                 originalText: currentAtrilSelectedText, suggestedText: suggestedText.value.trim(),
                 suggestedLink: suggestedLink.value.trim() || null, createdAt: serverTimestamp(), status: "pendente",
@@ -683,7 +702,7 @@
                         refData.urls.forEach(url => {
                             const urlLink = document.createElement('a'); urlLink.href = url;
                             urlLink.textContent = escapeHTML(url); urlLink.target = '_blank';
-                            urlLink.style.display = 'block'; urlLink.style.marginBottom = '4px'; urlLink.style.color = '#87cefa';
+                            urlLink.style.display = 'block'; // Keep this for proper layout of links
                             referencePopupUrlsEl.appendChild(urlLink);
                         });
                     } else { referencePopupUrlsEl.textContent = 'Nenhum link disponível.'; }
@@ -729,31 +748,39 @@
         function hideSettingsPopup() { settingsPopup.style.opacity = '0'; settingsPopup.style.visibility = 'hidden'; }
         function applyFontSize(percent) {
             const scaleFactor = percent / 100;
-            const basePFontSize = 1.1; // em - Default for p, div, li in body
-            const baseRefTitleSize = 1.0; // em - Default for ref titles
-            const baseRefUrlSize = 0.9; // em - Default for ref urls
-            const baseH1Size = 1.8; const baseH2Size = 1.5; const baseH3SizeInBody = 1.3; const baseH3InRef = 1.4;
+            // Base font sizes (examples, adjust to your CSS defaults if different)
+            const baseBodyTextSize = 1.1; // em, for p, div, li in main body
+            const baseRefTitleSize = 1.0; // em, for titles in bottom ref list
+            const baseRefUrlSize = 0.9;  // em, for URLs in bottom ref list
+            const baseH1Size = 1.8; const baseH2Size = 1.5; const baseH3BodySize = 1.3; const baseH3RefContainer = 1.4;
 
             if (selectedDocBodyEl) {
                 selectedDocBodyEl.querySelectorAll('p, div, li, span:not(.ref-marker-popup):not(.editor-cursor-indicator):not(.status-indicator)').forEach(el => {
-                    if (!el.closest('#selected-doc-references-list')) { // Elements directly in body, not in ref list
-                        el.style.fontSize = `${basePFontSize * scaleFactor}em`;
+                    if (!el.closest('#selected-doc-references-list') && !el.closest('#referencePopup')) { // Exclude bottom ref list and individual ref popup
+                        el.style.fontSize = `${baseBodyTextSize * scaleFactor}em`;
                     }
                 });
-                selectedDocBodyEl.querySelectorAll('h1').forEach(h => h.style.fontSize = `${baseH1Size * scaleFactor}em`);
+                 // Scale headings in main body
+                selectedDocBodyEl.querySelectorAll('h1:not(#selected-doc-title)').forEach(h => h.style.fontSize = `${baseH1Size * scaleFactor}em`); // Main title h1 is separate
                 selectedDocBodyEl.querySelectorAll('h2').forEach(h => h.style.fontSize = `${baseH2Size * scaleFactor}em`);
-                selectedDocBodyEl.querySelectorAll('h3:not(div#selected-doc-references-container h3)').forEach(h => h.style.fontSize = `${baseH3InBody * scaleFactor}em`);
+                selectedDocBodyEl.querySelectorAll('h3:not(#selected-doc-references-container h3)').forEach(h => h.style.fontSize = `${baseH3BodySize * scaleFactor}em`);
             }
-            if (referencesContainerEl) { // For the "Referências" H3 title
+             // Title of the document
+            if (selectedDocTitleEl) selectedDocTitleEl.style.fontSize = `${baseH1Size * scaleFactor}em`;
+
+            // Bottom references section title ("Referências")
+            if (referencesContainerEl) {
                  const refContainerTitle = referencesContainerEl.querySelector('h3');
-                 if (refContainerTitle) refContainerTitle.style.fontSize = `${baseH3InRef * scaleFactor}em`;
+                 if (refContainerTitle) refContainerTitle.style.fontSize = `${baseH3RefContainer * scaleFactor}em`;
             }
+            // Items in the bottom references list
             if (referencesListEl) {
-                referencesListEl.querySelectorAll('li').forEach(li => { // Scale children of li
+                referencesListEl.querySelectorAll('li').forEach(li => {
                     li.querySelectorAll('.ref-title-atril').forEach(el => el.style.fontSize = `${baseRefTitleSize * scaleFactor}em`);
                     li.querySelectorAll('.ref-url-item-atril a').forEach(el => el.style.fontSize = `${baseRefUrlSize * scaleFactor}em`);
                 });
             }
+            // Does NOT apply to #referencePopup, which has its own CSS for font size.
             if (currentFontSizeDisplay) currentFontSizeDisplay.textContent = `${percent}%`;
         }
         function updateFontSize(change) {
@@ -763,7 +790,7 @@
             currentFontSizePercent = newSize;
             applyFontSize(currentFontSizePercent);
             try { localStorage.setItem(LS_FONT_SIZE_KEY, currentFontSizePercent.toString()); }
-            catch (e) { console.warn("Não foi possível salvar o tamanho da fonte:", e); }
+            catch (e) { console.warn("Não foi possível salvar tamanho da fonte:", e); }
         }
         function loadFontSize() {
             try {
@@ -774,7 +801,7 @@
                         currentFontSizePercent = parsedSize;
                     }
                 }
-            } catch (e) { console.warn("Não foi possível carregar o tamanho da fonte:", e); }
+            } catch (e) { console.warn("Não foi possível carregar tamanho da fonte:", e); }
             applyFontSize(currentFontSizePercent);
             if (currentFontSizeDisplay) currentFontSizeDisplay.textContent = `${currentFontSizePercent}%`;
         }
@@ -810,28 +837,26 @@
                 }
             }
             if (settingsPopup && settingsPopup.style.visibility === 'visible') {
-                const popupContent = settingsPopup.querySelector('div');
+                const popupContent = settingsPopup.querySelector('div > div'); // More specific to content box
                 if (popupContent && !popupContent.contains(event.target) && event.target !== settingsGearBtn && !settingsGearBtn.contains(event.target)) {
                     hideSettingsPopup();
                 }
             }
-            // For hiding selection toolbar (adapted from mousedown to general click if it makes sense)
             if (!selectedDocBodyEl.contains(event.target) &&
                 !atrilSelectionToolbar.contains(event.target) &&
                 !event.target.closest('sup.ref-marker-popup') &&
                 !(referencePopupEl && referencePopupEl.style.display !== 'none' && referencePopupEl.contains(event.target)) &&
-                !(settingsPopup && settingsPopup.style.visibility === 'visible' && settingsPopup.querySelector('div').contains(event.target)) &&
-                event.target !== settingsGearBtn && !settingsGearBtn.contains(event.target) 
+                !(settingsPopup && settingsPopup.style.visibility === 'visible' && settingsPopup.querySelector('div > div').contains(event.target)) && // check against settings popup content
+                event.target !== settingsGearBtn && !settingsGearBtn.contains(event.target)
                 ) {
                 const selection = window.getSelection();
                 if (selection && selection.isCollapsed) {
                      hideAtrilSelectionToolbar();
-                } else if (!selection || selection.rangeCount === 0){ // Also hide if no selection exists (e.g., after popup interaction)
+                } else if (!selection || selection.rangeCount === 0){
                     hideAtrilSelectionToolbar();
                 }
             }
-
-        }, true); // Use capture for comprehensive popup hiding
+        }, true);
 
         suggestEditBtn.addEventListener('click', () => { if (currentAtrilSelectedText) { showSuggestionPopup(); hideAtrilSelectionToolbar(); } });
         cancelSuggestionBtn.addEventListener('click', hideSuggestionPopup);

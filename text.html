@@ -142,7 +142,6 @@
         .toolbar button:hover { 
             background-color: #555; 
         }
-        /* NEW: Style for disabled toolbar buttons */
         .toolbar button:disabled {
             color: #888;
             cursor: not-allowed;
@@ -153,7 +152,7 @@
         .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
         .popup-content { background: #333; color: #d4d4d4; padding: 25px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 450px; max-height: 80vh; display: flex; flex-direction: column; }
         .popup-content h3 { margin-top: 0; margin-bottom: 15px; color: #e0e0e0; }
-        .popup-content input[type="text"], .popup-content input[type="url"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4 !important; }
+        .popup-content input[type="text"], .popup-content input[type="url"], .popup-content select { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4 !important; }
         .popup-content input[type="text"]::placeholder, .popup-content input[type="url"]::placeholder { color: #777; }
         .popup-content button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; }
         .popup-content .popup-actions { margin-top: auto; padding-top: 15px; border-top: 1px solid #444; text-align: right; }
@@ -176,14 +175,8 @@
         .edit-ref-btn { position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 1em; cursor: pointer; padding: 5px; color: #999; }
         .edit-ref-btn:hover { color: #bbb; }
 
-        /* MODIFIED: Style for unlinked reference titles in the list */
-        #referencesList li.reference-item-unlinked .ref-title {
-            color: #FF8B8B; /* A light red, similar to [vazio] placeholder */
-        }
-        #referencesList li.reference-item-unlinked .ref-title:hover {
-             color: #FF6B6B; /* A bit brighter red on hover */
-             text-decoration: underline;
-        }
+        #referencesList li.reference-item-unlinked .ref-title { color: #FF8B8B; }
+        #referencesList li.reference-item-unlinked .ref-title:hover { color: #FF6B6B; text-decoration: underline; }
 
         #loadDocumentPopup .popup-content { background: #333; }
         #documentsListContainer ul li button { background-color: #3a7ca5; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 10px; }
@@ -226,8 +219,9 @@
             <button id="addChapterBtn" style="margin-top: 15px; padding: 8px 15px; font-size: 0.9em; cursor: pointer; background-color: #3a7ca5; color:white; border:none; border-radius:4px;">+ Adicionar Novo Capítulo</button>
             
             <div id="floatingToolbar" class="toolbar" style="display: none;">
-                <button id="attachLinkBtn" title="Anexar Link/Referência">🔗</button>
-                <button id="removeLinkBtn" title="Remover Link/Referência">🚫</button> <!-- NEW BUTTON -->
+                <button id="attachLinkBtn" title="Anexar Novo Link/Referência">🔗</button>
+                <button id="appendToRefBtn" title="Anexar a Link/Referência Existente">➕🔗</button> <!-- NEW BUTTON -->
+                <button id="removeLinkBtn" title="Remover Link/Referência do Trecho">🚫</button> 
             </div>
             
             <div id="referencesSection">
@@ -245,7 +239,7 @@
     <!-- Pop-up para Adicionar Referência -->
     <div id="addReferencePopup" class="popup">
         <div class="popup-content">
-            <h3>Adicionar Referência</h3>
+            <h3>Adicionar Nova Referência</h3>
             <input type="text" id="refTitleInput" placeholder="Título da Referência">
             <label style="display:block; margin-bottom:5px; margin-top:10px; color: #c0c0c0;">URLs do Link:</label>
             <div id="addRefUrlsContainer" style="margin-bottom: 10px;">
@@ -290,6 +284,20 @@
         </div>
     </div>
 
+    <!-- NEW POPUP: Pop-up para Selecionar Referência Existente para Anexar -->
+    <div id="selectExistingRefPopup" class="popup">
+        <div class="popup-content">
+            <h3>Anexar Texto a Referência Existente</h3>
+            <label for="existingRefSelect" style="display:block; margin-bottom:10px; color: #c0c0c0;">Selecione a Referência:</label>
+            <select id="existingRefSelect" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4; min-height: 38px;"></select>
+            <div class="popup-actions">
+                <button id="confirmAppendRefBtn" class="save-btn">Anexar</button>
+                <button id="cancelAppendRefBtn" class="close-popup-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+
 <script type="module">
     // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
     const firebaseConfig = {
@@ -330,7 +338,8 @@
     const addChapterBtn = document.getElementById('addChapterBtn');
     const floatingToolbar = document.getElementById('floatingToolbar');
     const attachLinkBtn = document.getElementById('attachLinkBtn');
-    const removeLinkBtn = document.getElementById('removeLinkBtn'); // NEW
+    const removeLinkBtn = document.getElementById('removeLinkBtn'); 
+    const appendToRefBtn = document.getElementById('appendToRefBtn'); // NEW
     
     const docTitleInput = document.getElementById('docTitle');
     const referencesListUl = document.getElementById('referencesList');
@@ -356,12 +365,18 @@
     const referenceEyeToolbar = document.getElementById('referenceEyeToolbar');
     const viewReferenceFromToolbarBtn = document.getElementById('viewReferenceFromToolbarBtn');
 
+    // NEW POPUP Elements
+    const selectExistingRefPopup = document.getElementById('selectExistingRefPopup');
+    const existingRefSelect = document.getElementById('existingRefSelect');
+    const confirmAppendRefBtn = document.getElementById('confirmAppendRefBtn');
+    // const cancelAppendRefBtn = document.getElementById('cancelAppendRefBtn'); // Already handled by .close-popup-btn
+
     // Variáveis de Estado Global
     let currentDocId = null;
     let currentDocumentData = null; 
     let debounceTimer;
     let currentSelectionRange = null;
-    let rangeForPendingReference = null;
+    let rangeForPendingReference = null; // Used for both new and appending to existing
     let activeEditorElement = null; 
     let activeReferencedTextSpanForEye = null; 
     
@@ -401,18 +416,16 @@
         floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; 
         floatingToolbar.style.display = 'flex'; 
 
-        // NEW: Control state of attachLinkBtn and removeLinkBtn
-        const isSelectionInReferencedText = currentSelectionRange && 
-                                            !currentSelectionRange.collapsed &&
-                                            currentSelectionRange.commonAncestorContainer &&
-                                            currentSelectionRange.commonAncestorContainer.parentElement && // Ensure parentElement exists
-                                            currentSelectionRange.commonAncestorContainer.parentElement.closest('span.referenced-text[data-ref-id]');
+        const isSelectionInsideRefSpan = currentSelectionRange && !currentSelectionRange.collapsed &&
+                                    currentSelectionRange.commonAncestorContainer &&
+                                    currentSelectionRange.commonAncestorContainer.parentElement &&
+                                    currentSelectionRange.commonAncestorContainer.closest('span.referenced-text[data-ref-id]');
         
-        const parentRefSpan = currentSelectionRange && !currentSelectionRange.collapsed ? 
-                              currentSelectionRange.commonAncestorContainer.closest('span.referenced-text[data-ref-id]') : null;
+        const hasExistingReferences = currentDocumentData && currentDocumentData.referencias && currentDocumentData.referencias.length > 0;
 
-        if (attachLinkBtn) attachLinkBtn.disabled = !!parentRefSpan; // Disable attach if already in a ref span
-        if (removeLinkBtn) removeLinkBtn.disabled = !parentRefSpan; // Enable remove only if in a ref span
+        if (attachLinkBtn) attachLinkBtn.disabled = !!isSelectionInsideRefSpan;
+        if (removeLinkBtn) removeLinkBtn.disabled = !isSelectionInsideRefSpan;
+        if (appendToRefBtn) appendToRefBtn.disabled = !!isSelectionInsideRefSpan || !hasExistingReferences;
 
     }
     
@@ -779,7 +792,7 @@
             
             if (!isStructuralChange) {
                 renderReferences(); 
-                if(activeEditorElement) updateEmptyReferenceSpansStyles(activeEditorElement); // Update styles after potential unlinking
+                if(activeEditorElement) updateEmptyReferenceSpansStyles(activeEditorElement); 
             }
             
             if (isStructuralChange) {
@@ -904,7 +917,7 @@
         } 
     }
    
-    async function addReferenceToDocument(title) {
+    async function addReferenceToDocument(title) { // For creating NEW reference
         if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; }
         const liveRange = rangeForPendingReference; 
         if (!liveRange) { alert("Nenhuma seleção válida foi armazenada."); rangeForPendingReference = null; return; }
@@ -1233,7 +1246,7 @@
         }
     }
 
-    function showAddReferencePopup() { 
+    function showAddReferencePopup() { // For new references
         if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; } 
         const rangeToUse = currentSelectionRange;
         if (!rangeToUse || !activeEditorElement.contains(rangeToUse.commonAncestorContainer)) { 
@@ -1293,7 +1306,6 @@
         }
     }
 
-    // NEW: Function to handle unlinking selected text from its reference
     async function handleUnlinkSelection() {
         if (!currentSelectionRange || currentSelectionRange.collapsed || !activeEditorElement) return;
 
@@ -1311,60 +1323,67 @@
         const refId = refSpan.dataset.refId;
         const parentNode = refSpan.parentNode;
 
-        // 1. Extract the content that comes *after* the selection but is still within the original refSpan.
         const suffixRange = document.createRange();
         suffixRange.selectNodeContents(refSpan);
         try {
             suffixRange.setStart(selRange.endContainer, selRange.endOffset);
         } catch (e) {
-            // This can happen if endContainer is not a child of refSpan,
-            // or if offset is out of bounds. Assume suffix is empty if error.
             console.warn("Error setting start for suffixRange, assuming no suffix.", e);
-            suffixRange.collapse(true); // Collapse to end, so extractContents is empty
+            suffixRange.collapse(true); 
         }
         const suffixFragment = suffixRange.extractContents();
-
-        // 2. Extract the selected content itself.
-        // Now refSpan only contains the prefix.
         const selectedFragment = selRange.extractContents();
 
-        // 3. Insert the selected (now unwrapped) content after the original span (which is now the prefix).
         if (refSpan.nextSibling) {
             parentNode.insertBefore(selectedFragment, refSpan.nextSibling);
         } else {
             parentNode.appendChild(selectedFragment);
         }
 
-        // 4. If there was a suffix, create a new span for it and insert it after the unwrapped content.
         if (suffixFragment.childNodes.length > 0) {
             const newSuffixSpan = document.createElement('span');
             newSuffixSpan.className = 'referenced-text';
             newSuffixSpan.dataset.refId = refId;
             newSuffixSpan.appendChild(suffixFragment);
+            
+            let insertionPoint = null;
             if (selectedFragment.lastChild && selectedFragment.lastChild.nextSibling) {
-                 parentNode.insertBefore(newSuffixSpan, selectedFragment.lastChild.nextSibling);
-            } else if (refSpan.nextSibling && refSpan.nextSibling.nextSibling) { // If selectedFragment was empty or just text node
-                 parentNode.insertBefore(newSuffixSpan, refSpan.nextSibling.nextSibling);
+                 insertionPoint = selectedFragment.lastChild.nextSibling;
+            } else if (refSpan.nextSibling && refSpan.nextSibling.nextSibling && parentNode.contains(refSpan.nextSibling.nextSibling)) {
+                 insertionPoint = refSpan.nextSibling.nextSibling;
+            }
+            
+            if (insertionPoint) {
+                parentNode.insertBefore(newSuffixSpan, insertionPoint);
             } else {
                  parentNode.appendChild(newSuffixSpan);
             }
             updateEmptyReferenceSpansStyles(newSuffixSpan.parentElement);
         }
 
-        // 5. Clean up the original span if it's now empty.
         if (refSpan.textContent.trim() === '') {
             parentNode.removeChild(refSpan);
         } else {
             updateEmptyReferenceSpansStyles(refSpan.parentElement);
         }
         
-        // Restore selection after the unlinked text
         const newRangeForCursor = document.createRange();
-        const lastNodeOfUnwrapped = selectedFragment.childNodes.length > 0 ? selectedFragment.childNodes[selectedFragment.childNodes.length-1] : (refSpan.nextSibling || refSpan) ;
-        
-        if (lastNodeOfUnwrapped) {
+        const lastNodeOfSelectedFragment = selectedFragment.lastChild;
+        let nodeToPlaceCursorAfter = lastNodeOfSelectedFragment;
+        if (!nodeToPlaceCursorAfter) { // if selectedFragment was empty or didn't append actual nodes
+            nodeToPlaceCursorAfter = refSpan.nextSibling ? refSpan : parentNode.lastChild;
+        }
+
+
+        if (nodeToPlaceCursorAfter && parentNode.contains(nodeToPlaceCursorAfter)) {
             try {
-                newRangeForCursor.setStartAfter(lastNodeOfUnwrapped);
+                 if (nodeToPlaceCursorAfter.nodeType === Node.TEXT_NODE && nodeToPlaceCursorAfter.length === 0 && nodeToPlaceCursorAfter.nextSibling) {
+                    newRangeForCursor.setStartBefore(nodeToPlaceCursorAfter.nextSibling);
+                 } else if (nodeToPlaceCursorAfter.nodeType === Node.TEXT_NODE) {
+                    newRangeForCursor.setStart(nodeToPlaceCursorAfter, nodeToPlaceCursorAfter.length);
+                 } else {
+                    newRangeForCursor.setStartAfter(nodeToPlaceCursorAfter);
+                 }
                 newRangeForCursor.collapse(true);
                 const sel = window.getSelection();
                 if (sel) {
@@ -1373,19 +1392,113 @@
                 }
             } catch(e) {
                 console.warn("Could not set cursor after unlinked text", e);
-                placeCursorAtEndOf(activeEditorElement); // Fallback
+                placeCursorAtEndOf(activeEditorElement); 
             }
         } else {
-            placeCursorAtEndOf(activeEditorElement); // Fallback
+            placeCursorAtEndOf(activeEditorElement); 
         }
         
         activeEditorElement.focus();
         hideFloatingToolbar();
 
-        await saveDocumentBody(true, true); // Structural change
-        renderReferences(); // Update reference list (link status might change)
+        await saveDocumentBody(true, true); 
+        renderReferences(); 
     }
 
+    // NEW: Functions for "Append to Existing Reference" feature
+    function populateExistingRefsDropdown() {
+        if (!existingRefSelect || !currentDocumentData || !currentDocumentData.referencias) return;
+        existingRefSelect.innerHTML = ''; // Clear previous options
+
+        if (currentDocumentData.referencias.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "Nenhuma referência existente";
+            option.disabled = true;
+            existingRefSelect.appendChild(option);
+            if(confirmAppendRefBtn) confirmAppendRefBtn.disabled = true;
+            return;
+        }
+
+        currentDocumentData.referencias.forEach(ref => {
+            const option = document.createElement('option');
+            option.value = ref.id;
+            option.textContent = escapeHTML(ref.tituloReferencia);
+            existingRefSelect.appendChild(option);
+        });
+        if(confirmAppendRefBtn) confirmAppendRefBtn.disabled = false;
+    }
+
+    function showSelectExistingRefPopup() {
+        if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; }
+        const rangeToUse = currentSelectionRange;
+        if (!rangeToUse || rangeToUse.collapsed || !activeEditorElement.contains(rangeToUse.commonAncestorContainer)) {
+            alert("Selecione o texto que deseja anexar a uma referência existente.");
+            rangeForPendingReference = null;
+            return;
+        }
+        rangeForPendingReference = rangeToUse.cloneRange(); // Store the selection
+
+        populateExistingRefsDropdown();
+        if (selectExistingRefPopup) showPopup(selectExistingRefPopup);
+        hideFloatingToolbar();
+    }
+
+    async function appendSelectionToExistingRef() {
+        if (!rangeForPendingReference || !existingRefSelect || !activeEditorElement) {
+            alert("Erro interno: seleção ou referência não encontrada.");
+            rangeForPendingReference = null;
+            return;
+        }
+        const selectedRefId = existingRefSelect.value;
+        if (!selectedRefId) {
+            alert("Nenhuma referência selecionada.");
+            return;
+        }
+
+        const liveRange = rangeForPendingReference;
+         if (!activeEditorElement.contains(liveRange.commonAncestorContainer)) { 
+            alert("A seleção armazenada não é válida para o editor ativo."); 
+            rangeForPendingReference = null; 
+            return; 
+        }
+
+
+        const span = document.createElement('span');
+        span.className = 'referenced-text';
+        span.setAttribute('data-ref-id', selectedRefId);
+
+        try {
+            if (!liveRange.collapsed) {
+                const selectedContents = liveRange.extractContents();
+                span.appendChild(selectedContents);
+            }
+            liveRange.insertNode(span);
+            // Place cursor after the new span
+            const newRangeForCursor = document.createRange();
+            const spaceNode = document.createTextNode('\u00A0'); // Non-breaking space
+            if (span.parentNode) {
+                span.parentNode.insertBefore(spaceNode, span.nextSibling);
+                newRangeForCursor.setStart(spaceNode, 1); // Cursor after space
+                newRangeForCursor.collapse(true);
+                const sel = window.getSelection();
+                if (sel) { sel.removeAllRanges(); sel.addRange(newRangeForCursor); }
+            }
+             if(activeEditorElement) activeEditorElement.focus({ preventScroll: true });
+        } catch (e) {
+            console.error("Erro ao anexar texto à referência existente:", e);
+            alert("Erro ao anexar texto.");
+            rangeForPendingReference = null;
+            return;
+        }
+
+        rangeForPendingReference = null; // Clear stored range
+        if (selectExistingRefPopup) hidePopup(selectExistingRefPopup);
+        
+        updateEmptyReferenceSpansStyles(activeEditorElement);
+        renderReferences(); // Re-render to update link counts/styles
+        await saveDocumentBody(true, true); // Structural change, save immediately
+    }
     
     function safelyAddEventListener(element, eventType, listener, elementName = 'Elemento') { 
         if (element) { 
@@ -1412,7 +1525,8 @@
         }, 'addChapterBtn');
 
         safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup, 'attachLinkBtn');
-        safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection, 'removeLinkBtn'); // NEW
+        safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection, 'removeLinkBtn'); 
+        safelyAddEventListener(appendToRefBtn, 'click', showSelectExistingRefPopup, 'appendToRefBtn'); // NEW
         
         safelyAddEventListener(saveNewRefBtnElement, 'click', () => { 
             if(refTitleInput) { 
@@ -1425,10 +1539,15 @@
         safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference, 'saveEditedRefBtn');
         safelyAddEventListener(deleteRefBtn, 'click', deleteReference, 'deleteRefBtn');
        
+        // NEW: Event listener for the "Append" button in the selectExistingRefPopup
+        safelyAddEventListener(confirmAppendRefBtn, 'click', appendSelectionToExistingRef, 'confirmAppendRefBtn');
+
         document.querySelectorAll('.close-popup-btn').forEach(btn => btn.addEventListener('click', () => {
             const popupToClose = btn.closest('.popup');
             if (popupToClose) hidePopup(popupToClose);
-            if (popupToClose && popupToClose.id === 'addReferencePopup') rangeForPendingReference = null;
+            if (popupToClose && (popupToClose.id === 'addReferencePopup' || popupToClose.id === 'selectExistingRefPopup')) {
+                 rangeForPendingReference = null; // Clear pending range on any cancel
+            }
         }));
 
         safelyAddEventListener(editorsContainer, 'click', async e => {
@@ -1467,8 +1586,9 @@
                 hideFloatingToolbar(); 
                 hideReferenceEyeToolbar(); 
                 currentSelectionRange = null; 
-                if (removeLinkBtn) removeLinkBtn.disabled = true; // NEW
-                if (attachLinkBtn) attachLinkBtn.disabled = true; // NEW
+                if (removeLinkBtn) removeLinkBtn.disabled = true; 
+                if (attachLinkBtn) attachLinkBtn.disabled = true; 
+                if (appendToRefBtn) appendToRefBtn.disabled = true; // NEW
                 return; 
             }
             const range = sel.getRangeAt(0); 
@@ -1476,19 +1596,21 @@
             
             if (activeEditorElement.contains(range.commonAncestorContainer)) {
                 if (!sel.isCollapsed && sel.toString().trim() !== "") {
-                    showFloatingToolbar(); // This will now also handle button states
+                    showFloatingToolbar(); 
                     hideReferenceEyeToolbar(); 
                 } else { 
                     hideFloatingToolbar();
-                    if (removeLinkBtn) removeLinkBtn.disabled = true; // NEW
-                    if (attachLinkBtn) attachLinkBtn.disabled = true; // Ensure disabled if selection collapsed
+                    if (removeLinkBtn) removeLinkBtn.disabled = true; 
+                    if (attachLinkBtn) attachLinkBtn.disabled = true; 
+                    if (appendToRefBtn) appendToRefBtn.disabled = true; // NEW
                 }
             } else { 
                 hideFloatingToolbar();
                 hideReferenceEyeToolbar();
                 currentSelectionRange = null; 
-                if (removeLinkBtn) removeLinkBtn.disabled = true; // NEW
-                if (attachLinkBtn) attachLinkBtn.disabled = true; // NEW
+                if (removeLinkBtn) removeLinkBtn.disabled = true; 
+                if (attachLinkBtn) attachLinkBtn.disabled = true; 
+                if (appendToRefBtn) appendToRefBtn.disabled = true; // NEW
             }
         });
         
@@ -1500,11 +1622,10 @@
             const isClickOnEyeToolbar = referenceEyeToolbar && referenceEyeToolbar.contains(e.target);
             const isClickInsideReferencedText = e.target.closest('span.referenced-text[data-ref-id]');
             
-            if (!isClickOnFloatingToolbar && !isClickOnAnyPopup && !isClickOnEyeToolbar) { 
-                // If not clicking toolbar, and selection collapses, hide toolbar.
-                // selectionchange handles this better.
-                // hideFloatingToolbar(); 
-            }
+            // No longer needed here as selectionchange handles it more reliably
+            // if (!isClickOnFloatingToolbar && !isClickOnAnyPopup && !isClickOnEyeToolbar) { 
+            //     hideFloatingToolbar(); 
+            // }
             if (!isClickOnEyeToolbar && !isClickInsideReferencedText && !isClickOnAnyPopup ) {
                  hideReferenceEyeToolbar();
             }

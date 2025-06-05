@@ -267,6 +267,7 @@
     <!-- Toolbar do Olho para Referências -->
     <div id="referenceEyeToolbar" class="toolbar" style="display: none;">
         <button id="viewReferenceFromToolbarBtn" title="Ver Referência">👁️</button>
+        <button id="splitAndInsertBtn" title="Inserir Texto Divisor Aqui">✂️+📝</button>
     </div>
 
     <!-- Pop-up para Adicionar Referência -->
@@ -399,6 +400,7 @@
 
     const referenceEyeToolbar = document.getElementById('referenceEyeToolbar');
     const viewReferenceFromToolbarBtn = document.getElementById('viewReferenceFromToolbarBtn');
+    const splitAndInsertBtn = document.getElementById('splitAndInsertBtn'); 
 
     const selectExistingRefPopup = document.getElementById('selectExistingRefPopup');
     const existingRefListContainer = document.getElementById('existingRefListContainer'); 
@@ -487,6 +489,10 @@
         referenceEyeToolbar.style.display = 'flex';
         referenceEyeToolbar.dataset.refId = targetSpan.dataset.refId; 
 
+        if (splitAndInsertBtn) {
+            splitAndInsertBtn.disabled = !targetSpan.closest('.text-editor-chapter');
+        }
+
         if (activeReferencedTextSpanForEye && activeReferencedTextSpanForEye !== targetSpan) {
             activeReferencedTextSpanForEye.classList.remove('eye-icon-active');
         }
@@ -545,6 +551,7 @@
                 if (activeEditorElement === chapterDiv) { 
                     applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
                     updateEmptyReferenceSpansStyles(chapterDiv); 
+                    const paragraphWasCleaned = cleanupEmptyReferenceParagraphOnEnter();
                     saveDocumentBody(true, false); 
                 }
             }, 300);
@@ -1556,6 +1563,248 @@
         await saveDocumentBody(true, true); 
     }
     
+    async function handleSplitSpanAndInsert() {
+        if (!activeReferencedTextSpanForEye || !activeEditorElement) {
+            console.warn("Nenhum span de referência ativo ou editor ativo para dividir.");
+            return;
+        }
+
+        const partASpan = activeReferencedTextSpanForEye; // Este span se tornará a "Parte A"
+        const originalRefId = partASpan.dataset.refId;
+        const editorChapterDiv = partASpan.closest('.text-editor-chapter');
+        let currentBlockContainer = partASpan.closest('p, div:not(.text-editor-chapter):not(.chapter-wrapper)');
+
+        if (!editorChapterDiv) {
+            console.error("Não foi possível encontrar o contêiner do capítulo do editor.");
+            return;
+        }
+        // Se currentBlockContainer não for filho direto do editor, precisamos encontrar o elemento correto
+        // para inserir o novo parágrafo depois.
+        if (currentBlockContainer && currentBlockContainer.parentNode !== editorChapterDiv) {
+            let directChildOfEditor = currentBlockContainer;
+            while(directChildOfEditor.parentNode && directChildOfEditor.parentNode !== editorChapterDiv) {
+                directChildOfEditor = directChildOfEditor.parentNode;
+            }
+            currentBlockContainer = directChildOfEditor; // Este é o bloco que é filho direto do editor
+        }
+         if (!currentBlockContainer || currentBlockContainer === editorChapterDiv) { // Se não achou um P/DIV ou é o próprio editor
+            // Se o span estava diretamente no editor (sem um <p>), precisamos envolver a Parte A num <p>
+            // ou garantir que a Parte B seja inserida corretamente.
+            // Por simplicidade, vamos assumir que os spans estão geralmente em <p>s.
+            // Se não, o comportamento padrão do editor ao inserir <p>s pode ser suficiente.
+            // Se partASpan.parentNode é o editorChapterDiv, então currentBlockContainer pode ser o próprio partASpan
+            // para a lógica de inserção 'after'.
+             if (partASpan.parentNode === editorChapterDiv) {
+                currentBlockContainer = partASpan; // Use o próprio span A como referência para inserção se ele for filho direto.
+             } else {
+                console.warn("Não foi possível determinar o bloco contêiner da Parte A para inserção correta da Parte B.");
+                // Tentativa de usar o pai do span como referência de inserção.
+                currentBlockContainer = partASpan.parentNode;
+             }
+        }
+
+
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount || !selection.isCollapsed) {
+            console.warn("Nenhuma seleção válida (colapsada) para dividir o span.");
+            return;
+        }
+
+        const cursorRange = selection.getRangeAt(0).cloneRange();
+
+        if (!partASpan.contains(cursorRange.commonAncestorContainer)) {
+            console.warn("O cursor não está dentro do span de referência ativo.");
+            return;
+        }
+
+        // 1. Extrair o conteúdo DEPOIS do cursor dentro do partASpan para ser a "Parte B"
+        const rangeForPartB = document.createRange();
+        rangeForPartB.selectNodeContents(partASpan);
+        try {
+            rangeForPartB.setStart(cursorRange.startContainer, cursorRange.startOffset);
+        } catch (e) {
+            console.warn("Não foi possível definir o início do rangeForPartB.", e);
+        }
+        const fragmentPartB = rangeForPartB.extractContents();
+        // partASpan (Parte A) agora contém apenas o texto ANTES do cursor.
+
+        // Se a Parte A ficou vazia de texto visível, removemos a classe de referência para evitar o "[vazio]"
+        // a menos que o clique tenha sido exatamente no início e não haja nada antes.
+        if (partASpan.textContent.trim() === '') {
+            // Se o partASpan só tem espaços ou está vazio, e originalmente tinha texto,
+            // pode ser melhor remover o span se ele não serve mais a um propósito.
+            // Ou, se o objetivo é manter um span "marcador" vazio, não fazer nada aqui.
+            // Por ora, vamos deixar o updateEmptyReferenceSpansStyles cuidar disso.
+        }
+
+        // 2. Criar um NOVO PARÁGRAFO para a Parte B
+        const newParagraphForPartB = document.createElement('p');
+        newParagraphForPartB.style.fontSize = DEFAULT_FONT_SIZE;
+        newParagraphForPartB.style.lineHeight = DEFAULT_LINE_HEIGHT;
+
+        if (fragmentPartB.childNodes.length > 0) {
+            const spanForPartB = document.createElement('span');
+            spanForPartB.className = 'referenced-text';
+            spanForPartB.dataset.refId = originalRefId;
+            spanForPartB.appendChild(fragmentPartB);
+            newParagraphForPartB.appendChild(spanForPartB);
+        } else {
+            // Se a Parte B está completamente vazia (cursor no final do span original),
+            // criamos um novo parágrafo com um <br> para torná-lo um bloco vazio editável.
+            // Não adicionamos um span referenciado vazio aqui para evitar o "[vazio]" indesejado.
+            newParagraphForPartB.innerHTML = '<br>';
+        }
+
+        // 3. Inserir o novo parágrafo (com a Parte B) DEPOIS do bloco contêiner da Parte A.
+        if (currentBlockContainer && currentBlockContainer.parentNode) {
+            currentBlockContainer.parentNode.insertBefore(newParagraphForPartB, currentBlockContainer.nextSibling);
+        } else {
+            // Fallback muito genérico: adiciona ao final do editor
+            editorChapterDiv.appendChild(newParagraphForPartB);
+        }
+
+        // 4. Atualizar estilos (se a Parte A ficou de fato vazia)
+        updateEmptyReferenceSpansStyles(partASpan.parentElement);
+
+
+        // 5. Posicionar o cursor IMEDIATAMENTE APÓS o conteúdo final da Parte A (partASpan).
+        const newSel = window.getSelection();
+        const newRangeToSelect = document.createRange();
+
+        // Tentamos colocar o cursor no final do conteúdo *dentro* do partASpan (Parte A)
+        // ou, se partASpan for ele mesmo o ponto de referência, logo após ele.
+        if (partASpan.parentNode) { // Garante que partASpan ainda está no DOM
+            try {
+                // Se partASpan tem filhos (texto, outros nós), posiciona no final do último filho
+                if (partASpan.lastChild) {
+                    newRangeToSelect.setStart(partASpan.lastChild, partASpan.lastChild.nodeType === Node.TEXT_NODE ? partASpan.lastChild.length : partASpan.lastChild.childNodes.length);
+                } else { // Se partASpan está vazio (ex: clique no início e nada antes)
+                    newRangeToSelect.setStart(partASpan, 0);
+                }
+                newRangeToSelect.collapse(true);
+            } catch (e) {
+                console.warn("Falha ao posicionar cursor no final da Parte A, usando fallback.", e);
+                placeCursorAtEndOf(currentBlockContainer || activeEditorElement);
+            }
+        } else {
+             placeCursorAtEndOf(activeEditorElement);
+        }
+
+        newSel.removeAllRanges();
+        newSel.addRange(newRangeToSelect);
+        if (activeEditorElement) activeEditorElement.focus({ preventScroll: true });
+
+        hideReferenceEyeToolbar();
+        await saveDocumentBody(true, true);
+    }
+
+
+
+
+    function cleanupEmptyReferenceParagraphOnEnter() {
+    if (!activeEditorElement) return false;
+
+    const sel = window.getSelection();
+    // Só atua se o cursor estiver colapsado (sem seleção de texto)
+    if (!sel || !sel.rangeCount > 0 || !sel.isCollapsed) return false;
+
+    const range = sel.getRangeAt(0);
+    let cursorNode = range.startContainer;
+    let currentBlock = null;
+
+    // Tenta encontrar o elemento de bloco (<p> ou <div> relevante) onde o cursor está
+    if (cursorNode.nodeType === Node.TEXT_NODE) {
+        currentBlock = cursorNode.parentNode; // Começa com o pai direto
+    } else {
+        currentBlock = cursorNode; // Se o cursor já está num elemento
+    }
+    // Sobe na árvore até encontrar um <p> ou <div> que não seja o próprio editor/wrapper
+    currentBlock = currentBlock.closest('p, div:not(.text-editor-chapter):not(.chapter-wrapper)');
+
+    // Se não encontrou um bloco válido ou o bloco não está no editor ativo, não faz nada
+    if (!currentBlock || !activeEditorElement.contains(currentBlock)) {
+        return false;
+    }
+
+    // Verifica se o bloco atual é um candidato para limpeza:
+    // Deve conter EXATAMENTE UM span.referenced-text.referenced-text-empty
+    // E NENHUM outro conteúdo textual significativo.
+    const emptyRefSpansInBlock = currentBlock.querySelectorAll('span.referenced-text.referenced-text-empty');
+
+    if (emptyRefSpansInBlock.length === 1) {
+        const problemSpan = emptyRefSpansInBlock[0];
+        let hasOtherSignificantContent = false;
+
+        // 1. O problemSpan em si deve estar "realmente" vazio (sem nós filhos de texto com conteúdo ou outros elementos)
+        for (const childNode of Array.from(problemSpan.childNodes)) {
+            if (childNode.nodeType === Node.TEXT_NODE && childNode.nodeValue.trim() !== '') {
+                hasOtherSignificantContent = true; // O "span vazio" na verdade tem texto
+                break;
+            }
+            if (childNode.nodeType === Node.ELEMENT_NODE && childNode.nodeName !== 'BR') {
+                hasOtherSignificantContent = true; // O "span vazio" tem outros elementos dentro
+                break;
+            }
+        }
+        if (hasOtherSignificantContent) return false; // O span não está realmente vazio, não limpar.
+
+        // 2. Verificar se há outro conteúdo significativo no currentBlock ALÉM do problemSpan e de <br>s
+        for (const childNode of Array.from(currentBlock.childNodes)) {
+            if (childNode === problemSpan) continue; // Ignora o próprio span problemático
+            if (childNode.nodeName === 'BR') continue; // Ignora <br>s soltos no parágrafo
+
+            if (childNode.nodeType === Node.TEXT_NODE && childNode.nodeValue.trim() !== '') {
+                hasOtherSignificantContent = true; // Encontrou texto significativo fora do span
+                break;
+            }
+            // Se encontrar outro elemento que não seja o problemSpan (já verificado) ou um <br>
+            if (childNode.nodeType === Node.ELEMENT_NODE) {
+                 // Permitimos outros spans que não sejam de referência ou spans de referência com conteúdo
+                if (childNode.matches('span.referenced-text') && !childNode.classList.contains('referenced-text-empty')) {
+                    hasOtherSignificantContent = true; // É um span de referência com conteúdo
+                    break;
+                } else if (!childNode.matches('span')) { // É outro tipo de elemento não-span
+                    hasOtherSignificantContent = true;
+                    break;
+                }
+                // Spans normais (sem data-ref-id) são permitidos, não contam como "significant content" para limpeza
+            }
+        }
+
+        if (!hasOtherSignificantContent) {
+            // Se chegamos aqui, o bloco contém apenas o problemSpan (que está realmente vazio)
+            // e talvez alguns <br>s. Vamos limpar.
+            // console.log("Limpando parágrafo com span de referência vazio:", currentBlock);
+
+            const parent = currentBlock.parentNode;
+            const newEmptyParagraph = document.createElement('p');
+            newEmptyParagraph.style.fontSize = DEFAULT_FONT_SIZE;
+            newEmptyParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
+            newEmptyParagraph.innerHTML = '<br>'; // Parágrafo limpo padrão
+
+            if (parent && parent.contains(currentBlock)) {
+                parent.replaceChild(newEmptyParagraph, currentBlock);
+                activeEditorElement.normalize(); // Ajuda a mesclar nós de texto adjacentes, opcional
+
+                // Reposicionar o cursor no novo parágrafo (antes do <br>)
+                const newCursorRange = document.createRange();
+                const brNode = newEmptyParagraph.firstChild; // Agora é o <br>
+                if (brNode) {
+                    newCursorRange.setStartBefore(brNode);
+                    newCursorRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newCursorRange);
+                    // O foco já deve estar no editor devido ao evento de input
+                }
+                return true; // Limpeza realizada
+            }
+        }
+    }
+    return false; // Nenhuma limpeza realizada
+}
+
+
+
     function safelyAddEventListener(element, eventType, listener, elementName = 'Elemento') { 
         if (element) { 
             element.addEventListener(eventType, listener); 
@@ -1597,6 +1846,11 @@
        
         safelyAddEventListener(confirmAppendRefBtn, 'click', appendSelectionToExistingRef, 'confirmAppendRefBtn');
 
+        safelyAddEventListener(splitAndInsertBtn, 'click', async (event) => { 
+            event.stopPropagation();
+            await handleSplitSpanAndInsert();
+        }, 'splitAndInsertBtn');
+
         document.querySelectorAll('.close-popup-btn').forEach(btn => btn.addEventListener('click', () => {
             const popupToClose = btn.closest('.popup');
             if (popupToClose) hidePopup(popupToClose);
@@ -1615,23 +1869,6 @@
                     hideFloatingToolbar();
                 }
                 return; 
-            }
-
-            const clickedReferencedText = e.target.closest('span.referenced-text[data-ref-id]');
-            const selection = window.getSelection();
-
-            if (clickedReferencedText && selection && selection.isCollapsed) {
-                e.stopPropagation(); 
-                showReferenceEyeToolbar(clickedReferencedText);
-                return; 
-            } else if (!e.target.closest('#referenceEyeToolbar')) {
-                hideReferenceEyeToolbar();
-            }
-            
-            if (selection && selection.isCollapsed && floatingToolbar.style.display === 'flex') {
-                if (!e.target.closest('#floatingToolbar')) { 
-                    hideFloatingToolbar();
-                }
             }
         }, 'editorsContainer (click)');
 
@@ -1653,8 +1890,24 @@
                 if (!sel.isCollapsed && sel.toString().trim() !== "") {
                     showFloatingToolbar(); 
                     hideReferenceEyeToolbar(); 
+                } else if (sel.isCollapsed) { 
+                    hideFloatingToolbar();
+                    const common = range.commonAncestorContainer;
+                    let parentSpan = null;
+                    if (common.nodeType === Node.ELEMENT_NODE) {
+                        parentSpan = common.closest('span.referenced-text[data-ref-id]');
+                    } else if (common.nodeType === Node.TEXT_NODE && common.parentElement) {
+                        parentSpan = common.parentElement.closest('span.referenced-text[data-ref-id]');
+                    }
+
+                    if (parentSpan && activeEditorElement.contains(parentSpan)) {
+                        showReferenceEyeToolbar(parentSpan); 
+                    } else {
+                        hideReferenceEyeToolbar(); 
+                    }
                 } else { 
                     hideFloatingToolbar();
+                    hideReferenceEyeToolbar();
                     if (removeLinkBtn) removeLinkBtn.disabled = true; 
                     if (attachLinkBtn) attachLinkBtn.disabled = true; 
                     if (appendToRefBtn) appendToRefBtn.disabled = true; 
@@ -1675,11 +1928,18 @@
             const isClickOnAnyPopup = e.target.closest('.popup');
             const isClickOnFloatingToolbar = floatingToolbar && floatingToolbar.contains(e.target);
             const isClickOnEyeToolbar = referenceEyeToolbar && referenceEyeToolbar.contains(e.target);
-            const isClickInsideReferencedText = e.target.closest('span.referenced-text[data-ref-id]');
             
-            if (!isClickOnEyeToolbar && !isClickInsideReferencedText && !isClickOnAnyPopup ) {
-                 hideReferenceEyeToolbar();
+            if (!isClickOnEyeToolbar && !isClickOnFloatingToolbar && !isClickOnAnyPopup) {
+                 if (!e.target.closest('.text-editor-chapter') && !e.target.closest('span.referenced-text[data-ref-id]')) {
+                     hideReferenceEyeToolbar();
+                 }
             }
+             if (!isClickOnFloatingToolbar && !isClickOnAnyPopup){
+                const sel = window.getSelection();
+                if(sel && sel.isCollapsed && !e.target.closest('#referenceEyeToolbar')){ 
+                    hideFloatingToolbar();
+                }
+             }
         });
         
         safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', (event) => {

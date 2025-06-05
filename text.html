@@ -142,6 +142,12 @@
         .toolbar button:hover { 
             background-color: #555; 
         }
+        /* NEW: Style for disabled toolbar buttons */
+        .toolbar button:disabled {
+            color: #888;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
         
         .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1001; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
         .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
@@ -221,6 +227,7 @@
             
             <div id="floatingToolbar" class="toolbar" style="display: none;">
                 <button id="attachLinkBtn" title="Anexar Link/Referência">🔗</button>
+                <button id="removeLinkBtn" title="Remover Link/Referência">🚫</button> <!-- NEW BUTTON -->
             </div>
             
             <div id="referencesSection">
@@ -323,6 +330,7 @@
     const addChapterBtn = document.getElementById('addChapterBtn');
     const floatingToolbar = document.getElementById('floatingToolbar');
     const attachLinkBtn = document.getElementById('attachLinkBtn');
+    const removeLinkBtn = document.getElementById('removeLinkBtn'); // NEW
     
     const docTitleInput = document.getElementById('docTitle');
     const referencesListUl = document.getElementById('referencesList');
@@ -380,8 +388,33 @@
 
 
     // Funções de Toolbar
-    function hideFloatingToolbar(){ if(floatingToolbar) floatingToolbar.style.display='none'; }
-    function showFloatingToolbar(){ if(!currentSelectionRange || !activeEditorElement || !floatingToolbar) return; if (floatingToolbar.style.display === 'flex' && currentSelectionRange.collapsed) return; const rect = currentSelectionRange.getBoundingClientRect(); floatingToolbar.style.left = `${rect.left + window.scrollX + (rect.width/2) - (floatingToolbar.offsetWidth/2)}px`; floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; floatingToolbar.style.display = 'flex'; }
+    function hideFloatingToolbar(){ 
+        if(floatingToolbar) floatingToolbar.style.display='none'; 
+    }
+
+    function showFloatingToolbar(){ 
+        if(!currentSelectionRange || !activeEditorElement || !floatingToolbar) return; 
+        if (floatingToolbar.style.display === 'flex' && currentSelectionRange.collapsed) return; 
+        
+        const rect = currentSelectionRange.getBoundingClientRect(); 
+        floatingToolbar.style.left = `${rect.left + window.scrollX + (rect.width/2) - (floatingToolbar.offsetWidth/2)}px`; 
+        floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; 
+        floatingToolbar.style.display = 'flex'; 
+
+        // NEW: Control state of attachLinkBtn and removeLinkBtn
+        const isSelectionInReferencedText = currentSelectionRange && 
+                                            !currentSelectionRange.collapsed &&
+                                            currentSelectionRange.commonAncestorContainer &&
+                                            currentSelectionRange.commonAncestorContainer.parentElement && // Ensure parentElement exists
+                                            currentSelectionRange.commonAncestorContainer.parentElement.closest('span.referenced-text[data-ref-id]');
+        
+        const parentRefSpan = currentSelectionRange && !currentSelectionRange.collapsed ? 
+                              currentSelectionRange.commonAncestorContainer.closest('span.referenced-text[data-ref-id]') : null;
+
+        if (attachLinkBtn) attachLinkBtn.disabled = !!parentRefSpan; // Disable attach if already in a ref span
+        if (removeLinkBtn) removeLinkBtn.disabled = !parentRefSpan; // Enable remove only if in a ref span
+
+    }
     
     function hideReferenceEyeToolbar() {
         if (referenceEyeToolbar) referenceEyeToolbar.style.display = 'none';
@@ -688,7 +721,7 @@
         }
        
         updateChapterActionButtonsState();
-        renderReferences(); // MODIFIED: Call without argument to use global currentDocumentData.referencias
+        renderReferences(); 
     }
 
     async function saveDocumentBody(forceImmediateSave = false, isStructuralChange = false) {
@@ -744,12 +777,9 @@
                 atualizadoEm: serverTimestamp()
             });
             
-            // MODIFIED: Always re-render references to update link status and order
-            // This covers both structural and non-structural changes effectively.
-            // If it's a structural change, the full re-render will happen below anyway.
-            // If not, this ensures link status/order is updated.
-             if (!isStructuralChange) {
+            if (!isStructuralChange) {
                 renderReferences(); 
+                if(activeEditorElement) updateEmptyReferenceSpansStyles(activeEditorElement); // Update styles after potential unlinking
             }
             
             if (isStructuralChange) {
@@ -770,7 +800,7 @@
                         updateEmptyReferenceSpansStyles(editor);
                     });
                 }
-                renderReferences(); // This call handles re-rendering for structural changes
+                renderReferences(); 
                 
                 requestAnimationFrame(() => { 
                     if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
@@ -933,7 +963,7 @@
                 referencias: currentDocumentData.referencias, 
                 atualizadoEm: serverTimestamp() 
             });
-            renderReferences(); // MODIFIED: No argument needed
+            renderReferences(); 
             updateEmptyReferenceSpansStyles(activeEditorElement); 
             if(addReferencePopup) hidePopup(addReferencePopup);
             await saveDocumentBody(true, false); 
@@ -967,7 +997,6 @@
         });
     }
 
-    // MODIFIED: renderReferences function to sort by appearance in text
     function renderReferences() {
         if (!referencesListUl) return;
         referencesListUl.innerHTML = "";
@@ -1039,7 +1068,7 @@
             tS.addEventListener('click', navigateToReferencedTextInEditor);
 
             if (!isLinked) {
-                li.classList.add('reference-item-unlinked'); // For red title CSS
+                li.classList.add('reference-item-unlinked'); 
                 tS.title = "Esta referência não está atualmente vinculada no texto do documento.";
             } else {
                 li.classList.remove('reference-item-unlinked');
@@ -1139,7 +1168,7 @@
                 referencias: currentDocumentData.referencias, 
                 atualizadoEm: serverTimestamp() 
             }); 
-            renderReferences(); // MODIFIED: No argument needed
+            renderReferences(); 
             if(editReferencePopup) hidePopup(editReferencePopup); 
         } catch (e) { 
             console.error("Erro ao salvar referência editada:", e); 
@@ -1159,7 +1188,7 @@
                 referencias: currentDocumentData.referencias, 
                 atualizadoEm:serverTimestamp()
             }); 
-            renderReferences(); // MODIFIED: No argument needed
+            renderReferences(); 
             if(editorsContainer) {
                  editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{
                     updateEmptyReferenceSpansStyles(spanInEditor.closest('.text-editor-chapter'));
@@ -1184,7 +1213,7 @@
         let refSpanInEditor=null;
         const allSpansForRef = editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`);
         if (allSpansForRef.length > 0) {
-            refSpanInEditor = allSpansForRef[0]; // Take the first one, as list is now sorted by first appearance
+            refSpanInEditor = allSpansForRef[0]; 
         }
         
         const refListItem=event.target.closest('li.reference-item');
@@ -1263,6 +1292,100 @@
             documentsListContainerMsg.textContent="Erro ao carregar.";
         }
     }
+
+    // NEW: Function to handle unlinking selected text from its reference
+    async function handleUnlinkSelection() {
+        if (!currentSelectionRange || currentSelectionRange.collapsed || !activeEditorElement) return;
+
+        const selRange = currentSelectionRange;
+        const commonAncestor = selRange.commonAncestorContainer;
+        const refSpan = commonAncestor.nodeType === Node.ELEMENT_NODE ? 
+                        commonAncestor.closest('span.referenced-text[data-ref-id]') : 
+                        commonAncestor.parentElement.closest('span.referenced-text[data-ref-id]');
+
+        if (!refSpan) {
+            console.warn("Attempted to unlink text not inside a reference span.");
+            return;
+        }
+
+        const refId = refSpan.dataset.refId;
+        const parentNode = refSpan.parentNode;
+
+        // 1. Extract the content that comes *after* the selection but is still within the original refSpan.
+        const suffixRange = document.createRange();
+        suffixRange.selectNodeContents(refSpan);
+        try {
+            suffixRange.setStart(selRange.endContainer, selRange.endOffset);
+        } catch (e) {
+            // This can happen if endContainer is not a child of refSpan,
+            // or if offset is out of bounds. Assume suffix is empty if error.
+            console.warn("Error setting start for suffixRange, assuming no suffix.", e);
+            suffixRange.collapse(true); // Collapse to end, so extractContents is empty
+        }
+        const suffixFragment = suffixRange.extractContents();
+
+        // 2. Extract the selected content itself.
+        // Now refSpan only contains the prefix.
+        const selectedFragment = selRange.extractContents();
+
+        // 3. Insert the selected (now unwrapped) content after the original span (which is now the prefix).
+        if (refSpan.nextSibling) {
+            parentNode.insertBefore(selectedFragment, refSpan.nextSibling);
+        } else {
+            parentNode.appendChild(selectedFragment);
+        }
+
+        // 4. If there was a suffix, create a new span for it and insert it after the unwrapped content.
+        if (suffixFragment.childNodes.length > 0) {
+            const newSuffixSpan = document.createElement('span');
+            newSuffixSpan.className = 'referenced-text';
+            newSuffixSpan.dataset.refId = refId;
+            newSuffixSpan.appendChild(suffixFragment);
+            if (selectedFragment.lastChild && selectedFragment.lastChild.nextSibling) {
+                 parentNode.insertBefore(newSuffixSpan, selectedFragment.lastChild.nextSibling);
+            } else if (refSpan.nextSibling && refSpan.nextSibling.nextSibling) { // If selectedFragment was empty or just text node
+                 parentNode.insertBefore(newSuffixSpan, refSpan.nextSibling.nextSibling);
+            } else {
+                 parentNode.appendChild(newSuffixSpan);
+            }
+            updateEmptyReferenceSpansStyles(newSuffixSpan.parentElement);
+        }
+
+        // 5. Clean up the original span if it's now empty.
+        if (refSpan.textContent.trim() === '') {
+            parentNode.removeChild(refSpan);
+        } else {
+            updateEmptyReferenceSpansStyles(refSpan.parentElement);
+        }
+        
+        // Restore selection after the unlinked text
+        const newRangeForCursor = document.createRange();
+        const lastNodeOfUnwrapped = selectedFragment.childNodes.length > 0 ? selectedFragment.childNodes[selectedFragment.childNodes.length-1] : (refSpan.nextSibling || refSpan) ;
+        
+        if (lastNodeOfUnwrapped) {
+            try {
+                newRangeForCursor.setStartAfter(lastNodeOfUnwrapped);
+                newRangeForCursor.collapse(true);
+                const sel = window.getSelection();
+                if (sel) {
+                    sel.removeAllRanges();
+                    sel.addRange(newRangeForCursor);
+                }
+            } catch(e) {
+                console.warn("Could not set cursor after unlinked text", e);
+                placeCursorAtEndOf(activeEditorElement); // Fallback
+            }
+        } else {
+            placeCursorAtEndOf(activeEditorElement); // Fallback
+        }
+        
+        activeEditorElement.focus();
+        hideFloatingToolbar();
+
+        await saveDocumentBody(true, true); // Structural change
+        renderReferences(); // Update reference list (link status might change)
+    }
+
     
     function safelyAddEventListener(element, eventType, listener, elementName = 'Elemento') { 
         if (element) { 
@@ -1289,6 +1412,7 @@
         }, 'addChapterBtn');
 
         safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup, 'attachLinkBtn');
+        safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection, 'removeLinkBtn'); // NEW
         
         safelyAddEventListener(saveNewRefBtnElement, 'click', () => { 
             if(refTitleInput) { 
@@ -1343,6 +1467,8 @@
                 hideFloatingToolbar(); 
                 hideReferenceEyeToolbar(); 
                 currentSelectionRange = null; 
+                if (removeLinkBtn) removeLinkBtn.disabled = true; // NEW
+                if (attachLinkBtn) attachLinkBtn.disabled = true; // NEW
                 return; 
             }
             const range = sel.getRangeAt(0); 
@@ -1350,15 +1476,19 @@
             
             if (activeEditorElement.contains(range.commonAncestorContainer)) {
                 if (!sel.isCollapsed && sel.toString().trim() !== "") {
-                    showFloatingToolbar();
+                    showFloatingToolbar(); // This will now also handle button states
                     hideReferenceEyeToolbar(); 
                 } else { 
                     hideFloatingToolbar();
+                    if (removeLinkBtn) removeLinkBtn.disabled = true; // NEW
+                    if (attachLinkBtn) attachLinkBtn.disabled = true; // Ensure disabled if selection collapsed
                 }
             } else { 
                 hideFloatingToolbar();
                 hideReferenceEyeToolbar();
                 currentSelectionRange = null; 
+                if (removeLinkBtn) removeLinkBtn.disabled = true; // NEW
+                if (attachLinkBtn) attachLinkBtn.disabled = true; // NEW
             }
         });
         
@@ -1371,7 +1501,9 @@
             const isClickInsideReferencedText = e.target.closest('span.referenced-text[data-ref-id]');
             
             if (!isClickOnFloatingToolbar && !isClickOnAnyPopup && !isClickOnEyeToolbar) { 
-                hideFloatingToolbar(); 
+                // If not clicking toolbar, and selection collapses, hide toolbar.
+                // selectionchange handles this better.
+                // hideFloatingToolbar(); 
             }
             if (!isClickOnEyeToolbar && !isClickInsideReferencedText && !isClickOnAnyPopup ) {
                  hideReferenceEyeToolbar();

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linha do Tempo Bíblica - Reinos de Judá e Israel</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Estilos Gerais */
+        body { font-family: 'Tinos', serif; background-color: #3d352a; color: #f4f1eb; margin: 0; }
+        header { background-color: #2e2820; color: #f4f1eb; text-align: center; padding: 20px; border-bottom: 2px solid #5a4b40; }
+        header h1 { margin: 0; }
+        .controls-area { text-align: center; padding: 20px; background-color: #332c24; }
+        .legend { display: inline-block; margin-top: 15px; }
+        .legend-item { padding: 5px 15px; border-radius: 15px; color: white; margin: 0 5px; font-size: 0.9em; }
+        .legend-judah { background-color: #4A69A5; }
+        .legend-israel { background-color: #9A5B2B; }
+        .legend-prophet { background-color: #4CAF50; }
+
+        /* Contêiner da Linha do Tempo */
+        #timeline-container { 
+            position: relative; 
+            max-width: 1200px; 
+            margin: 40px auto; 
+            padding: 0 1%; 
+        }
+        #timeline-container::before { 
+            content: ''; position: absolute; top: 0; bottom: 0; 
+            left: 33.33%; 
+            width: 4px; background-color: #8a7a69; 
+            transform: translateX(-50%); 
+            z-index: 0;
+        }
+        #timeline-container::after { 
+            content: ''; position: absolute; top: 0; bottom: 0; 
+            left: 66.66%; 
+            width: 4px; background-color: #8a7a69; 
+            transform: translateX(-50%); 
+            z-index: 0;
+        }
+        .loading { text-align: center; font-size: 1.2em; color: #ccc; }
+
+        /* Estilo dos Cards */
+        .timeline-item {
+            position: absolute;
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            color: white;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column; 
+            justify-content: center; 
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s, top 0.3s ease-out;
+            z-index: 1; 
+        }
+        .timeline-item:hover { transform: scale(1.02); z-index: 10; box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
+        .timeline-item h3 { margin: 0; font-size: 0.90em; line-height: 1.3; font-weight: normal; }
+        .timeline-item h3 strong { font-weight: bold; }
+        .timeline-item h3 i { font-style: italic; font-size: 0.9em; }
+
+        /* Colunas de Judá e Israel (largas) */
+        .judah { background-color: #4A69A5; width: 30%; left: 1.5%; } 
+        .israel { background-color: #9A5B2B; width: 30%; left: 68.16%; } 
+
+        /* Sub-colunas de Profetas (estreitas) */
+        .prophet-col-1, .prophet-col-2, .prophet-col-3, .prophet-col-4 {
+            background-color: #4CAF50;
+            width: 7%;
+        }
+        .prophet-col-1 { left: 34.3%; }
+        .prophet-col-2 { left: 42.3%; }
+        .prophet-col-3 { left: 50.3%; }
+        .prophet-col-4 { left: 58.3%; }
+
+        .timeline-item > .connector-dot {
+            content: ''; position: absolute; width: 16px; height: 16px; 
+            border-radius: 50%; background-color: #3d352a; 
+            border: 3px solid #8a7a69; 
+            top: 10px; 
+            z-index: 2;
+        }
+        .judah > .connector-dot { right: -10px; transform: translateX(50%); }
+        .israel > .connector-dot { left: -10px; transform: translateX(-50%); }
+        .prophet-col-1 > .connector-dot, .prophet-col-2 > .connector-dot { left: -10px; transform: translateX(-50%); }
+        .prophet-col-3 > .connector-dot, .prophet-col-4 > .connector-dot { right: -10px; transform: translateX(50%); }
+        
+        .edit-btn { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; background: rgba(0,0,0,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s, background 0.2s; z-index: 3; }
+        .timeline-item:hover .edit-btn { opacity: 1; }
+        .edit-btn:hover { background: rgba(0,0,0,0.4); }
+        .edit-btn svg { width: 12px; height: 12px; fill: white; }
+
+        /* Modal e Formulário */
+        .primary-btn { background-color: #5a4b40; color: white; border: none; padding: 10px 20px; font-family: 'Tinos', serif; font-size: 1em; cursor: pointer; border-radius: 5px; transition: background-color 0.3s; }
+        .primary-btn:hover { background-color: #7d6a5a; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        #form-container { background: #fff; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); color: #333}
+        .form-field { margin-bottom: 15px; }
+        .form-field label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-field input, .form-field select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        .form-buttons { text-align: right; margin-top: 20px; }
+        .form-buttons button { margin-left: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <header> <h1>Linha do Tempo Bíblica</h1> </header>
+    <div class="controls-area">
+        <button id="show-form-btn" class="primary-btn">Adicionar Novo Personagem</button>
+        <div class="legend"> 
+            <span class="legend-item legend-judah">Judá</span> 
+            <span class="legend-item legend-prophet">Profeta</span> 
+            <span class="legend-item legend-israel">Israel</span> 
+        </div>
+    </div>
+    <div id="form-modal" class="modal-overlay hidden">
+        <div id="form-container">
+            <h2 id="form-title">Adicionar Personagem</h2>
+            <form id="add-character-form">
+                <div class="form-field"> <label for="nome">Nome:</label> <input type="text" id="nome" name="nome" required> </div>
+                <div class="form-field"> <label for="reino">Reino / Tipo:</label> <select id="reino" name="reino" required> <option value="Judá">Judá</option> <option value="Israel">Israel</option> <option value="Profeta">Profeta</option> </select> </div>
+                <div class="form-field"> <label for="ano_inicio">Ano de Início (a.C.):</label> <input type="number" id="ano_inicio" name="ano_inicio" required> </div>
+                <div class="form-field"> <label for="ano_fim">Ano de Fim (a.C.):</label> <input type="number" id="ano_fim" name="ano_fim" required> </div>
+                <div class="form-buttons"> <button type="button" id="cancel-btn" class="primary-btn" style="background-color: #777;">Cancelar</button> <button type="submit" class="primary-btn">Salvar</button> </div>
+            </form>
+        </div>
+    </div>
+    <main id="timeline-container">
+        <div class="loading">Carregando dados...</div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Configuração e Inicialização do Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // Substitua pela sua chave de API real
+          authDomain: "bibliacontexto.firebaseapp.com",
+          projectId: "bibliacontexto",
+          storageBucket: "bibliacontexto.firebasestorage.app",
+          messagingSenderId: "266293600679",
+          appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const timelineContainer = document.getElementById('timeline-container');
+        const showFormBtn = document.getElementById('show-form-btn');
+        const formModal = document.getElementById('form-modal');
+        const addCharacterForm = document.getElementById('add-character-form');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const formTitle = document.getElementById('form-title');
+        let editingCharacterId = null;
+        let personagens = [];
+
+        async function carregarLinhaDoTempo() {
+            console.clear(); // Limpa a console a cada recarregamento para facilitar a leitura
+            console.log("%c--- INICIANDO RENDERIZAÇÃO DA LINHA DO TEMPO ---", "color: #00ff99; font-size: 16px; font-weight: bold;");
+
+            timelineContainer.innerHTML = `<div class="loading">Carregando dados...</div>`;
+            try {
+                const snapshot = await db.collection('personagens').get();
+                personagens = []; 
+                snapshot.forEach(doc => personagens.push({ id: doc.id, ...doc.data() }));
+
+                const validPersonagens = personagens
+                    .filter(p => typeof p.ano_inicio === 'number' && typeof p.ano_fim === 'number')
+                    .sort((a, b) => b.ano_inicio - a.ano_inicio || a.ano_fim - b.ano_fim);
+                
+                if (validPersonagens.length === 0) {
+                    timelineContainer.innerHTML = '<div class="loading">Nenhum personagem válido para exibir.</div>';
+                    return;
+                }
+                
+                console.log(`Dados carregados e ordenados. ${validPersonagens.length} personagens para renderizar.`);
+                timelineContainer.innerHTML = ''; 
+
+                const maxAnoGlobal = Math.max(...validPersonagens.map(p => p.ano_inicio));
+                const minAnoGlobal = Math.min(...validPersonagens.map(p => p.ano_fim));
+                
+                console.log(`Intervalo de Anos Global: ${maxAnoGlobal} a.C. a ${minAnoGlobal} a.C.`);
+
+                const pixelsPerYearVertical = 8;
+                const minItemHeight = 45;
+                const columnItemGap = 4;
+                const timelineVerticalPadding = 60;
+                
+                let placedItems = { judah: [], israel: [] };
+                let prophetColumnBottoms = [-columnItemGap, -columnItemGap, -columnItemGap, -columnItemGap];
+                let yearGroupTopCache = { judah: {}, israel: {} };
+                let maxOverallBottomY = 0;
+
+                validPersonagens.forEach(p => {
+                    console.log(`%cProcessando: ${p.nome} (${p.reino}, ${p.ano_inicio}-${p.ano_fim})`, "color: #ffcc00;");
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('timeline-item');
+                    
+                    const idealTop = (maxAnoGlobal - p.ano_inicio) * pixelsPerYearVertical;
+                    const duration = Math.max(1, p.ano_inicio - p.ano_fim);
+                    const height = Math.max(minItemHeight, duration * pixelsPerYearVertical);
+                    let finalTop = idealTop;
+
+                    console.log(` -> Posição Ideal (idealTop): ${idealTop.toFixed(2)}px | Altura (height): ${height.toFixed(2)}px`);
+
+                    if (p.reino === 'Profeta') {
+                        // Lógica de Profeta (sem logs detalhados por enquanto para focar no problema principal)
+                        let placed = false;
+                        for (let i = 0; i < prophetColumnBottoms.length; i++) {
+                            if (idealTop >= prophetColumnBottoms[i]) {
+                                itemDiv.classList.add(`prophet-col-${i + 1}`);
+                                prophetColumnBottoms[i] = idealTop + height + columnItemGap;
+                                placed = true;
+                                break;
+                            }
+                        }
+                        if (!placed) {
+                            let minBottom = Math.min(...prophetColumnBottoms);
+                            let minIndex = prophetColumnBottoms.indexOf(minBottom);
+                            finalTop = minBottom;
+                            itemDiv.classList.add(`prophet-col-${minIndex + 1}`);
+                            prophetColumnBottoms[minIndex] = finalTop + height + columnItemGap;
+                        }
+
+                    } else { // Lógica para Reis de Judá e Israel
+                        const columnKey = p.reino === 'Judá' ? 'judah' : 'israel';
+                        itemDiv.classList.add(columnKey);
+                        
+                        const obstacles = placedItems[columnKey] || [];
+                        console.log(` -> Verificando ${obstacles.length} obstáculos na coluna [${columnKey}]`);
+                        
+                        // ==========================================================
+                        //  CORREÇÃO APLICADA: mudado de <= para <
+                        // ==========================================================
+                        const collidingItems = obstacles.filter(placed =>
+                            idealTop < (placed.top + placed.height) && (idealTop + height) > placed.top
+                        );
+
+                        if (collidingItems.length > 0) {
+                            console.log(` -> %cCOLISÃO DETETADA!`, 'color: #ff4d4d; font-weight: bold;', `${collidingItems.length} item(s) no caminho.`);
+                            console.log(collidingItems); // Mostra os objetos que estão a colidir
+                            const maxBottom = Math.max(...collidingItems.map(item => item.top + item.height));
+                            finalTop = maxBottom + columnItemGap;
+                            console.log(` -> Nova posição calculada (finalTop) para evitar colisão: ${finalTop.toFixed(2)}px`);
+                        } else {
+                            console.log(` -> %cSem colisão.`, 'color: #33cc33;');
+                            finalTop = idealTop; // Mantém a posição ideal
+                        }
+
+                        const placedInfo = { top: finalTop, height: height, startYear: p.ano_inicio };
+                        if (!placedItems[columnKey]) placedItems[columnKey] = [];
+                        placedItems[columnKey].push(placedInfo);
+                    }
+                    
+                    itemDiv.style.top = `${finalTop}px`;
+                    itemDiv.style.height = `${height}px`;
+                    console.log(` -> ✅ Finalizando ${p.nome}. Posição final: top=${finalTop.toFixed(2)}px, height=${height.toFixed(2)}px`);
+                    console.log("----------------------------------------------------");
+
+
+                    maxOverallBottomY = Math.max(maxOverallBottomY, finalTop + height);
+                    
+                    itemDiv.innerHTML = `
+                        <div class="connector-dot"></div>
+                        <a class="edit-btn" data-id="${p.id}">
+                             <svg viewBox="0 0 24 24"><path fill="white" d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z" /></svg>
+                        </a>
+                        <h3><strong>${p.nome}</strong><br><i>(${p.ano_inicio} a.C. - ${p.ano_fim} a.C.)</i></h3>
+                    `;
+                    timelineContainer.appendChild(itemDiv);
+                });
+                
+                const totalTimelineHeight = (maxAnoGlobal - minAnoGlobal) * pixelsPerYearVertical;
+                timelineContainer.style.height = `${Math.max(totalTimelineHeight, maxOverallBottomY) + timelineVerticalPadding}px`;
+                console.log(`%c--- RENDERIZAÇÃO FINALIZADA ---`, "color: #00ff99; font-size: 16px; font-weight: bold;");
+
+            } catch (error) {
+                console.error("Erro CRÍTICO ao renderizar linha do tempo:", error);
+                timelineContainer.innerHTML = `<div class="loading" style="color: red;">Falha ao carregar dados. Verifique o console.</div>`;
+            }
+        }
+
+        // --- Lógica do formulário (sem alterações) ---
+        showFormBtn.addEventListener('click', () => {
+            editingCharacterId = null; formTitle.textContent = 'Adicionar Personagem';
+            addCharacterForm.reset(); formModal.classList.remove('hidden');
+        });
+        cancelBtn.addEventListener('click', () => formModal.classList.add('hidden'));
+        timelineContainer.addEventListener('click', (event) => {
+            const editBtn = event.target.closest('.edit-btn'); if (!editBtn) return;
+            const charId = editBtn.dataset.id;
+            const charToEdit = personagens.find(p => p.id === charId);
+            if (charToEdit) {
+                editingCharacterId = charId; formTitle.textContent = 'Editar Personagem';
+                addCharacterForm.nome.value = charToEdit.nome; addCharacterForm.reino.value = charToEdit.reino;
+                addCharacterForm.ano_inicio.value = charToEdit.ano_inicio; addCharacterForm.ano_fim.value = charToEdit.ano_fim;
+                formModal.classList.remove('hidden');
+            }
+        });
+        addCharacterForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true; submitButton.textContent = 'Salvando...';
+            const characterData = {
+                nome: addCharacterForm.nome.value, reino: addCharacterForm.reino.value,
+                ano_inicio: parseInt(addCharacterForm.ano_inicio.value, 10), ano_fim: parseInt(addCharacterForm.ano_fim.value, 10),
+            };
+            try {
+                if (isNaN(characterData.ano_inicio) || isNaN(characterData.ano_fim)) { alert("Os anos devem ser números válidos."); throw new Error("Invalid year input");}
+                if (characterData.ano_fim > characterData.ano_inicio) { alert("O ano de fim não pode ser maior que o ano de início."); throw new Error("Invalid date range"); }
+                if (editingCharacterId) { await db.collection('personagens').doc(editingCharacterId).update(characterData); } 
+                else { await db.collection('personagens').add(characterData); }
+                formModal.classList.add('hidden'); addCharacterForm.reset();
+                carregarLinhaDoTempo();
+            } catch (error) { console.error("Erro ao salvar: ", error); if (error.message.includes("Invalid")) return; alert("Ocorreu um erro ao salvar.");
+            } finally {
+                submitButton.disabled = false; submitButton.textContent = 'Salvar'; editingCharacterId = null;
+            }
+        });
+
+        carregarLinhaDoTempo();
+    </script>
+</body>
+</html>

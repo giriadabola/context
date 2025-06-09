@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de App Mobile</title>
+    <style>
+        /* --- Configurações Gerais da Página --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #e9e9e9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- Estrutura do Simulador (Aparência de Celular) --- */
+        .mobile-simulator {
+            width: 390px;
+            height: 844px;
+            border: 12px solid #111;
+            border-radius: 40px;
+            background-color: #ffffff;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Tela de Conteúdo Principal --- */
+        .screen-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 80px; /* Espaço para não sobrepor a barra de navegação */
+        }
+        
+        /* --- Barra de Navegação Inferior --- */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #ddd;
+            background-color: #f8f8f8;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 5px 0;
+        }
+
+        .nav-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            font-size: 11px;
+            color: #888;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-transform: uppercase;
+        }
+
+        .nav-button:hover {
+            color: #007aff;
+        }
+
+        .nav-button.active {
+            color: #007aff; /* Cor do ícone e texto ativo */
+            font-weight: 600;
+        }
+        
+        /* --- Conteúdo das Abas --- */
+        .tab-content {
+            display: none; /* Esconde todas as abas por padrão */
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Grade de Ícones dos Apps --- */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            text-align: center;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-icon img {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 6px;
+            object-fit: cover;
+        }
+
+        .app-icon span {
+            font-size: 12px;
+            color: #333;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-simulator">
+        <!-- ==== ÁREA DE CONTEÚDO DA TELA ==== -->
+        <div class="screen-content">
+
+            <!-- Conteúdo da Aba CHAT -->
+            <div id="chat" class="tab-content">
+                <div class="app-grid">
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-chat7864.logowik.com.webp" alt="Google Chat"><span>Google Chat</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-meet8001.jpg" alt="Google Meet"><span>Google Meet</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-voice8556.jpg" alt="Google Voice"><span>Google Voice</span></div>
+                    <div class="app-icon"><img src="https://cdn-1.webcatalog.io/catalog/google-contacts/google-contacts-icon-filled-256.png?v=1714773032189" alt="Google Contacts"><span>Google Contacts</span></div>
+                </div>
+            </div>
+
+            <!-- Conteúdo da Aba PAY -->
+            <div id="pay" class="tab-content">
+                <div class="app-grid">
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-pay-icon-20205841.logowik.com.webp" alt="Google Pay"><span>Google Pay</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-wallet2132.jpg" alt="Google Wallet"><span>Google Wallet</span></div>
+                    <div class="app-icon"><img src="https://play-lh.googleusercontent.com/f-hEfQglSjY0D-JhyNeKiHEzZ5_F6BiG8Y978hwlSnZQW3L-VCv3hKUguli_UVpurV-F" alt="Google Pay Business"><span>Pay Business</span></div>
+                </div>
+            </div>
+
+            <!-- Conteúdo da Aba APPS -->
+            <div id="apps" class="tab-content">
+                <div class="app-grid">
+                    <!-- Linha 1 -->
+                    <div class="app-icon"><img src="https://img.freepik.com/premium-vector/gemini-logo-icon_1273375-845.jpg" alt="Google Gemini"><span>Gemini</span></div>
+                    <div class="app-icon"><img src="https://static.dezeen.com/uploads/2025/05/sq-google-g-logo-update_dezeen_2364_col_0-852x852.jpg" alt="Google Search"><span>Search</span></div>
+                    <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/39/1/google-lens-logo-png_seeklogo-391663.png" alt="Google Lens"><span>Lens</span></div>
+                    <div class="app-icon"><img src="https://thumbs.dreamstime.com/b/gmail-logo-gmail-icon-google-email-service-logotype-icon-vector-gmail-logo-gmail-icon-google-email-service-logotype-icon-vector-302789383.jpg" alt="Google Gmail"><span>Gmail</span></div>
+                    <!-- Linha 2 -->
+                    <div class="app-icon"><img src="https://img.freepik.com/vetores-premium/logotipo-do-google-tradutor_689336-962.jpg" alt="Google Tradutor"><span>Tradutor</span></div>
+                    <div class="app-icon"><img src="https://static.vecteezy.com/system/resources/previews/022/484/517/non_2x/google-news-icon-logo-symbol-free-png.png" alt="Google Notícias"><span>Notícias</span></div>
+                    <div class="app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Google_Finance.png" alt="Google Finance"><span>Finance</span></div>
+                    <div class="app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png" alt="Google Calendar"><span>Calendar</span></div>
+                    <!-- Linha 3 -->
+                    <div class="app-icon"><img src="https://img.freepik.com/vetores-premium/modelo-de-localizacao-de-icone-de-vetor-ilustracao-design-de-logotipo_942802-5019.jpg" alt="Google Maps"><span>Maps</span></div>
+                    <div class="app-icon"><img src="https://brandlogos.net/wp-content/uploads/2025/05/waze_app_icon-logo_brandlogos.net_l82da.png" alt="Waze"><span>Waze</span></div>
+                    <div class="app-icon"><img src="https://play-lh.googleusercontent.com/Zi0RZFKtIFVuDy-BaXkkoU6g_4c_jpYxo4oIrlJQcGeircu0cMowGXBa7NajTydJhw" alt="Android Auto"><span>Android Auto</span></div>
+                    <div class="app-icon"><img src="https://thumbs.dreamstime.com/b/google-travel-icon-white-background-google-travel-logo-357845357.jpg" alt="Google Travel"><span>Travel</span></div>
+                    <!-- Linha 4 -->
+                    <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/48/1/google-flight-logo-png_seeklogo-483790.png" alt="Google Flights"><span>Flights</span></div>
+                    <div class="app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTcEqHMQp3kRzU66Ox2NwauMWAW8E9SZl7Cg&s" alt="Google Hotel Search"><span>Hotel Search</span></div>
+                    <div class="app-icon"><img src="https://static.vecteezy.com/system/resources/previews/022/484/515/non_2x/google-fit-icon-logo-symbol-free-png.png" alt="Google Fit"><span>Fit</span></div>
+                    <div class="app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCskqRfODN3F2M9LLUrgw9kRwNRemJB6gu4w&s" alt="Google Health"><span>Health</span></div>
+                    <!-- Linha 5 -->
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-keep3316.jpg" alt="Google Keep"><span>Keep</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-docs-icon6180.jpg" alt="Google Docs"><span>Docs</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-sheets9090.jpg" alt="Google Sheets"><span>Sheets</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-slides3480.jpg" alt="Google Slides"><span>Slides</span></div>
+                    <!-- Linha 6 -->
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-tasks7052.logowik.com.webp" alt="Google Tasks"><span>Tasks</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-sites-new9232.jpg" alt="Google Sites"><span>Sites</span></div>
+                    <div class="app-icon"><img src="https://cdn2.iconfinder.com/data/icons/metro-ui-icon-set/512/Google_Blogger.png" alt="Blogger"><span>Blogger</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-one3430.jpg" alt="Google One"><span>Google One</span></div>
+                    <!-- Linha 7 -->
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/new-google-drive2295.logowik.com.webp" alt="Google Drive"><span>Drive</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-home1351.jpg" alt="Google Home"><span>Home</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-cloud.jpg" alt="Google Cloud"><span>Cloud</span></div>
+                    <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/39/1/google-looker-logo-png_seeklogo-394597.png" alt="Google Looker"><span>Looker</span></div>
+                    <!-- Linha 8 -->
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-photoscan7065.jpg" alt="Google PhotoScan"><span>PhotoScan</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-analytics-2020.jpg" alt="Google Analytics"><span>Analytics</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-adsense-20196443.logowik.com.webp" alt="Google AdSense"><span>AdSense</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-play-store4701.jpg" alt="Play Store"><span>Play Store</span></div>
+                </div>
+            </div>
+
+            <!-- Conteúdo da Aba MIDIA -->
+            <div id="midia" class="tab-content">
+                <div class="app-grid">
+                    <div class="app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/1200px-YouTube_full-color_icon_%282017%29.svg.png" alt="Youtube"><span>Youtube</span></div>
+                    <div class="app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Youtube_Music_icon.svg/2048px-Youtube_Music_icon.svg.png" alt="Youtube Music"><span>YT Music</span></div>
+                    <div class="app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/YouTube_Kids_LogoVector.svg/1280px-YouTube_Kids_LogoVector.svg.png" alt="Youtube Kids"><span>YT Kids</span></div>
+                    <div class="app-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAABR1BMVEX///9ChfT7vATqQzU0qFP7ugA2gPTa5vz+8NCDrPf80GgmpUrpNyfpMyH0qqbG4sz4ycel0q/+6MHJ2Psrpk18w438wADqPCzwhH0zqUrpPTZDg/nrQjE7mandUlB6sUnygyXb7t9Cgv3wPyMZp1b8zVr2mxv2+/e43sGUy6B8xId9wpKEwqiEusR2rtNoo+GZuPiowvm80vpnunw2m5Y7js47hO1woPZOsmc8oYZDiOpdlfUUoUBAmLJ6pvfx9v4/ksdDi+M/m6Q8oIuQtPjboKzTUVvJU2nAW4OobJ93dsvjSEHQU2Rjftv1PBCsZZSVbK6Fabbe097m58VTpzmeryfftgBXrEvCtiiTsTjnuRWIrkG9z5HzoYr73Nr814Lvai7veHD946f5rxL92onznZfziyXua2HwciP5uUz4s2j2rHj3vLh+GZf6AAADwklEQVR4nO3Z6VITQRSG4TAb0cwkBuMMgRGEAJFFBaJhd1cQUNyQTVyQxe3+fzthqbIqmT4dSOyT9nsvIFVPndPdU5VEAiGEEEIIIYQQQgghhBBCCCGEEEIIISRfse9mdvhaTCMjo2O3bt+5pKTxicn2Bxfl9WVLuflUKpWr2bx19165v9tRWNvURPsFfJlSZLPiyucWZrudNsVFyqmr5/VNC3gRcGa2WzXvJMeZO4+xWJoX8CLgQr9q2V/136/7QGYs0fwi4EMmAzzNKdc5xmxK6GMHjHIm6gEOizeU2Yqe5ow3EDjDboKV5KeYJYCW9Ug1pnbOpBywjwLmH7McYZQj9foXxZco4xFWkhGOEteolX/C8Jo5zXkqsaMUMHoplH+qxSexpyVySfOqFaKc++QIyXvUmua7pG0SQxwlR5jj+RieRb775Clk/FacJgZm6CXNX+ctdMSf4PSS8heK13SaBLIXts2JgBLfM/yFwoNIP/ctIBS+FxkIW0IoukwhhJBFEEIIofoghBBC9TVA2K/wT+1/IUyNtavrWU9VzxeXXiyXGyrMCn6g2aW9sKogKBRWlpZ1EbpmzcKgsPpSa2FU8GpNc6FpFlbLmgtNt6esudAMenQXmu6i7kKz8Fp3YWiWNReahTXdhWaovbDwRndhsKi7MOzSXWi6bwU/oIXQuyL4AQghbHoQQgghhM0PQgghhLD5QQghhBA2PwghhBDC5gchhBBC2PwghBBCCJsfhBBCqIHwXV53YYf+wvfaC9cHdBd+0F5ob2gv3CSH2OpCgxxiqwtt8iS2utCwqeu05YWG3Ssmtr6QImogNIwtEVELob1pxRu1EBq2sRVr1EMYGbfXN6yBWkpdhIZtG9ubWzs7vVV9TKprN2ic8BjJLf9GV0OF/IIQQgjVByGEEKoPQgghVN/FhUkdhO4ngTChmkAkJQxEQB2E4YpQ+Jn3msoIg06hkPlVIyMUXjTs11RG6IqBzNfU/0IKiSXl/l745ARNT/hWVBrkTLTpEX6lgKyH6A+RQvFzz/4k0sfQpU7hcaod8X2jJhiGMkC+e0q/FfQ1c9IeT6JPjtBLywETiX2WRPIUegeyQJ63jX/YQCDHKVIvRSi/oid1GLyMFDAwiQ/u6oqsPm6IFQ09+lOm1hi3uRh9W3jJhF5P3QM8Mw7a6pG+bx92xQNDNzg6r69Scn9Q4Z/dx+Mb+h4GMbmeFxylJV/5+IrJvb39y0r68fPXbmd8B+nfF9YhhBBCCCGEEEIIIYQQQgghhBBCCCH0f/UHOyg1eqBbMAkAAAAASUVORK5CYII=" alt="Google TV"><span>Google TV</span></div>
+                    <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/48/1/google-play-console-icon-logo-png_seeklogo-486878.png" alt="Google Play Console"><span>Play Console</span></div>
+                    <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/33/1/google-play-books-logo-png_seeklogo-332742.png" alt="Google Play Livros"><span>Play Livros</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-photos-2020-new-logo.jpg" alt="Google Photos"><span>Photos</span></div>
+                    <div class="app-icon"><img src="data:image/png;base64,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" alt="Google Videos"><span>Videos</span></div>
+                    <div class="app-icon"><img src="https://www.gstatic.com/culturalinstitute/images/gac-icon-200x200-v1.png" alt="Google Arts & Culture"><span>Arts & Culture</span></div>
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-classroom-icon8999.logowik.com.webp" alt="Google Classroom"><span>Classroom</span></div>
+                    <div class="app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2F0v4p4Dt6-MFhqxkopfkMszAszahzx2zmg&s" alt="Google NotebookLM"><span>NotebookLM</span></div>
+                    <div class="app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Scholar_logo.svg/2048px-Google_Scholar_logo.svg.png" alt="Google Scholar"><span>Scholar</span></div>
+                </div>
+            </div>
+
+            <!-- Conteúdo da Aba SOCIAL -->
+            <div id="social" class="tab-content">
+                <div class="app-grid">
+                    <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/39/1/google-groups-logo-png_seeklogo-393171.png" alt="Google Groups"><span>Google Groups</span></div>
+                </div>
+            </div>
+
+            <!-- Conteúdo da Aba SHOP -->
+            <div id="shop" class="tab-content">
+                <div class="app-grid">
+                    <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-shopping.jpg" alt="Google Shopping"><span>Google Shopping</span></div>
+                </div>
+            </div>
+            
+            <!-- Conteúdo da Aba PERFIL -->
+            <div id="perfil" class="tab-content">
+                <p style="text-align: center; color: #555; margin-top: 40px;">Página de Perfil do Usuário</p>
+            </div>
+        </div>
+
+        <!-- ==== BARRA DE NAVEGAÇÃO INFERIOR ==== -->
+        <nav class="bottom-nav">
+            <button class="nav-button active" onclick="showTab('chat', this)">CHAT</button>
+            <button class="nav-button" onclick="showTab('pay', this)">PAY</button>
+            <button class="nav-button" onclick="showTab('apps', this)">APPS</button>
+            <button class="nav-button" onclick="showTab('midia', this)">MIDIA</button>
+            <button class="nav-button" onclick="showTab('social', this)">SOCIAL</button>
+            <button class="nav-button" onclick="showTab('shop', this)">SHOP</button>
+            <button class="nav-button" onclick="showTab('perfil', this)">PERFIL</button>
+        </nav>
+    </div>
+
+    <script>
+        // Função para mostrar a aba correta e atualizar o botão ativo
+        function showTab(tabId, element) {
+            // Esconde todos os conteúdos de aba
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.style.display = 'none';
+            });
+
+            // Remove a classe 'active' de todos os botões
+            const navButtons = document.querySelectorAll('.nav-button');
+            navButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Mostra o conteúdo da aba selecionada
+            const selectedTab = document.getElementById(tabId);
+            if (selectedTab) {
+                selectedTab.style.display = 'block';
+            }
+
+            // Adiciona a classe 'active' ao botão clicado
+            if (element) {
+                element.classList.add('active');
+            }
+        }
+
+        // Garante que a primeira aba (CHAT) seja mostrada ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            showTab('chat', document.querySelector('.nav-button'));
+        });
+    </script>
+
+</body>
+</html>

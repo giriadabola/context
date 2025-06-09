@@ -2,7 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ATUALIZAÇÃO: Adicionado viewport-fit=cover para lidar com áreas seguras (notches) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Simulador de App Mobile</title>
     <style>
         /* --- Configurações Gerais da Página --- */
@@ -16,6 +17,8 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            /* Garante que a transição de cor de fundo seja suave */
+            transition: background-color 0.3s ease;
         }
 
         /* --- Estrutura do Simulador (Aparência de Celular) --- */
@@ -30,6 +33,7 @@
             flex-direction: column;
             overflow: hidden;
             position: relative;
+            transition: all 0.3s ease; /* Animação suave na redimensionamento */
         }
 
         /* --- Tela de Conteúdo Principal --- */
@@ -50,6 +54,7 @@
             bottom: 0;
             width: 100%;
             padding: 5px 0;
+            z-index: 10;
         }
 
         .nav-button {
@@ -115,6 +120,44 @@
             color: #333;
             word-break: break-word;
         }
+        
+        /* --- ================================== --- */
+        /* --- Media Query para Adaptação Mobile  --- */
+        /* --- ================================== --- */
+        @media (max-width: 600px) {
+            body {
+                /* Remove o fundo cinza e o padding em telas pequenas */
+                background-color: #ffffff;
+                padding: 0;
+                /* Remove o alinhamento, deixando o conteúdo preencher a tela */
+                display: block;
+                height: auto;
+            }
+
+            .mobile-simulator {
+                /* Remove a "moldura" do celular */
+                width: 100%;
+                height: 100vh; /* Ocupa 100% da altura da tela */
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .screen-content {
+                /* Adiciona padding seguro para notches e barras de gesto */
+                padding-top: calc(20px + env(safe-area-inset-top));
+                padding-left: 20px;
+                padding-right: 20px;
+                /* Ajusta o padding inferior para a barra de navegação + área segura */
+                padding-bottom: calc(80px + env(safe-area-inset-bottom));
+            }
+
+            .bottom-nav {
+                /* Ajusta o padding inferior da barra para a área segura */
+                padding-bottom: calc(5px + env(safe-area-inset-bottom));
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -198,7 +241,7 @@
                     <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/48/1/google-play-console-icon-logo-png_seeklogo-486878.png" alt="Google Play Console"><span>Play Console</span></div>
                     <div class="app-icon"><img src="https://images.seeklogo.com/logo-png/33/1/google-play-books-logo-png_seeklogo-332742.png" alt="Google Play Livros"><span>Play Livros</span></div>
                     <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-photos-2020-new-logo.jpg" alt="Google Photos"><span>Photos</span></div>
-                    <div class="app-icon"><img src="data:image/png;base64,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" alt="Google Videos"><span>Videos</span></div>
+                    <div class="app-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAABBVBMVEX///80qFPqQzX7vARChfQzqFLP6tYeo0Y1qVaX0af+78X7uADpMiD60s/0npj93IBLi/TO3fzyhiGcekTqRDgpqlPsPjSmsjSau/ja5v08gvO80fvx9v5Eh/NVkPVhl/Xx+PP/+u7h8eVmunvn7/1QtWz62tf98O/X7d3+8s/+9d3//fn7xRm84MX+56+HypgxffOMs/jC1vt7p/dtn/aGsPiwyvplnPYqefLucGb85ePsV0r5y8fn7c2o2bWirR/8z03+4pdbuHL7yDn8y1T80214wor946LN15T813j7wCqnxPn4vozxfgD84crxj4bIuZ/uaFz1rKbvgHfsU0aXcjTl3tM27YClAAAF3klEQVR4nO3da3faRhAGYAtJXMzFTgtqSkoio+BgY0x6SVqCS3Bik6Y3107b//9TuuKcpDHSpnuZSWdO5v0ujh5mtSMtEtrZkUgkEolEIpFIJBKJRPIJJR2OqzD5cRcmR8cHkwkQbrxcj3o1qDxvQiU8WZ0fHfgqJ8Nl1qvFcRwEQQyQoP5FCJhmuHp17GUcLl/01F7VA7DACvO8PD92B06z/FuH4+XjAFwYhhenjmVMG/UYUocmDE/2DpyAM3AfljAMLx2I6RoBiCZ0IKJUEFFoT2ygABGF4Z4dcAo6g34UYXhqAxxmOCVEFV7Y9MUlEhBVGL4yb4vDFyyFL82LiFZCXKF5EVOsoxBbuDLtGOMeFjCIA0xheGQ6SGu6XlH3D6aweW4ozGKNUF1peF8hotZwZXggjkoPwzgYZbOGd37a887lxc8a4YmZMC09DOPRrGo4BtAz2X2tMZpNNcNaGTCbIu+2VSanF2XApllHHJcI42yMvM+2OVqVCc0m02pRGI9IVXCT05KB2tw12rRaK840M+TddcjkNaRwRGaSeS+7xSK6CutxhryzTpkUJxvnGsYEB6nKJVwNgwbyvrplD1CUivD/iQi1ESGZiFAbEZKJCLURIZmIUBsRkokItREhmYhQGxGSiQi1ESGZUBA+/NJxQ6NQEN65f89xS5OQEO4//vorx23/OzSE0ePv0UYqEeGgP/gGqYxEhCr9uw8dt/9w6Aij6Ns7jh/wwVASRg+eIoxUUsL+PsKcSkoYRYPvwOdUYkJlhO7+5ITRD08cP0YTesJBH7b70xOqCef+PcAJh6Iw6g8Auz9JIWj3pyrsP3jq+GnboSpU3f8JzMFIVqiMMN2fsDCK9iG6P2lh1Ac4T6UthBipxIUA3Z+6UMWz+zMQ9v26PwOhZ/fnIFRtw2Ok8hBGkfucykUYOa/8sxFGriv/fISuK/+MhJHbyj8nYdR36f6shJHLtT83of3KPzthf/+uHZGd0Hrln6HQcuWfpdBq5Z+n0Gbln6fQ5tqfqzCfU826f1EY8hAq4y9GVfz1s+389jsLoXENO0k3eT/dpNXmIDQ/DjuVbuV2OAht5lKeQpt+yFJodU7DUGh5XspOaH1twU5ofX3ITWh/jc9K6LROw0nottbGSOi4XspH6LrmzUbo/LsFF6H7b088hD6/H3IQ+v0GzEDo+Ts+A6HnvRjUhf730xAXAtwTRVsIcV8baSHIvYmEhUD3l5IVgt0jTFUId583VSHcvfokhcYr9iahKIR9ZoaeEPq5J3pC6GfXyAnBnz8kJkR4hpSUEOU5YFJClGe5KQlxnsenI8T6TwUiQsT/xSAiRPxvExpCzP+nISFE/Y8hCkLc/4miIMSNCLURIZmIUBsRkokItREhmYhQGxGSiQi1ESGZiFAbEZKJCLURIZl4CINPTkj0PaTOwsJbq+sUX3iscuUqHG4fh0GcGb53/uNmnlTchGmsqnY7JN/p3F5sA02FO6PtGtJ85fFVAWgsXMfbNaT4bvWzYgkrrUOzbZe1baE6Ese4+2udw3kRWGk9M9u40C42RFpVPCsDVpJHZlunxQMxH6gzOtNN+2pRmEfzLAy3T2fFYbqZUbNZwzt/dLxzNVeH4HYrVOkmc9OvqBqXFDGvYxD7pvd56ZdvF81HdFsdU2G6Lheq0xvfKGHXOzq56VSqMtUJfQNTQ00Jk2vDiUZlqC0iYWElubE4uZyWTafUhQvzQZpPp/yEScd8kObjNEMhIgqTa8OT0nfjtI5BxKzhjR1QnZ0Wzr9JC5M3VmN0k0bJ6SlZYWI1zbwjqnMYLsLFmQNQDVTwYxFJmDgC1QlqxkLoDlRNYwbb+nGEb1yOwbdJp+t8qEJNq9DCbt4Hb+xn0dtlnK57tc1VBQQRUqguMpLWnx3LRl9ax+psVKvl14z+F4iQwqTVur459CzgW2NaXa5HcQ0gf7WAkizmnTYM71/ncFz1zt9tkBw+e0RyHV4ikUgkEolEIpFIJBIJVv4Bs5cwKbqMpVsAAAAASUVORK5CYII=" alt="Google Videos"><span>Videos</span></div>
                     <div class="app-icon"><img src="https://www.gstatic.com/culturalinstitute/images/gac-icon-200x200-v1.png" alt="Google Arts & Culture"><span>Arts & Culture</span></div>
                     <div class="app-icon"><img src="https://logowik.com/content/uploads/images/google-classroom-icon8999.logowik.com.webp" alt="Google Classroom"><span>Classroom</span></div>
                     <div class="app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2F0v4p4Dt6-MFhqxkopfkMszAszahzx2zmg&s" alt="Google NotebookLM"><span>NotebookLM</span></div>

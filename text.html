@@ -29,6 +29,29 @@
         .initial-actions button { padding: 12px 25px; font-size: 1.1em; cursor: pointer; border: 1px solid #3a7ca5; background-color: #3a7ca5; color: white; border-radius: 5px; margin: 0 10px 20px 10px; }
         .initial-actions button:hover { background-color: #4a90c2; border-color: #4a90c2; }
         
+        /* --- ESTILOS ADICIONADOS PARA O LINK DO STUDIO --- */
+        .studio-links {
+            margin-top: 40px;
+        }
+        .studio-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .studio-links li {
+            margin-bottom: 10px;
+        }
+        .studio-links a {
+            color: #7aa0c7; /* Cor azulada, consistente com outros links */
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+        .studio-links a:hover {
+            text-decoration: underline;
+            color: #87cefa; /* Cor mais clara no hover */
+        }
+        /* --- FIM DOS ESTILOS ADICIONADOS --- */
+        
         #docTitle { width: calc(100% - 22px); padding: 10px; font-size: 1.5em; margin-bottom: 10px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4 !important; }
         #docTitle::placeholder { color: #777; }
 
@@ -237,6 +260,14 @@
             <button id="initNewDocBtn">Novo Documento</button>
             <button id="initLoadDocBtn">Carregar Documento</button>
         </div>
+        
+        <!-- Bloco HTML adicionado -->
+        <div class="studio-links">
+          <ul>
+            <li><a href="studiomusic.html">Studio: Music</a></li>
+          </ul>
+        </div>
+        <!-- Fim do bloco HTML adicionado -->
     </div>
 
     <div id="editorInterface" style="display: none;">
@@ -433,7 +464,7 @@
                 if (!el.style.lineHeight || el.style.lineHeight === "") el.style.lineHeight = targetLineHeight; 
             }); 
         }
-            function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        function getFirstSentence(htmlString) { if (!htmlString) return ""; const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlString; let textContent = (tempDiv.textContent || "").trim(); const firstPeriodIndex = textContent.indexOf('.'); if (firstPeriodIndex !== -1) { return textContent.substring(0, firstPeriodIndex + 1); } return textContent.substring(0, 100) + (textContent.length > 100 ? "..." : ""); }
+            function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        function getFirstSentence(htmlString) { if (!htmlString) return ""; const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlString; let textContent = (tempDiv.textContent || "").trim(); const firstPeriodIndex = textContent.indexOf('.'); if (firstPeriodIndex !== -1) { return textContent.substring(0, firstPeriodIndex + 1); } return textContent.substring(0, 100) + (textContent.length > 100 ? "..." : ""); }
         function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) { const container = document.getElementById(containerId); if (!container) return null; const inputGroup = document.createElement('div'); inputGroup.className = 'url-input-group'; const urlInput = document.createElement('input'); urlInput.type = 'url'; urlInput.className = 'ref-url-input'; urlInput.placeholder = 'URL do Link'; urlInput.value = urlValue; inputGroup.appendChild(urlInput); if (canBeRemoved) { urlInput.style.marginRight = '10px'; const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = 'Remover'; removeBtn.addEventListener('click', () => { inputGroup.remove(); if (container.childElementCount === 0) { createUrlInputEntry(container.id, '', false); } }); inputGroup.appendChild(removeBtn); } container.appendChild(inputGroup); return urlInput; }
     
     
@@ -2008,3 +2039,5 @@
     </script>
 </body>
 </html>
+
+</details>

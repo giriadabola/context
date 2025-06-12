@@ -69,17 +69,22 @@
              box-shadow: 0 0 0 1px rgba(58, 124, 165, 0.25);
         }
         .chapter-toolbar {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            display: flex;
-            gap: 6px;
-            background-color: rgba(56, 56, 56, 0.85);
-            padding: 5px;
-            border-radius: 4px;
-            z-index: 10;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
+    /* position: absolute;  <-- REMOVA OU COMENTE ESTA LINHA */
+    position: -webkit-sticky; /* Para compatibilidade com o Safari */
+    position: sticky;        /* <-- ADICIONE ESTA LINHA */
+    top: 6px;                /* Esta linha agora define a posição "grudada" */
+    right: 6px;
+    display: flex;
+    gap: 6px;
+    background-color: rgba(56, 56, 56, 0.85);
+    padding: 5px;
+    border-radius: 4px;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+
+
         .chapter-toolbar button {
             background: none;
             border: 1px solid #666;
@@ -215,8 +220,13 @@
         .url-input-group button[type="button"] { padding: 10px 15px; border: none; border-radius: 4px; background-color: #d9534f; color: white; cursor: pointer; flex-shrink: 0; margin-left: 10px; }
         #addMoreUrlsToAddPopupBtn, #addMoreUrlsToEditPopupBtn { padding: 8px 12px; font-size:0.9em; margin-bottom: 15px; background-color: #5a6268; color:white; border:none; border-radius:4px; cursor:pointer; }
         #addMoreUrlsToAddPopupBtn:hover, #addMoreUrlsToEditPopupBtn:hover { background-color: #6c757d; }
-        .highlight-scroll { background-color: #2c3e50 !important; } 
-        .reference-item.highlight-scroll { background-color: #5a512e !important; } 
+        #editorsContainer .text-editor-chapter .referenced-text.highlight-scroll {
+    background-color: rgba(255, 223, 100, 0.25) !important; /* A light, transparent yellow background */
+    border-bottom: 2px solid #FFC107; /* A solid yellow underline */
+    padding-bottom: 1px; /* A little space for the underline */
+    border-radius: 2px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}        .reference-item.highlight-scroll { background-color: #5a512e !important; } 
 
         /* CSS for scrollable reference list in popup */
         .scrollable-ref-list {
@@ -368,1674 +378,784 @@
     <script type="module">
         // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
         const firebaseConfig = {
-          apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // IMPORTANT: Replace with your actual API key if this is a placeholder
-          authDomain: "bibliacontexto.firebaseapp.com",
-          projectId: "bibliacontexto",
-          storageBucket: "bibliacontexto.firebasestorage.app",
-          messagingSenderId: "266293600679",
-          appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
-        };
+  apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // IMPORTANT: Replace with your actual API key if this is a placeholder
+  authDomain: "bibliacontexto.firebaseapp.com",
+  projectId: "bibliacontexto",
+  storageBucket: "bibliacontexto.firebasestorage.app",
+  messagingSenderId: "266293600679",
+  appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
+};
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+    getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+let app;
+let db;
+try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    console.log("Firebase inicializado com sucesso! Project ID:", firebaseConfig.projectId);
+} catch (error) {
+    console.error("ERRO CRÍTICO AO INICIALIZAR O FIREBASE:", error);
+    alert("Falha crítica ao conectar com o Firebase. Verifique o console para detalhes, confirme suas credenciais em 'firebaseConfig' e se o projeto Firebase está acessível.");
+    throw new Error("Falha na inicialização do Firebase. O aplicativo não pode continuar.");
+}
+
+// IDs dos Elementos
+const initialScreenDiv = document.getElementById('initialScreen');
+const editorInterfaceDiv = document.getElementById('editorInterface');
+const initNewDocBtn = document.getElementById('initNewDocBtn');
+const initLoadDocBtn = document.getElementById('initLoadDocBtn');
+const backToInitialScreenBtn = document.getElementById('backToInitialScreenBtn');
+const editorsContainer = document.getElementById('editorsContainer');
+const addChapterBtn = document.getElementById('addChapterBtn');
+const floatingToolbar = document.getElementById('floatingToolbar');
+const attachLinkBtn = document.getElementById('attachLinkBtn');
+const removeLinkBtn = document.getElementById('removeLinkBtn'); 
+const appendToRefBtn = document.getElementById('appendToRefBtn'); 
+const docTitleInput = document.getElementById('docTitle');
+const referencesListUl = document.getElementById('referencesList');
+const addReferencePopup = document.getElementById('addReferencePopup');
+const refTitleInput = document.getElementById('refTitleInput');
+const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
+const cancelNewRefBtn = document.getElementById('cancelNewRefBtn');
+const editReferencePopup = document.getElementById('editReferencePopup');
+const editRefTitleInput = document.getElementById('editRefTitleInput');
+const editingRefIdInput = document.getElementById('editingRefIdInput');
+const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
+const deleteRefBtn = document.getElementById('deleteRefBtn');
+const loadDocumentPopup = document.getElementById('loadDocumentPopup');
+const documentsListContainerUl = document.querySelector('#documentsListContainer ul');
+const documentsListContainerMsg = document.querySelector('#documentsListContainer p');
+const addMoreUrlsToAddPopupBtn = document.getElementById('addMoreUrlsToAddPopupBtn');
+const addMoreUrlsToEditPopupBtn = document.getElementById('addMoreUrlsToEditPopupBtn');
+const referenceEyeToolbar = document.getElementById('referenceEyeToolbar');
+const viewReferenceFromToolbarBtn = document.getElementById('viewReferenceFromToolbarBtn');
+const splitAndInsertBtn = document.getElementById('splitAndInsertBtn'); 
+const selectExistingRefPopup = document.getElementById('selectExistingRefPopup');
+const existingRefListContainer = document.getElementById('existingRefListContainer'); 
+const confirmAppendRefBtn = document.getElementById('confirmAppendRefBtn');
+
+// Variáveis de Estado Global
+let currentDocId = null;
+let currentDocumentData = null; 
+let debounceTimer;
+let currentSelectionRange = null;
+let rangeForPendingReference = null; 
+let activeEditorElement = null; 
+let activeReferencedTextSpanForEye = null; 
+let undoStack = [];
+let redoStack = [];
+
+// Constantes Globais
+const DEFAULT_FONT_SIZE = '25px'; 
+const DEFAULT_FONT_FAMILY = 'Arial, sans-serif';
+const DEFAULT_LINE_HEIGHT = '1.6'; 
+
+// --- Funções de Undo/Redo (Versão Final e Corrigida) ---
+function saveStateForUndo() {
+    if (!currentDocumentData) return;
+    const stateSnapshot = JSON.parse(JSON.stringify(currentDocumentData));
+    undoStack.push(stateSnapshot);
+    redoStack = []; 
+    if (undoStack.length > 30) {
+        undoStack.shift(); 
+    }
+}
+
+async function handleUndo() {
+    clearTimeout(debounceTimer);
+
+    if (undoStack.length === 0) {
+        console.log("Nada para desfazer.");
+        return;
+    }
+
+    const currentStateForRedo = JSON.parse(JSON.stringify(currentDocumentData));
+    redoStack.push(currentStateForRedo);
+
+    const previousState = undoStack.pop();
     
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import {
-            getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, where, orderBy, serverTimestamp,
-            arrayUnion
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    try {
+        currentDocumentData = previousState;
+        await updateDoc(doc(db, "documentos", currentDocId), {
+            titulo: currentDocumentData.titulo,
+            corpo: currentDocumentData.corpo,
+            referencias: currentDocumentData.referencias,
+            atualizadoEm: serverTimestamp()
+        });
+        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
+        console.log("Ação desfeita com sucesso e salva.");
+    } catch (error) {
+        console.error("Falha ao salvar o estado desfeito:", error);
+        alert("Ocorreu um erro ao tentar desfazer a ação.");
+        undoStack.push(previousState);
+        redoStack.pop();
+    }
+}
+
+async function handleRedo() {
+    clearTimeout(debounceTimer);
     
-        let app;
-        let db;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            console.log("Firebase inicializado com sucesso! Project ID:", firebaseConfig.projectId);
-        } catch (error) {
-            console.error("ERRO CRÍTICO AO INICIALIZAR O FIREBASE:", error);
-            alert("Falha crítica ao conectar com o Firebase. Verifique o console para detalhes, confirme suas credenciais em 'firebaseConfig' e se o projeto Firebase está acessível.");
-            throw new Error("Falha na inicialização do Firebase. O aplicativo não pode continuar.");
+    if (redoStack.length === 0) {
+        console.log("Nada para refazer.");
+        return;
+    }
+
+    const currentStateForUndo = JSON.parse(JSON.stringify(currentDocumentData));
+    undoStack.push(currentStateForUndo);
+
+    const nextState = redoStack.pop();
+
+    try {
+        currentDocumentData = nextState;
+        await updateDoc(doc(db, "documentos", currentDocId), {
+            titulo: currentDocumentData.titulo,
+            corpo: currentDocumentData.corpo,
+            referencias: currentDocumentData.referencias,
+            atualizadoEm: serverTimestamp()
+        });
+        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
+        console.log("Ação refeita com sucesso e salva.");
+    } catch (error) {
+        console.error("Falha ao salvar o estado refeito:", error);
+        alert("Ocorreu um erro ao tentar refazer a ação.");
+        redoStack.push(nextState);
+        undoStack.pop();
+    }
+}
+
+// Funções Utilitárias
+function generateId(prefix = 'entity-') { return prefix + Date.now() + '-' + Math.random().toString(36).substring(2, 7); }
+function showPopup(popupElement) { if (popupElement) popupElement.classList.add('active'); }
+function hidePopup(popupElement) { if (popupElement) popupElement.classList.remove('active'); }
+function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) { 
+    if (!container) return; 
+    container.querySelectorAll('p, div').forEach(el => { 
+        if (!el.style.fontSize || el.style.fontSize === "") el.style.fontSize = targetFontSizeCSS; 
+        if (!el.style.lineHeight || el.style.lineHeight === "") el.style.lineHeight = targetLineHeight; 
+    }); 
+}
+    function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) { const container = document.getElementById(containerId); if (!container) return null; const inputGroup = document.createElement('div'); inputGroup.className = 'url-input-group'; const urlInput = document.createElement('input'); urlInput.type = 'url'; urlInput.className = 'ref-url-input'; urlInput.placeholder = 'URL do Link'; urlInput.value = urlValue; inputGroup.appendChild(urlInput); if (canBeRemoved) { urlInput.style.marginRight = '10px'; const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = 'Remover'; removeBtn.addEventListener('click', () => { inputGroup.remove(); if (container.childElementCount === 0) { createUrlInputEntry(container.id, '', false); } }); inputGroup.appendChild(removeBtn); } container.appendChild(inputGroup); return urlInput; }
+
+// Funções de Toolbar
+function hideFloatingToolbar(){ if(floatingToolbar) floatingToolbar.style.display='none'; }
+function showFloatingToolbar(){ 
+    if(!currentSelectionRange || !activeEditorElement || !floatingToolbar) return; 
+    if (floatingToolbar.style.display === 'flex' && currentSelectionRange.collapsed) return; 
+    const rect = currentSelectionRange.getBoundingClientRect(); 
+    floatingToolbar.style.left = `${rect.left + window.scrollX + (rect.width/2) - (floatingToolbar.offsetWidth/2)}px`; 
+    floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; 
+    floatingToolbar.style.display = 'flex'; 
+    let elementToCheckForClosest = currentSelectionRange.commonAncestorContainer.nodeType === Node.ELEMENT_NODE ? currentSelectionRange.commonAncestorContainer : currentSelectionRange.commonAncestorContainer.parentElement;
+    const isSelectionInsideRefSpan = currentSelectionRange && !currentSelectionRange.collapsed && elementToCheckForClosest && elementToCheckForClosest.closest('span.referenced-text[data-ref-id]');
+    const hasExistingReferences = currentDocumentData?.referencias?.length > 0;
+    if (attachLinkBtn) attachLinkBtn.disabled = !!isSelectionInsideRefSpan;
+    if (removeLinkBtn) removeLinkBtn.disabled = !isSelectionInsideRefSpan;
+    if (appendToRefBtn) appendToRefBtn.disabled = !!isSelectionInsideRefSpan || !hasExistingReferences;
+}
+function hideReferenceEyeToolbar() {
+    if (referenceEyeToolbar) referenceEyeToolbar.style.display = 'none';
+    if (activeReferencedTextSpanForEye) {
+        activeReferencedTextSpanForEye.classList.remove('eye-icon-active'); 
+        activeReferencedTextSpanForEye = null;
+    }
+}
+function showReferenceEyeToolbar(targetSpan) {
+    if (!referenceEyeToolbar || !targetSpan) return;
+    hideFloatingToolbar(); 
+    const rect = targetSpan.getBoundingClientRect();
+    referenceEyeToolbar.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (referenceEyeToolbar.offsetWidth / 2)}px`;
+    referenceEyeToolbar.style.top = `${rect.top + window.scrollY - referenceEyeToolbar.offsetHeight - 5}px`; 
+    referenceEyeToolbar.style.display = 'flex';
+    referenceEyeToolbar.dataset.refId = targetSpan.dataset.refId; 
+    if (splitAndInsertBtn) splitAndInsertBtn.disabled = !targetSpan.closest('.text-editor-chapter');
+    if (activeReferencedTextSpanForEye && activeReferencedTextSpanForEye !== targetSpan) activeReferencedTextSpanForEye.classList.remove('eye-icon-active');
+    activeReferencedTextSpanForEye = targetSpan;
+    activeReferencedTextSpanForEye.classList.add('eye-icon-active'); 
+}
+
+// Funções de Capítulo
+function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterCreation = false) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chapter-wrapper';
+    wrapper.dataset.chapterId = chapterId || generateId('chptr-');
+    const toolbar = document.createElement('div');
+    toolbar.className = 'chapter-toolbar';
+
+    toolbar.innerHTML = `<button title="Mover Capítulo Para Cima">🔼</button>` +
+                        `<button title="Mover Capítulo Para Baixo">🔽</button>` +
+                        `<button title="Desfazer (Ctrl+Z)">↶</button>` +
+                        `<button title="Refazer (Ctrl+Y)">↷</button>` +
+                        `<button title="Formatar Fonte (Arial)" style="font-family: serif; font-weight: bold;">T</button>` +
+                        `<button title="Formatar Tamanho (25px)">Aa</button>` +
+                        `<button title="Remover Capítulo">🗑️</button>`;
+
+    toolbar.children[0].addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'up'); });
+    toolbar.children[1].addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'down'); });
+    toolbar.children[2].addEventListener('click', (e) => { e.stopPropagation(); handleUndo(); });
+    toolbar.children[3].addEventListener('click', (e) => { e.stopPropagation(); handleRedo(); });
+    toolbar.children[4].addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontFamily(wrapper); });
+    toolbar.children[5].addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontSize(wrapper); });
+    toolbar.children[6].addEventListener('click', (e) => { e.stopPropagation(); handleRemoveChapter(wrapper); });
+
+    wrapper.appendChild(toolbar);
+    const chapterDiv = document.createElement('div');
+    chapterDiv.className = 'text-editor-chapter';
+    chapterDiv.setAttribute('contenteditable', 'true');
+    chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
+    applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+    updateEmptyReferenceSpansStyles(chapterDiv); 
+
+    let isTypingStateSavedForThisSession = false;
+
+    chapterDiv.addEventListener('focus', () => {
+        activeEditorElement = chapterDiv;
+        document.querySelectorAll('.chapter-wrapper.active-chapter-wrapper').forEach(w => w.classList.remove('active-chapter-wrapper'));
+        wrapper.classList.add('active-chapter-wrapper');
+        isTypingStateSavedForThisSession = false;
+    });
+
+    chapterDiv.addEventListener('input', () => {
+        if (!isTypingStateSavedForThisSession) {
+            saveStateForUndo();
+            isTypingStateSavedForThisSession = true;
         }
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            if (activeEditorElement === chapterDiv) { 
+                applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+                updateEmptyReferenceSpansStyles(chapterDiv); 
+                saveDocumentBody(true, false); 
+            }
+        }, 1500);
+    });
     
-        // IDs dos Elementos
-        const initialScreenDiv = document.getElementById('initialScreen');
-        const editorInterfaceDiv = document.getElementById('editorInterface');
-        const initNewDocBtn = document.getElementById('initNewDocBtn');
-        const initLoadDocBtn = document.getElementById('initLoadDocBtn');
-        const backToInitialScreenBtn = document.getElementById('backToInitialScreenBtn');
-    
-        const editorsContainer = document.getElementById('editorsContainer');
-        const addChapterBtn = document.getElementById('addChapterBtn');
-        const floatingToolbar = document.getElementById('floatingToolbar');
-        const attachLinkBtn = document.getElementById('attachLinkBtn');
-        const removeLinkBtn = document.getElementById('removeLinkBtn'); 
-        const appendToRefBtn = document.getElementById('appendToRefBtn'); 
-        
-        const docTitleInput = document.getElementById('docTitle');
-        const referencesListUl = document.getElementById('referencesList');
-        
-        const addReferencePopup = document.getElementById('addReferencePopup');
-        const refTitleInput = document.getElementById('refTitleInput');
-        const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
-        const cancelNewRefBtn = document.getElementById('cancelNewRefBtn');
-        
-        const editReferencePopup = document.getElementById('editReferencePopup');
-        const editRefTitleInput = document.getElementById('editRefTitleInput');
-        const editingRefIdInput = document.getElementById('editingRefIdInput');
-        const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
-        const deleteRefBtn = document.getElementById('deleteRefBtn');
-        
-        const loadDocumentPopup = document.getElementById('loadDocumentPopup');
-        const documentsListContainerUl = document.querySelector('#documentsListContainer ul');
-        const documentsListContainerMsg = document.querySelector('#documentsListContainer p');
-    
-        const addMoreUrlsToAddPopupBtn = document.getElementById('addMoreUrlsToAddPopupBtn');
-        const addMoreUrlsToEditPopupBtn = document.getElementById('addMoreUrlsToEditPopupBtn');
-    
-        const referenceEyeToolbar = document.getElementById('referenceEyeToolbar');
-        const viewReferenceFromToolbarBtn = document.getElementById('viewReferenceFromToolbarBtn');
-        const splitAndInsertBtn = document.getElementById('splitAndInsertBtn'); 
-    
-        const selectExistingRefPopup = document.getElementById('selectExistingRefPopup');
-        const existingRefListContainer = document.getElementById('existingRefListContainer'); 
-        const confirmAppendRefBtn = document.getElementById('confirmAppendRefBtn');
-    
-        // Variáveis de Estado Global
-        let currentDocId = null;
-        let currentDocumentData = null; 
-        let debounceTimer;
-        let currentSelectionRange = null;
-        let rangeForPendingReference = null; 
-        let activeEditorElement = null; 
-        let activeReferencedTextSpanForEye = null; 
-        
-        // Constantes Globais
-        const DEFAULT_FONT_SIZE = '25px'; 
-        const DEFAULT_FONT_FAMILY = 'Arial, sans-serif';
-        const DEFAULT_LINE_HEIGHT = '1.6'; 
-        const CURSOR_PLACEHOLDER_ID = "___cursor_placeholder_temp___";
-    
-    
-        // Funções Utilitárias
-        function generateId(prefix = 'entity-') { return prefix + Date.now() + '-' + Math.random().toString(36).substring(2, 7); }
-        function showPopup(popupElement) { if (popupElement) popupElement.classList.add('active'); }
-        function hidePopup(popupElement) { if (popupElement) popupElement.classList.remove('active'); }
-        function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) { 
-            if (!container) return; 
-            container.querySelectorAll('p, div').forEach(el => { 
-                if (!el.style.fontSize || el.style.fontSize === "") el.style.fontSize = targetFontSizeCSS; 
-                if (!el.style.lineHeight || el.style.lineHeight === "") el.style.lineHeight = targetLineHeight; 
-            }); 
-        }
-            function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        function getFirstSentence(htmlString) { if (!htmlString) return ""; const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlString; let textContent = (tempDiv.textContent || "").trim(); const firstPeriodIndex = textContent.indexOf('.'); if (firstPeriodIndex !== -1) { return textContent.substring(0, firstPeriodIndex + 1); } return textContent.substring(0, 100) + (textContent.length > 100 ? "..." : ""); }
-        function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) { const container = document.getElementById(containerId); if (!container) return null; const inputGroup = document.createElement('div'); inputGroup.className = 'url-input-group'; const urlInput = document.createElement('input'); urlInput.type = 'url'; urlInput.className = 'ref-url-input'; urlInput.placeholder = 'URL do Link'; urlInput.value = urlValue; inputGroup.appendChild(urlInput); if (canBeRemoved) { urlInput.style.marginRight = '10px'; const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = 'Remover'; removeBtn.addEventListener('click', () => { inputGroup.remove(); if (container.childElementCount === 0) { createUrlInputEntry(container.id, '', false); } }); inputGroup.appendChild(removeBtn); } container.appendChild(inputGroup); return urlInput; }
-    
-    
-        // Funções de Toolbar
-        function hideFloatingToolbar(){ 
-            if(floatingToolbar) floatingToolbar.style.display='none'; 
-        }
-    
-        function showFloatingToolbar(){ 
-            if(!currentSelectionRange || !activeEditorElement || !floatingToolbar) return; 
-            if (floatingToolbar.style.display === 'flex' && currentSelectionRange.collapsed) return; 
-            
-            const rect = currentSelectionRange.getBoundingClientRect(); 
-            floatingToolbar.style.left = `${rect.left + window.scrollX + (rect.width/2) - (floatingToolbar.offsetWidth/2)}px`; 
-            floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; 
-            floatingToolbar.style.display = 'flex'; 
-    
-            let elementToCheckForClosest = null;
-            if (currentSelectionRange && currentSelectionRange.commonAncestorContainer) {
-                if (currentSelectionRange.commonAncestorContainer.nodeType === Node.ELEMENT_NODE) {
-                    elementToCheckForClosest = currentSelectionRange.commonAncestorContainer;
-                } else if (currentSelectionRange.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
-                    elementToCheckForClosest = currentSelectionRange.commonAncestorContainer.parentElement;
+    chapterDiv.addEventListener('paste', (event) => {
+        saveStateForUndo(); 
+        event.preventDefault(); 
+        const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
+        if (plainText) {
+            document.execCommand('insertText', false, plainText);
+            setTimeout(() => {
+                if (activeEditorElement) { 
+                    applyDefaultStylesToBlocks(activeEditorElement, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
+                    updateEmptyReferenceSpansStyles(activeEditorElement); 
                 }
-            }
-    
-            const isSelectionInsideRefSpan = currentSelectionRange && !currentSelectionRange.collapsed &&
-                                        elementToCheckForClosest &&
-                                        elementToCheckForClosest.closest('span.referenced-text[data-ref-id]');
-            
-            const hasExistingReferences = currentDocumentData && currentDocumentData.referencias && currentDocumentData.referencias.length > 0;
-    
-            if (attachLinkBtn) attachLinkBtn.disabled = !!isSelectionInsideRefSpan;
-            if (removeLinkBtn) removeLinkBtn.disabled = !isSelectionInsideRefSpan;
-            if (appendToRefBtn) appendToRefBtn.disabled = !!isSelectionInsideRefSpan || !hasExistingReferences;
-        }
-        
-        function hideReferenceEyeToolbar() {
-            if (referenceEyeToolbar) referenceEyeToolbar.style.display = 'none';
-            if (activeReferencedTextSpanForEye) {
-                activeReferencedTextSpanForEye.classList.remove('eye-icon-active'); 
-                activeReferencedTextSpanForEye = null;
-            }
-        }
-    
-        function showReferenceEyeToolbar(targetSpan) {
-            if (!referenceEyeToolbar || !targetSpan) return;
-            hideFloatingToolbar(); 
-            
-            const rect = targetSpan.getBoundingClientRect();
-            referenceEyeToolbar.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (referenceEyeToolbar.offsetWidth / 2)}px`;
-            referenceEyeToolbar.style.top = `${rect.top + window.scrollY - referenceEyeToolbar.offsetHeight - 5}px`; 
-            referenceEyeToolbar.style.display = 'flex';
-            referenceEyeToolbar.dataset.refId = targetSpan.dataset.refId; 
-    
-            if (splitAndInsertBtn) {
-                splitAndInsertBtn.disabled = !targetSpan.closest('.text-editor-chapter');
-            }
-    
-            if (activeReferencedTextSpanForEye && activeReferencedTextSpanForEye !== targetSpan) {
-                activeReferencedTextSpanForEye.classList.remove('eye-icon-active');
-            }
-            activeReferencedTextSpanForEye = targetSpan;
-            activeReferencedTextSpanForEye.classList.add('eye-icon-active'); 
-        }
-    
-        // --- Funções de Capítulo ---
-        function generateChapterId() { return 'chptr-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9); }
-    
-        function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterCreation = false) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'chapter-wrapper';
-            wrapper.dataset.chapterId = chapterId || generateChapterId();
-    
-            const toolbar = document.createElement('div');
-            toolbar.className = 'chapter-toolbar';
-    
-            const moveUpBtn = document.createElement('button');
-            moveUpBtn.innerHTML = '🔼';
-            moveUpBtn.title = 'Mover Capítulo Para Cima';
-            moveUpBtn.addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'up'); });
-    
-            const moveDownBtn = document.createElement('button');
-            moveDownBtn.innerHTML = '🔽';
-            moveDownBtn.title = 'Mover Capítulo Para Baixo';
-            moveDownBtn.addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'down'); });
-            
-            const formatFontBtn = document.createElement('button');
-            formatFontBtn.innerHTML = 'T';
-            formatFontBtn.title = 'Formatar Fonte (Arial)';
-            formatFontBtn.style.fontFamily = 'serif';
-            formatFontBtn.style.fontWeight = 'bold';
-            formatFontBtn.addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontFamily(wrapper); });
-    
-            const formatSizeBtn = document.createElement('button');
-            formatSizeBtn.innerHTML = 'Aa';
-            formatSizeBtn.title = 'Formatar Tamanho (25px)';
-            formatSizeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontSize(wrapper); });
-    
-            const removeBtn = document.createElement('button');
-            removeBtn.innerHTML = '🗑️';
-            removeBtn.title = 'Remover Capítulo';
-            removeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleRemoveChapter(wrapper); });
-    
-            toolbar.appendChild(moveUpBtn);
-            toolbar.appendChild(moveDownBtn);
-            toolbar.appendChild(formatFontBtn);
-            toolbar.appendChild(formatSizeBtn);
-            toolbar.appendChild(removeBtn);
-            wrapper.appendChild(toolbar);
-    
-            const chapterDiv = document.createElement('div');
-            chapterDiv.className = 'text-editor-chapter';
-            chapterDiv.setAttribute('contenteditable', 'true');
-            
-            chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
-            applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-            updateEmptyReferenceSpansStyles(chapterDiv); 
-           
-            chapterDiv.addEventListener('focus', () => {
-                activeEditorElement = chapterDiv;
-                document.querySelectorAll('.chapter-wrapper.active-chapter-wrapper').forEach(w => w.classList.remove('active-chapter-wrapper'));
-                wrapper.classList.add('active-chapter-wrapper');
-            });
-    
-            chapterDiv.addEventListener('input', () => {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => {
-                    if (activeEditorElement === chapterDiv) { 
-                        applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-                        updateEmptyReferenceSpansStyles(chapterDiv); 
-                        const paragraphWasCleaned = cleanupEmptyReferenceParagraphOnEnter();
-                        saveDocumentBody(true, false); 
-                    }
-                }, 300);
-            });
-    
-            chapterDiv.addEventListener('paste', (event) => {
-                event.preventDefault(); 
-                const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
-                if (plainText) {
-                    document.execCommand('insertText', false, plainText);
-                    setTimeout(() => {
-                        if (activeEditorElement) { 
-                            applyDefaultStylesToBlocks(activeEditorElement, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-                            updateEmptyReferenceSpansStyles(activeEditorElement); 
-                        }
-                        saveDocumentBody(true, false); 
-                    }, 0);
-                }
-            });
-    
-            wrapper.appendChild(chapterDiv);
-            if (editorsContainer) editorsContainer.appendChild(wrapper);
-           
-            updateChapterActionButtonsState();
-    
-            if (focusAfterCreation && document.activeElement !== chapterDiv) {
-                placeCursorAtEndOf(chapterDiv);
-                chapterDiv.focus({ preventScroll: true }); 
-                activeEditorElement = chapterDiv;
-            }
-            return wrapper;
-        }
-    
-        function updateChapterActionButtonsState() {
-            if (!editorsContainer) return;
-            const chapterWrappers = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));
-            const totalChapters = chapterWrappers.length;
-            chapterWrappers.forEach((wrapper, index) => {
-                const upBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(1)'); 
-                const downBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(2)'); 
-                const removeBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(5)');
-                if (upBtn) upBtn.disabled = (index === 0);
-                if (downBtn) downBtn.disabled = (index === totalChapters - 1);
-                if (removeBtn) removeBtn.disabled = (totalChapters <= 1);
-            });
-        }
-    
-        function handleRemoveChapter(chapterWrapperElement) {
-            if (!editorsContainer || !chapterWrapperElement) return;
-            
-            if (editorsContainer.querySelectorAll('.chapter-wrapper').length <= 1) {
-                alert("Não é possível remover o único capítulo.");
-                return;
-            }
-            if (window.confirm(`Tem certeza de que deseja remover este capítulo?`)) { 
-                const chapterIdToRemove = chapterWrapperElement.dataset.chapterId;
-                chapterWrapperElement.remove();
-                if (activeEditorElement && chapterWrapperElement.contains(activeEditorElement)) {
-                    activeEditorElement = null; currentSelectionRange = null;
-                }
-                if (currentDocumentData && currentDocumentData.corpo) {
-                    currentDocumentData.corpo = currentDocumentData.corpo.filter(ch => ch.id !== chapterIdToRemove);
-                }
-                updateChapterActionButtonsState();
-                renderReferences(); 
                 saveDocumentBody(true, true); 
-            }
+            }, 0);
         }
-    
-        function handleFormatFontFamily(chapterWrapperElement) {
-            const editorDiv = chapterWrapperElement.querySelector('.text-editor-chapter');
-            if (!editorDiv) return;
-            const elementsToStyle = editorDiv.querySelectorAll('p, div, span, strong, em, b, i, u');
-            elementsToStyle.forEach(el => {
-                el.style.fontFamily = DEFAULT_FONT_FAMILY;
-            });
-            saveDocumentBody(true, false);
-            alert('Fonte do capítulo formatada para Arial.');
+    });
+
+    wrapper.appendChild(chapterDiv);
+    editorsContainer.appendChild(wrapper);
+    updateChapterActionButtonsState();
+    if (focusAfterCreation) {
+        placeCursorAtEndOf(chapterDiv);
+        chapterDiv.focus({ preventScroll: true }); 
+        activeEditorElement = chapterDiv;
+    }
+    return wrapper;
+}
+
+function updateChapterActionButtonsState() {
+    if (!editorsContainer) return;
+    const chapterWrappers = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));
+    const totalChapters = chapterWrappers.length;
+    chapterWrappers.forEach((wrapper, index) => {
+        const upBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(1)'); 
+        const downBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(2)'); 
+        const removeBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(7)'); // Ajustado o índice para o botão de remover
+        if (upBtn) upBtn.disabled = (index === 0);
+        if (downBtn) downBtn.disabled = (index === totalChapters - 1);
+        if (removeBtn) removeBtn.disabled = (totalChapters <= 1);
+    });
+}
+function handleRemoveChapter(chapterWrapperElement) {
+    if (editorsContainer.querySelectorAll('.chapter-wrapper').length <= 1) return alert("Não é possível remover o único capítulo.");
+    if (window.confirm(`Tem certeza de que deseja remover este capítulo?`)) { 
+        saveStateForUndo();
+        const chapterIdToRemove = chapterWrapperElement.dataset.chapterId;
+        chapterWrapperElement.remove();
+        if (activeEditorElement && chapterWrapperElement.contains(activeEditorElement)) activeEditorElement = null;
+        if (currentDocumentData?.corpo) currentDocumentData.corpo = currentDocumentData.corpo.filter(ch => ch.id !== chapterIdToRemove);
+        updateChapterActionButtonsState();
+        renderReferences(); 
+        saveDocumentBody(true, true); 
+    }
+}
+function handleFormatFontFamily(chapterWrapperElement) {
+    const editorDiv = chapterWrapperElement.querySelector('.text-editor-chapter');
+    if (!editorDiv) return;
+    saveStateForUndo();
+    editorDiv.querySelectorAll('p, div, span, strong, em, b, i, u').forEach(el => {
+        el.style.fontFamily = DEFAULT_FONT_FAMILY;
+    });
+    saveDocumentBody(true, false);
+    alert('Fonte do capítulo formatada para Arial.');
+}
+function handleFormatFontSize(chapterWrapperElement) {
+    const editorDiv = chapterWrapperElement.querySelector('.text-editor-chapter');
+    if (!editorDiv) return;
+    saveStateForUndo();
+    editorDiv.querySelectorAll('p, div, span, strong, em, b, i, u').forEach(el => {
+        el.style.fontSize = DEFAULT_FONT_SIZE;
+    });
+    saveDocumentBody(true, false);
+    alert('Tamanho da fonte do capítulo formatado para 25px.');
+}
+function handleMoveChapter(chapterWrapperElement, direction) {
+    if (!editorsContainer || !chapterWrapperElement) return;
+    const sibling = direction === 'up' ? chapterWrapperElement.previousElementSibling : chapterWrapperElement.nextElementSibling;
+    if (sibling) {
+        saveStateForUndo();
+        const parent = chapterWrapperElement.parentNode;
+        parent.insertBefore(direction === 'up' ? chapterWrapperElement : sibling, direction === 'up' ? sibling : chapterWrapperElement);
+        if (currentDocumentData?.corpo) {
+            const newOrderIds = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(w => w.dataset.chapterId);
+            currentDocumentData.corpo.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
         }
+        updateChapterActionButtonsState();
+        saveDocumentBody(true, true);
+    }
+}
+
+// Funções do Editor e Documento
+function placeCursorAtEndOf(element) {
+    if (!element) return;
+    const sel = window.getSelection();
+    if (sel) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        range.collapse(false); // Colapsa para o final
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+}
+function showEditorInterfaceScreen() { 
+    initialScreenDiv.style.display = 'none'; 
+    editorInterfaceDiv.style.display = 'block'; 
+}
+async function showInitialScreen() {
+    editorInterfaceDiv.style.display = 'none';
+    initialScreenDiv.style.display = 'block';
+    currentDocId = null; currentDocumentData = null;
+    docTitleInput.value = '';
+    editorsContainer.innerHTML = '';
+    referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
+    hideFloatingToolbar(); hideReferenceEyeToolbar();
+}
+async function createNewDocument() {
+    undoStack = []; redoStack = [];
+    showEditorInterfaceScreen();
+    currentDocId = generateId('doc-');
+    const initialChapterId = generateId('chptr-');
+    const initialChapterHTML = `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`;
+    currentDocumentData = { titulo: "Novo Documento Sem Título", corpo: [{ id: initialChapterId, html: initialChapterHTML }], referencias: [], criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() };
+    try {
+        await setDoc(doc(db, "documentos", currentDocId), currentDocumentData);
+        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
+    } catch (e) { console.error("Erro ao criar novo documento:", e); alert("Erro ao criar documento."); }
+}
+async function loadDocument(id) { 
+    if (!id) return; 
+    undoStack = []; redoStack = [];
+    showEditorInterfaceScreen(); 
+    editorsContainer.innerHTML = "<p>Carregando...</p>"; 
+    docTitleInput.value = "Carregando..."; 
+    referencesListUl.innerHTML = "<li>Carregando...</li>"; 
+    currentDocId = id; 
+    try { 
+        const docSnap = await getDoc(doc(db, "documentos", currentDocId)); 
+        if (docSnap.exists()) { 
+            currentDocumentData = docSnap.data(); 
+            displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias); 
+        } else { 
+            alert("Documento não encontrado."); await showInitialScreen(); 
+        } 
+    } catch (e) { console.error("Erro ao carregar documento:", e); alert("Erro ao carregar o documento."); await showInitialScreen(); } 
+}
+function displayDocumentContent(title, corpoData, references = []) {
+    docTitleInput.value = title || "";
+    editorsContainer.innerHTML = '';
+    activeEditorElement = null;
+    let chaptersToRender = corpoData && corpoData.length > 0 ? corpoData : [{ id: generateId('chptr-'), html: '' }];
+    chaptersToRender.forEach(chapterObj => {
+        createNewChapterElement(chapterObj.html, chapterObj.id);
+    });
+    editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => updateEmptyReferenceSpansStyles(editor));
+    updateChapterActionButtonsState();
+    renderReferences(); 
+}
+async function saveDocumentBody(forceImmediateSave = false, isStructuralChange = false) {
+    if (!currentDocId || !editorsContainer) return;
+    if (!forceImmediateSave) return;
     
-        function handleFormatFontSize(chapterWrapperElement) {
-            const editorDiv = chapterWrapperElement.querySelector('.text-editor-chapter');
-            if (!editorDiv) return;
-            const elementsToStyle = editorDiv.querySelectorAll('p, div, span, strong, em, b, i, u');
-            elementsToStyle.forEach(el => {
-                el.style.fontSize = DEFAULT_FONT_SIZE;
-            });
-            saveDocumentBody(true, false);
-            alert('Tamanho da fonte do capítulo formatado para 25px.');
-        }
-    
-        function handleMoveChapter(chapterWrapperElement, direction) {
-            if (!editorsContainer || !chapterWrapperElement) return;
-            const parent = chapterWrapperElement.parentNode; 
-            let moved = false;
-            if (direction === 'up' && chapterWrapperElement.previousElementSibling) {
-                parent.insertBefore(chapterWrapperElement, chapterWrapperElement.previousElementSibling);
-                moved = true;
-            } else if (direction === 'down' && chapterWrapperElement.nextElementSibling) {
-                parent.insertBefore(chapterWrapperElement.nextElementSibling, chapterWrapperElement);
-                moved = true;
-            }
-            
-            if (moved) {
-                if (currentDocumentData && currentDocumentData.corpo) {
-                    const newOrderIds = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(w => w.dataset.chapterId);
-                    const reorderedCorpo = [];
-                    newOrderIds.forEach(id => {
-                        const chapterData = currentDocumentData.corpo.find(ch => ch.id === id);
-                        if (chapterData) {
-                            reorderedCorpo.push(chapterData);
-                        }
-                    });
-                    currentDocumentData.corpo = reorderedCorpo;
-                }
-                updateChapterActionButtonsState();
-                saveDocumentBody(true, true); 
-            }
-        }
-    
-        // --- Funções do Editor e Documento ---
-        function placeCursorAtEndOf(element) {
-            const sel = window.getSelection();
-            if (sel && element) {
-                const range = document.createRange();
-                
-                if (!element.firstChild || (element.nodeName === 'P' && element.innerHTML.toLowerCase() === '<br>')) {
-                     if (element.nodeName !== 'P') { 
-                        element.innerHTML = '';
-                        const p = document.createElement('p');
-                        p.style.fontFamily = DEFAULT_FONT_FAMILY;
-                        p.style.fontSize = DEFAULT_FONT_SIZE;
-                        p.style.lineHeight = DEFAULT_LINE_HEIGHT;
-                        p.innerHTML = '<br>';
-                        element.appendChild(p);
-                        element = p;
-                     } else {
-                        element.innerHTML = '<br>';
-                     }
-                }
-    
-                let targetNode = element;
-                while (targetNode.lastChild) {
-                    targetNode = targetNode.lastChild;
-                }
-    
-                if (targetNode) {
-                     if (targetNode.nodeType === Node.TEXT_NODE) {
-                        range.setStart(targetNode, targetNode.length);
-                    } else {
-                        range.setStartAfter(targetNode);
-                    }
-                } else {
-                    range.selectNodeContents(element);
-                }
-    
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-            if (element && document.activeElement !== element) {
-                element.focus({ preventScroll: true });
-            }
-        }
-    
-        function showEditorInterfaceScreen() { 
-            if (initialScreenDiv) initialScreenDiv.style.display = 'none'; 
-            if (editorInterfaceDiv) editorInterfaceDiv.style.display = 'block'; 
-        }
+    const chapterDataForSave = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(wrapper => ({
+        id: wrapper.dataset.chapterId,
+        html: wrapper.querySelector('.text-editor-chapter').innerHTML
+    }));
+   
+    if (currentDocumentData) currentDocumentData.corpo = chapterDataForSave;
+    try {
+        await updateDoc(doc(db, "documentos", currentDocId), { corpo: chapterDataForSave, atualizadoEm: serverTimestamp() });
+    } catch (e) { console.error("Erro ao salvar corpo do documento:", e); }
+}
+async function saveDocumentTitle() { 
+    if (!currentDocId || !docTitleInput) return; 
+    const newTitle = docTitleInput.value.trim() || "Documento Sem Título"; 
+    saveStateForUndo();
+    try { 
+        await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() }); 
+        if(currentDocumentData) currentDocumentData.titulo = newTitle; 
+    } catch (e) { 
+        console.error("Erro ao salvar título do documento:", e); 
+        alert("Falha ao salvar o título."); 
+    } 
+}
+async function addReferenceToDocument(title) {
+    saveStateForUndo();
+
+    if (!rangeForPendingReference) {
+        alert("Erro: Nenhuma seleção de texto foi encontrada para criar o link. Por favor, selecione o texto novamente.");
+        hidePopup(addReferencePopup);
+        return;
+    }
+
+    const urls = Array.from(document.querySelectorAll('#addRefUrlsContainer .ref-url-input'))
+                      .map(input => input.value.trim())
+                      .filter(Boolean);
+
+    if (urls.length === 0) {
+        return alert("É necessário fornecer pelo menos uma URL para a referência.");
+    }
+
+    const newRefId = generateId('ref-');
+    const newReference = { id: newRefId, tituloReferencia: title, urls: urls };
+    const span = document.createElement('span');
+    span.className = 'referenced-text';
+    span.dataset.refId = newRefId;
+
+    try {
+        rangeForPendingReference.surroundContents(span);
+    } catch (e) {
+        span.textContent = rangeForPendingReference.toString();
+        rangeForPendingReference.deleteContents();
+        rangeForPendingReference.insertNode(span);
+    }
+
+    if (!currentDocumentData.referencias) currentDocumentData.referencias = [];
+    currentDocumentData.referencias.push(newReference);
+
+    try {
+        const chapterDataForSave = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(wrapper => ({
+            id: wrapper.dataset.chapterId,
+            html: wrapper.querySelector('.text-editor-chapter').innerHTML
+        }));
+        currentDocumentData.corpo = chapterDataForSave;
         
-        async function showInitialScreen() {
-            if (editorInterfaceDiv) editorInterfaceDiv.style.display = 'none';
-            if (initialScreenDiv) initialScreenDiv.style.display = 'block';
-            currentDocId = null; currentDocumentData = null;
-            if (docTitleInput) docTitleInput.value = '';
-            if (editorsContainer) editorsContainer.innerHTML = '';
-            activeEditorElement = null; currentSelectionRange = null; rangeForPendingReference = null;
-            if (referencesListUl) referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
-            hideFloatingToolbar();
-            hideReferenceEyeToolbar(); 
-            updateChapterActionButtonsState();
+        await updateDoc(doc(db, "documentos", currentDocId), {
+            corpo: currentDocumentData.corpo,
+            referencias: currentDocumentData.referencias,
+            atualizadoEm: serverTimestamp()
+        });
+
+        renderReferences();
+        updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));
+        hidePopup(addReferencePopup);
+    } catch (error) {
+        console.error("Falha ao salvar a nova referência no Firebase:", error);
+        alert("Ocorreu um erro ao salvar a referência. Tente novamente.");
+    } finally {
+        rangeForPendingReference = null;
+    }
+}
+function updateEmptyReferenceSpansStyles(container) {
+    if (!container) return;
+    container.querySelectorAll('span.referenced-text[data-ref-id]').forEach(span => {
+        if (span.textContent.trim() === '') span.classList.add('referenced-text-empty');
+        else span.classList.remove('referenced-text-empty');
+    });
+}
+function renderReferences() {
+    if (!referencesListUl) return;
+    referencesListUl.innerHTML = "";
+    const allRefs = currentDocumentData?.referencias || [];
+    if (allRefs.length === 0) {
+        referencesListUl.innerHTML = "<li>Nenhuma referência adicionada.</li>";
+        return;
+    }
+    const refIdsInText = new Set(Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]')).map(span => span.dataset.refId));
+    allRefs.forEach(ref => {
+        const li = document.createElement('li');
+        li.className = 'reference-item';
+        if (!refIdsInText.has(ref.id)) li.classList.add('reference-item-unlinked');
+        li.dataset.refId = ref.id;
+        const urlsHTML = (ref.urls || []).map(url => `<a>${escapeHTML(url)}</a>`).join('<br>');
+        li.innerHTML = `<div class="ref-content"><span class="ref-title" data-ref-id="${ref.id}">${escapeHTML(ref.tituloReferencia)}: </span><div style="margin-top: 3px; font-size: 0.9em;">${urlsHTML}</div></div><button class="edit-ref-btn" data-ref-id="${ref.id}">✎</button>`;
+        referencesListUl.appendChild(li);
+    });
+}
+function openEditReferencePopup(refId) {
+    const ref = currentDocumentData?.referencias.find(r => r.id === refId);
+    if (!ref || !editReferencePopup) return;
+    editingRefIdInput.value = refId;
+    editRefTitleInput.value = ref.tituloReferencia;
+    const urlsContainer = document.getElementById('editRefUrlsContainer');
+    urlsContainer.innerHTML = '';
+    (ref.urls || []).forEach(url => createUrlInputEntry('editRefUrlsContainer', url, true));
+    if ((ref.urls || []).length === 0) createUrlInputEntry('editRefUrlsContainer', '', false);
+    showPopup(editReferencePopup);
+}
+async function saveEditedReference() {
+    const id = editingRefIdInput.value;
+    const title = editRefTitleInput.value.trim();
+    if (!id || !title) return alert("Título é obrigatório.");
+    saveStateForUndo();
+    const urls = Array.from(document.querySelectorAll('#editRefUrlsContainer .ref-url-input')).map(input => input.value.trim()).filter(Boolean);
+    if (urls.length === 0) return alert("Pelo menos uma URL é obrigatória.");
+    const refIndex = currentDocumentData.referencias.findIndex(r => r.id === id);
+    if (refIndex !== -1) {
+        currentDocumentData.referencias[refIndex].tituloReferencia = title;
+        currentDocumentData.referencias[refIndex].urls = urls;
+        await updateDoc(doc(db, "documentos", currentDocId), { referencias: currentDocumentData.referencias });
+        renderReferences();
+        hidePopup(editReferencePopup);
+    }
+}
+async function deleteReference() { 
+    const refId = editingRefIdInput.value;
+    if (!refId || !window.confirm("Excluir esta referência e remover todas as suas marcações no texto?")) return;
+    saveStateForUndo();
+    
+    // Remove all span tags associated with this reference
+    editorsContainer.querySelectorAll(`span.referenced-text[data-ref-id="${refId}"]`).forEach(span => {
+        const textNode = document.createTextNode(span.textContent);
+        span.parentNode.replaceChild(textNode, span);
+        textNode.parentNode.normalize();
+    });
+
+    currentDocumentData.referencias = currentDocumentData.referencias.filter(r => r.id !== refId);
+    await saveDocumentBody(true, true); // Save body changes first
+    await updateDoc(doc(db, "documentos", currentDocId), { referencias: currentDocumentData.referencias });
+    
+    renderReferences();
+    hidePopup(editReferencePopup);
+}
+function clearEditorHighlights() { 
+    document.querySelectorAll('.highlight-scroll').forEach(el => el.classList.remove('highlight-scroll')); 
+}
+function navigateToReferencedTextInEditor(event) {
+    const refId = event.target.dataset.refId;
+    if (!refId) return;
+    const refSpanInEditor = editorsContainer.querySelector(`.text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`);
+    const refListItem = referencesListUl.querySelector(`li.reference-item[data-ref-id="${refId}"]`);
+    clearEditorHighlights();
+    if (refSpanInEditor) {
+        refSpanInEditor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        refSpanInEditor.classList.add('highlight-scroll');
+        if (refListItem) refListItem.classList.add('highlight-scroll');
+        setTimeout(clearEditorHighlights, 2500);
+    } else {
+        alert("Marcação da referência não encontrada no texto.");
+    }
+}
+function showAddReferencePopup() {
+    if (!activeEditorElement || !currentSelectionRange || currentSelectionRange.collapsed) return alert("Selecione texto para adicionar uma referência.");
+    rangeForPendingReference = currentSelectionRange.cloneRange();
+    refTitleInput.value = "";
+    const urlsContainer = document.getElementById('addRefUrlsContainer');
+    urlsContainer.innerHTML = '';
+    createUrlInputEntry('addRefUrlsContainer', '', false);
+    showPopup(addReferencePopup);
+    refTitleInput.focus();
+}
+async function showLoadDocumentsPopup() {
+    if (!loadDocumentPopup || !documentsListContainerUl || !documentsListContainerMsg) return;
+    showPopup(loadDocumentPopup);
+    documentsListContainerUl.innerHTML = "";
+    documentsListContainerMsg.textContent = "Carregando...";
+    documentsListContainerMsg.style.display = 'block';
+    try {
+        const q = query(collection(db, "documentos"), orderBy("atualizadoEm", "desc"));
+        const snap = await getDocs(q);
+        documentsListContainerMsg.style.display = snap.empty ? 'block' : 'none';
+        if (snap.empty) {
+            documentsListContainerMsg.textContent = "Nenhum documento encontrado.";
+            return;
         }
-       
-        async function createNewDocument() {
-            showEditorInterfaceScreen();
-            currentDocId = generateId('doc-');
-            const initialChapterId = generateChapterId();
-            const initialChapterHTML = `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`;
-            
-            currentDocumentData = {
-                titulo: "Novo Documento Sem Título",
-                corpo: [{ id: initialChapterId, html: initialChapterHTML }],
-                referencias: [],
-                ativo: true, 
-                criadoEm: serverTimestamp(),
-                atualizadoEm: serverTimestamp()
-            };
-            try {
-                await setDoc(doc(db, "documentos", currentDocId), currentDocumentData);
-                displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
-                if (editorsContainer && editorsContainer.firstChild && editorsContainer.firstChild.querySelector('.text-editor-chapter')) {
-                     setTimeout(() => { 
-                        const firstEditor = editorsContainer.firstChild.querySelector('.text-editor-chapter');
-                        placeCursorAtEndOf(firstEditor);
-                        if(firstEditor) firstEditor.focus({preventScroll: true});
-                    }, 0);
-                }
-            } catch (e) { console.error("Erro ao criar novo documento:", e); alert("Erro ao criar documento."); }
-        }
-    
-        async function loadDocument(id) { 
-            if (!id) return; 
-            showEditorInterfaceScreen(); 
-            if(editorsContainer) editorsContainer.innerHTML = "<p>Carregando...</p>"; 
-            if(docTitleInput) docTitleInput.value = "Carregando..."; 
-            if(referencesListUl) referencesListUl.innerHTML = "<li>Carregando...</li>"; 
-            currentDocId = id; 
-            try { 
-                const docRef = doc(db, "documentos", currentDocId); 
-                const docSnap = await getDoc(docRef); 
-                if (docSnap.exists()) { 
-                    currentDocumentData = docSnap.data(); 
-                    displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias); 
-                } else { 
-                    alert("Documento não encontrado."); 
-                    await showInitialScreen(); 
-                } 
-            } catch (e) { 
-                console.error("Erro ao carregar documento:", e); 
-                alert("Erro ao carregar o documento."); 
-                await showInitialScreen();
-            } 
-        }
-       
-        function displayDocumentContent(title, corpoDataFromFirebase, references = []) {
-            if(docTitleInput) docTitleInput.value = title || "";
-            if(editorsContainer) editorsContainer.innerHTML = '';
-            activeEditorElement = null; currentSelectionRange = null;
-    
-            let chaptersToRender = [];
-            if (Array.isArray(corpoDataFromFirebase) && corpoDataFromFirebase.length > 0 && typeof corpoDataFromFirebase[0] === 'object' && corpoDataFromFirebase[0] !== null && corpoDataFromFirebase[0].hasOwnProperty('id') && corpoDataFromFirebase[0].hasOwnProperty('html')) {
-                chaptersToRender = corpoDataFromFirebase;
-            } else { 
-                chaptersToRender.push({ id: generateChapterId(), html: `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` });
-                if(currentDocumentData) currentDocumentData.corpo = chaptersToRender; 
-            }
-    
-            if (chaptersToRender.length > 0) {
-                chaptersToRender.forEach((chapterObj, index) => {
-                    const isLastChapter = index === chaptersToRender.length - 1;
-                    const shouldFocus = (chaptersToRender.length === 1 && chapterObj.html.includes('<br>')) ||
-                                        (isLastChapter && chapterObj.html.includes('<br>'));
-                    createNewChapterElement(chapterObj.html, chapterObj.id, shouldFocus);
-                });
-            } else { 
-                createNewChapterElement('', null, true);
-            }
-            
-            if (editorsContainer) { 
-                editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => {
-                    updateEmptyReferenceSpansStyles(editor);
-                });
-            }
-           
-            updateChapterActionButtonsState();
-            renderReferences(); 
-        }
-    
-        async function saveDocumentBody(forceImmediateSave = false, isStructuralChange = false) {
-            if (!currentDocId || !editorsContainer) return;
-            if (!forceImmediateSave) { 
-                clearTimeout(debounceTimer); 
-                debounceTimer = setTimeout(() => saveDocumentBody(true, false), 1500); 
-                return; 
-            }
-    
-            let scrollElement = document.querySelector('.container') || document.documentElement;
-            if (scrollElement.scrollHeight <= scrollElement.clientHeight && document.body.scrollHeight > document.body.clientHeight) scrollElement = document.body;
-            const scrollPositionsToRestore = { element: scrollElement, scrollTop: scrollElement.scrollTop };
-            
-            let activeChapterWrapperFoundForStructural = null; 
-            let selectionDetailsForStructural = null; 
-    
-            const chapterDataForSave = [];
-            const chapterWrappersFromDOM = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')); 
-            
-            chapterWrappersFromDOM.forEach((wrapper) => {
-                const chapterDiv = wrapper.querySelector('.text-editor-chapter');
-                const chapterId = wrapper.dataset.chapterId;
-                if (!chapterDiv || !chapterId) return;
-                let currentChapterHTML = chapterDiv.innerHTML; 
-    
-                if (isStructuralChange && activeEditorElement === chapterDiv) { 
-                    activeChapterWrapperFoundForStructural = wrapper;
-                    const sel = window.getSelection();
-                    if (sel && sel.rangeCount > 0) {
-                        const range = sel.getRangeAt(0);
-                        if (chapterDiv.contains(range.commonAncestorContainer)) {
-                            selectionDetailsForStructural = {
-                                startContainerPath: getNodePath(range.startContainer, chapterDiv),
-                                startOffset: range.startOffset,
-                                endContainerPath: getNodePath(range.endContainer, chapterDiv),
-                                endOffset: range.endOffset,
-                                isCollapsed: range.collapsed,
-                            };
-                        }
-                    }
-                }
-                chapterDataForSave.push({ id: chapterId, html: currentChapterHTML });
+        snap.forEach(dS => {
+            const data = dS.data();
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${escapeHTML(data.titulo) || "Sem Título"}</span><button data-doc-id="${dS.id}">Editar</button>`;
+            li.querySelector('button').addEventListener('click', e => {
+                hidePopup(loadDocumentPopup);
+                loadDocument(e.target.dataset.docId);
             });
-           
-            if (currentDocumentData) {
-                currentDocumentData.corpo = chapterDataForSave; 
-            }
-    
-            try {
-                await updateDoc(doc(db, "documentos", currentDocId), {
-                    corpo: chapterDataForSave,
-                    atualizadoEm: serverTimestamp()
-                });
-                
-                if (!isStructuralChange) {
-                    renderReferences(); 
-                    if(activeEditorElement) updateEmptyReferenceSpansStyles(activeEditorElement); 
-                }
-                
-                if (isStructuralChange) {
-                    const oldActiveChapterId = activeChapterWrapperFoundForStructural ? activeChapterWrapperFoundForStructural.dataset.chapterId : null;
-                    editorsContainer.innerHTML = ''; 
-                    activeEditorElement = null; currentSelectionRange = null;
-    
-                    const newRenderedWrappersList = [];
-                    if (currentDocumentData && Array.isArray(currentDocumentData.corpo)) {
-                        currentDocumentData.corpo.forEach(chapterObj => {
-                            if (chapterObj && chapterObj.id && typeof chapterObj.html === 'string') {
-                                newRenderedWrappersList.push(createNewChapterElement(chapterObj.html, chapterObj.id, false));
-                            }
-                        });
-                    }
-                    if (editorsContainer) {
-                        editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => {
-                            updateEmptyReferenceSpansStyles(editor);
-                        });
-                    }
-                    renderReferences(); 
-                    
-                    requestAnimationFrame(() => { 
-                        if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
-                        let wrapperToRestoreFocus = null;
-                        if (oldActiveChapterId) {
-                            wrapperToRestoreFocus = newRenderedWrappersList.find(w => w.dataset.chapterId === oldActiveChapterId);
-                        }
-                        if (!wrapperToRestoreFocus && chapterWrappersFromDOM.length > 0 && newRenderedWrappersList.length > 0) {
-                             const oldActiveWrapperDOM = activeChapterWrapperFoundForStructural || (activeEditorElement ? activeEditorElement.closest('.chapter-wrapper') : null);
-                             const oldActiveIndex = oldActiveWrapperDOM ? chapterWrappersFromDOM.indexOf(oldActiveWrapperDOM) : -1;
-                            
-                            if (oldActiveIndex !== -1 && newRenderedWrappersList[oldActiveIndex]) {
-                                 wrapperToRestoreFocus = newRenderedWrappersList[oldActiveIndex];
-                            } else if (newRenderedWrappersList.length > 0) {
-                                wrapperToRestoreFocus = newRenderedWrappersList[0]; 
-                            }
-                        }
-    
-                        if (wrapperToRestoreFocus) {
-                            const chapterDivToFocus = wrapperToRestoreFocus.querySelector('.text-editor-chapter');
-                            if (chapterDivToFocus) {
-                                activeEditorElement = chapterDivToFocus; 
-                                if (selectionDetailsForStructural) {
-                                    setTimeout(() => { 
-                                        tryRestoreSelection(activeEditorElement, selectionDetailsForStructural, true);
-                                    }, 0);
-                                } else {
-                                    setTimeout(() => {
-                                        placeCursorAtEndOf(activeEditorElement);
-                                        activeEditorElement.focus({ preventScroll: true });
-                                    }, 0);
-                                }
-                            }
-                        }
-                    });
-                    updateChapterActionButtonsState(); 
-                }
-            } catch (e) {
-                console.error("Erro ao salvar corpo do documento:", e);
-                if (scrollPositionsToRestore.element) scrollPositionsToRestore.element.scrollTop = scrollPositionsToRestore.scrollTop;
-            }
-        }
-    
-        function getNodePath(node, relativeTo) { const path = []; let current = node; while (current && current !== relativeTo) { const parent = current.parentNode; if (!parent) break; const index = Array.from(parent.childNodes).indexOf(current); path.unshift(index); current = parent; } return path; }
-        function getNodeFromPath(root, path) { let current = root; for (const index of path) { if (!current || !current.childNodes || typeof current.childNodes[index] === 'undefined') return null; current = current.childNodes[index]; } return current; }
-        
-        function tryRestoreSelection(editor, details, preventScrollForFocus = false) {
-            const sel = window.getSelection();
-            if (!sel || !editor) { if (editor && typeof editor.focus === 'function') editor.focus({ preventScroll: preventScrollForFocus }); return false; }
-            sel.removeAllRanges(); 
-            let successfullyRestored = false;
-    
-            try {
-                let startNode = getNodeFromPath(editor, details.startContainerPath);
-                let endNode = details.isCollapsed ? startNode : getNodeFromPath(editor, details.endContainerPath);
-                
-                if (!startNode) { 
-                    placeCursorAtEndOf(editor); 
-                    return false; 
-                }
-                if (!details.isCollapsed && !endNode) endNode = startNode; 
-                
-                let startOffset = details.startOffset;
-                let endOffset = details.isCollapsed ? startOffset : details.endOffset;
-    
-                if (startNode.nodeType === Node.TEXT_NODE) startOffset = Math.min(startOffset, startNode.nodeValue.length);
-                else if (startNode.nodeType === Node.ELEMENT_NODE) startOffset = Math.min(startOffset, startNode.childNodes.length);
-                
-                if (!details.isCollapsed && endNode) {
-                    if (endNode.nodeType === Node.TEXT_NODE) endOffset = Math.min(endOffset, endNode.nodeValue.length);
-                    else if (endNode.nodeType === Node.ELEMENT_NODE) endOffset = Math.min(endOffset, endNode.childNodes.length);
-                } else { 
-                    endOffset = startOffset; 
-                }
-                
-                const range = document.createRange(); 
-                range.setStart(startNode, startOffset);
-                if (details.isCollapsed || !endNode) range.collapse(true);
-                else range.setEnd(endNode, endOffset);
-                
-                sel.addRange(range); 
-                successfullyRestored = true;
-            } catch (e) { 
-                console.error("tryRestoreSelection: Erro ao restaurar seleção baseada em path:", e, "Detalhes:", details); 
-                placeCursorAtEndOf(editor); 
-            }
-            
-            if (typeof editor.focus === 'function') editor.focus({ preventScroll: preventScrollForFocus });
-            return successfullyRestored;
-        }
-    
-        async function saveDocumentTitle() { 
-            if (!currentDocId || !docTitleInput) return; 
-            const newTitle = docTitleInput.value.trim() || "Documento Sem Título"; 
-            try { 
-                await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() }); 
-                if(currentDocumentData) currentDocumentData.titulo = newTitle; 
-            } catch (e) { 
-                console.error("Erro ao salvar título do documento:", e); 
-                alert("Falha ao salvar o título."); 
-            } 
-        }
-       
-        async function addReferenceToDocument(title) { // For creating NEW reference
-            if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; }
-            const liveRange = rangeForPendingReference; 
-            if (!liveRange) { alert("Nenhuma seleção válida foi armazenada."); rangeForPendingReference = null; return; }
-            if (!activeEditorElement.contains(liveRange.commonAncestorContainer)) { alert("A seleção armazenada não é válida para o editor ativo."); rangeForPendingReference = null; return; }
-            if (!currentDocId || !title) { alert("ID do documento ou título da referência ausente."); return; }
-            
-            const urlInputs = document.querySelectorAll('#addRefUrlsContainer .ref-url-input'); 
-            const urls = [];
-            let allUrlsValid = true; 
-            let atLeastOneUrlProvided = false;
-            urlInputs.forEach(input => { 
-                const urlVal = input.value.trim(); 
-                if (urlVal) { 
-                    atLeastOneUrlProvided = true; 
-                    try { new URL(urlVal); urls.push(urlVal); } catch (_) { allUrlsValid = false; } 
-                } 
-            });
-            if (!atLeastOneUrlProvided) { alert("Pelo menos uma URL é obrigatória."); return; }
-            if (!allUrlsValid) { alert("Uma ou mais URLs fornecidas são inválidas."); return; }
-    
-            const refId = generateId('ref-'); 
-            let selTxt = "";
-            if (liveRange && !liveRange.collapsed) selTxt = liveRange.toString().trim();
-            
-            const span = document.createElement('span'); 
-            span.className = 'referenced-text'; 
-            span.setAttribute('data-ref-id', refId);
-            
-            try {
-                if (!liveRange.collapsed) { 
-                    const selectedContents = liveRange.extractContents(); 
-                    span.appendChild(selectedContents); 
-                } 
-                liveRange.insertNode(span);
-                const newRangeForCursor = document.createRange();
-                const spaceNode = document.createTextNode('\u00A0'); 
-                if (span.parentNode) {
-                    span.parentNode.insertBefore(spaceNode, span.nextSibling);
-                    newRangeForCursor.setStart(spaceNode, 1); 
-                    newRangeForCursor.collapse(true);
-                    const sel = window.getSelection(); 
-                    if (sel) { sel.removeAllRanges(); sel.addRange(newRangeForCursor); }
-                }
-                if(activeEditorElement) activeEditorElement.focus({ preventScroll: true }); 
-            } catch (e) { 
-                console.error("Erro ao envolver texto com span de referência:", e.message); 
-                alert("Ocorreu um erro ao criar a referência no texto."); 
-            }
-            
-            const newRef = { id: refId, tituloReferencia: title, urls: urls, textoSelecionadoOriginal: selTxt };
-            try {
-                if (!currentDocumentData.referencias) currentDocumentData.referencias = [];
-                currentDocumentData.referencias.push(newRef);
-                
-                await updateDoc(doc(db, "documentos", currentDocId), { 
-                    referencias: currentDocumentData.referencias, 
-                    atualizadoEm: serverTimestamp() 
-                });
-                renderReferences(); 
-                updateEmptyReferenceSpansStyles(activeEditorElement); 
-                if(addReferencePopup) hidePopup(addReferencePopup);
-                await saveDocumentBody(true, false); 
-            } catch (e) { 
-                console.error("Erro ao adicionar referência ao Firebase:", e); 
-                alert("Falha ao adicionar referência ao banco de dados."); 
-            }
-            finally {
-                rangeForPendingReference = null; 
-            }
-        }
-        
-        function updateEmptyReferenceSpansStyles(editorOrContainer) {
-            if (!editorOrContainer) {
-                return;
-            }
-            const refSpans = editorOrContainer.matches('.text-editor-chapter') ?
-                             editorOrContainer.querySelectorAll('span.referenced-text[data-ref-id]') :
-                             editorOrContainer.querySelectorAll('.text-editor-chapter span.referenced-text[data-ref-id]');
-    
-            refSpans.forEach(span => {
-                if (span.textContent.trim() === '') {
-                    if (!span.classList.contains('referenced-text-empty')) {
-                        span.classList.add('referenced-text-empty');
-                    }
-                } else {
-                    if (span.classList.contains('referenced-text-empty')) {
-                        span.classList.remove('referenced-text-empty');
-                    }
-                }
-            });
-        }
-    
-        function renderReferences() {
-            if (!referencesListUl) return;
-            referencesListUl.innerHTML = "";
-    
-            if (!currentDocId) {
-                referencesListUl.innerHTML = "<li>Nenhuma referência (documento não carregado).</li>";
-                return;
-            }
-    
-            const allRefsInCurrentDoc = currentDocumentData && currentDocumentData.referencias ? [...currentDocumentData.referencias] : [];
-    
-            if (allRefsInCurrentDoc.length === 0) {
-                referencesListUl.innerHTML = "<li>Nenhuma referência adicionada a este documento.</li>";
-                return;
-            }
-    
-            const refIdsInTextOrder = [];
-            const refIdsFoundInText = new Set();
-    
-            if (editorsContainer) {
-                const chapterWrappers = editorsContainer.querySelectorAll('.chapter-wrapper');
-                chapterWrappers.forEach(wrapper => {
-                    const chapterDiv = wrapper.querySelector('.text-editor-chapter');
-                    if (chapterDiv) {
-                        const refSpansInChapter = chapterDiv.querySelectorAll('span.referenced-text[data-ref-id]');
-                        refSpansInChapter.forEach(span => {
-                            const refId = span.dataset.refId;
-                            if (refId && !refIdsFoundInText.has(refId)) {
-                                refIdsInTextOrder.push(refId);
-                                refIdsFoundInText.add(refId);
-                            }
-                        });
-                    }
-                });
-            }
-    
-            const sortedLinkedRefs = [];
-            const unlinkedRefs = [];
-    
-            refIdsInTextOrder.forEach(idInText => {
-                const ref = allRefsInCurrentDoc.find(r => r.id === idInText);
-                if (ref) {
-                    sortedLinkedRefs.push(ref);
-                }
-            });
-    
-            allRefsInCurrentDoc.forEach(ref => {
-                if (!refIdsFoundInText.has(ref.id)) {
-                    unlinkedRefs.push(ref);
-                }
-            });
-    
-            const finalRefsToRender = [...sortedLinkedRefs, ...unlinkedRefs];
-    
-            finalRefsToRender.forEach(ref => {
-                const li = document.createElement('li');
-                li.className = 'reference-item';
-                li.setAttribute('data-ref-id', ref.id);
-    
-                const isLinked = refIdsFoundInText.has(ref.id);
-    
-                const cDiv = document.createElement('div');
-                cDiv.className = 'ref-content';
-    
-                const tS = document.createElement('span');
-                tS.className = 'ref-title';
-                tS.textContent = `${escapeHTML(ref.tituloReferencia)}: `;
-                tS.dataset.refId = ref.id;
-                tS.addEventListener('click', navigateToReferencedTextInEditor);
-    
-                if (!isLinked) {
-                    li.classList.add('reference-item-unlinked'); 
-                    tS.title = "Esta referência não está atualmente vinculada no texto do documento.";
-                } else {
-                    li.classList.remove('reference-item-unlinked');
-                }
-    
-                cDiv.appendChild(tS);
-    
-                const urlsToDisplay = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
-                if (urlsToDisplay.length > 0) {
-                    const urlsContainer = document.createElement('div');
-                    urlsContainer.style.marginTop = '3px';
-                    urlsToDisplay.forEach(url => {
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.textContent = escapeHTML(url);
-                        a.target = "_blank";
-                        a.style.display = 'block';
-                        a.style.marginBottom = '2px';
-                        urlsContainer.appendChild(a);
-                    });
-                    cDiv.appendChild(urlsContainer);
-                }
-                li.appendChild(cDiv);
-    
-                const eB = document.createElement('button');
-                eB.className = 'edit-ref-btn';
-                eB.innerHTML = '✎';
-                eB.title = "Editar Referência";
-                eB.dataset.refId = ref.id;
-                eB.addEventListener('click', () => openEditReferencePopup(ref.id));
-                li.appendChild(eB);
-    
-                referencesListUl.appendChild(li);
-            });
-        }
-    
-    
-        function openEditReferencePopup(refId) { 
-            if (!currentDocumentData || !currentDocumentData.referencias || !editingRefIdInput || !editRefTitleInput || !editReferencePopup) return; 
-            const ref = currentDocumentData.referencias.find(r => r.id === refId); 
-            if (!ref) { alert("Referência não encontrada."); return; } 
-            editingRefIdInput.value = refId; 
-            editRefTitleInput.value = ref.tituloReferencia; 
-            
-            const editRefUrlsContainer = document.getElementById('editRefUrlsContainer');
-            if(!editRefUrlsContainer) return;
-            editRefUrlsContainer.innerHTML = '';
-            const existingUrls = ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []);
-            if (existingUrls.length > 0) {
-                existingUrls.forEach((url, index) => {
-                    createUrlInputEntry('editRefUrlsContainer', url, existingUrls.length > 1 || index > 0);
-                });
-                if (editRefUrlsContainer.childElementCount === 1) {
-                    const singleInputGroup = editRefUrlsContainer.firstChild;
-                    if(singleInputGroup){
-                        const removeBtn = singleInputGroup.querySelector('button[type="button"]');
-                        if (removeBtn) removeBtn.remove(); 
-                        const urlInputInside = singleInputGroup.querySelector('.ref-url-input');
-                        if (urlInputInside) urlInputInside.style.marginRight = '0'; 
-                    }
-                }
-            } else {
-                createUrlInputEntry('editRefUrlsContainer', '', false); 
-            }
-            showPopup(editReferencePopup); 
-        }
-    
-        async function saveEditedReference() { 
-            if(!editingRefIdInput || !editRefTitleInput) return; 
-            const id = editingRefIdInput.value; 
-            const title = editRefTitleInput.value.trim(); 
-            if (!id || !title) { alert("Título é obrigatório."); return; } 
-            
-            const editUrlInputs = document.querySelectorAll('#editRefUrlsContainer .ref-url-input'); 
-            const newUrls = [];
-            let allEditedUrlsValid = true; 
-            let atLeastOneUrlProvidedInEdit = false;
-            editUrlInputs.forEach(input => { 
-                const urlVal = input.value.trim(); 
-                if (urlVal) { 
-                    atLeastOneUrlProvidedInEdit = true; 
-                    try { new URL(urlVal); newUrls.push(urlVal); } catch (_) { allEditedUrlsValid = false; } 
-                } 
-            });
-            if (!atLeastOneUrlProvidedInEdit) { alert("Pelo menos uma URL é obrigatória."); return; }
-            if (!allEditedUrlsValid) { alert("Uma ou mais URLs são inválidas."); return; }
-    
-            if (!currentDocumentData || !currentDocumentData.referencias) return; 
-            const idx = currentDocumentData.referencias.findIndex(r => r.id === id); 
-            if (idx === -1) { alert("Referência não encontrada para editar."); return; } 
-            
-            currentDocumentData.referencias[idx] = { ...currentDocumentData.referencias[idx], tituloReferencia: title, urls: newUrls }; 
-            delete currentDocumentData.referencias[idx].urlReferencia; 
-            
-            try { 
-                await updateDoc(doc(db, "documentos", currentDocId), { 
-                    referencias: currentDocumentData.referencias, 
-                    atualizadoEm: serverTimestamp() 
-                }); 
-                renderReferences(); 
-                if(editReferencePopup) hidePopup(editReferencePopup); 
-            } catch (e) { 
-                console.error("Erro ao salvar referência editada:", e); 
-            } 
-        }
-        
-        async function deleteReference(){ 
-            if(!editingRefIdInput) return; 
-            const refId=editingRefIdInput.value; 
-            if(!refId||!window.confirm("Excluir esta referência? Isto NÃO removerá a marcação do texto caso exista, mas ela ficará 'vazia' e vermelha se o texto dela for removido. A referência será removida da lista. Deseja continuar?"))return; 
-            if(!currentDocumentData||!currentDocumentData.referencias)return; 
-            
-            currentDocumentData.referencias = currentDocumentData.referencias.filter(r=>r.id!==refId); 
-            
-            try{ 
-                await updateDoc(doc(db,"documentos",currentDocId),{
-                    referencias: currentDocumentData.referencias, 
-                    atualizadoEm:serverTimestamp()
-                }); 
-                renderReferences(); 
-                if(editorsContainer) {
-                     editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`).forEach(spanInEditor=>{
-                        updateEmptyReferenceSpansStyles(spanInEditor.closest('.text-editor-chapter'));
-                     });
-                }
-                if(editReferencePopup) hidePopup(editReferencePopup); 
-            }catch(e){
-                console.error("Erro ao excluir referência:",e);
-                alert("Erro ao excluir referência.");
-            } 
-        }
-    
-        function clearEditorHighlights(){ 
-            if(editorsContainer) editorsContainer.querySelectorAll('.chapter-wrapper .text-editor-chapter .highlight-scroll, .reference-item.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')); 
-            if(referencesListUl) referencesListUl.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));
-        }
-    
-        function navigateToReferencedTextInEditor(event){
-            const refId=event.target.dataset.refId;
-            if(!refId || !editorsContainer)return;
-            
-            let refSpanInEditor=null;
-            const allSpansForRef = editorsContainer.querySelectorAll(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`);
-            if (allSpansForRef.length > 0) {
-                refSpanInEditor = allSpansForRef[0]; 
-            }
-            
-            const refListItem=event.target.closest('li.reference-item');
-            clearEditorHighlights();
-            
-            if(refSpanInEditor){
-                refSpanInEditor.scrollIntoView({behavior:'smooth',block:'center'});
-                refSpanInEditor.classList.add('highlight-scroll');
-                if(refListItem) refListItem.classList.add('highlight-scroll');
-                setTimeout(clearEditorHighlights,2500);
-            } else {
-                alert("Marcação da referência não encontrada no texto. A referência ainda existe na lista.");
-                if(refListItem) { 
-                     refListItem.classList.add('highlight-scroll');
-                     setTimeout(clearEditorHighlights,2500);
-                }
-            }
-        }
-    
-        function showAddReferencePopup() { // For new references
-            if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; } 
-            const rangeToUse = currentSelectionRange;
-            if (!rangeToUse || !activeEditorElement.contains(rangeToUse.commonAncestorContainer)) { 
-                alert("Selecione texto ou posicione o cursor no capítulo onde deseja adicionar a referência."); 
-                rangeForPendingReference = null; 
-                return; 
-            }
-            rangeForPendingReference = rangeToUse.cloneRange(); 
-            
-            if (refTitleInput) refTitleInput.value = ""; 
-            const addRefUrlsContainer = document.getElementById('addRefUrlsContainer');
-            if (addRefUrlsContainer) { 
-                addRefUrlsContainer.innerHTML = ''; 
-                createUrlInputEntry('addRefUrlsContainer', '', false); 
-            } 
-            if (addReferencePopup) { 
-                showPopup(addReferencePopup); 
-                if (refTitleInput) refTitleInput.focus(); 
-            } 
-            hideFloatingToolbar(); 
-        }
-        
-        async function showLoadDocumentsPopup(){ 
-            if(!loadDocumentPopup || !documentsListContainerUl || !documentsListContainerMsg) return; 
-            showPopup(loadDocumentPopup);
-            documentsListContainerUl.innerHTML="";
-            documentsListContainerMsg.textContent="Carregando...";
-            documentsListContainerMsg.style.display='block';
-            try{
-                const q=query(collection(db,"documentos"), orderBy("atualizadoEm","desc"));
-                const snap=await getDocs(q);
-                if(snap.empty){
-                    documentsListContainerMsg.textContent="Nenhum documento encontrado.";
-                    return;
-                }
-                documentsListContainerMsg.style.display='none';
-                snap.forEach(dS=>{
-                    const data=dS.data();
-                    const li=document.createElement('li');
-                    const ts=document.createElement('span');
-                    ts.textContent=escapeHTML(data.titulo)||"Sem Título";
-                    ts.title=escapeHTML(data.titulo)||"Sem Título";
-                    const eb=document.createElement('button');
-                    eb.textContent="Editar";
-                    eb.dataset.docId=dS.id;
-                    eb.addEventListener('click',e=>{
-                        loadDocument(e.target.dataset.docId);
-                        hidePopup(loadDocumentPopup);
-                    });
-                    li.appendChild(ts);
-                    li.appendChild(eb);
-                    documentsListContainerUl.appendChild(li);
-                });
-            }catch(e){
-                console.error("Erro ao buscar documentos para carregar:",e);
-                documentsListContainerMsg.textContent="Erro ao carregar.";
-            }
-        }
-    
-        async function handleUnlinkSelection() {
-            if (!currentSelectionRange || currentSelectionRange.collapsed || !activeEditorElement) return;
-    
-            const selRange = currentSelectionRange;
-            const commonAncestor = selRange.commonAncestorContainer;
-            
-            let refSpanToUnlink = null;
-            if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
-                refSpanToUnlink = commonAncestor.closest('span.referenced-text[data-ref-id]');
-            } else if (commonAncestor.nodeType === Node.TEXT_NODE && commonAncestor.parentElement) {
-                refSpanToUnlink = commonAncestor.parentElement.closest('span.referenced-text[data-ref-id]');
-            }
-    
-            if (!refSpanToUnlink) {
-                console.warn("Attempted to unlink text not inside a reference span.");
-                return;
-            }
-    
-            const refId = refSpanToUnlink.dataset.refId;
-            const parentNode = refSpanToUnlink.parentNode;
-    
-            const suffixRange = document.createRange();
-            suffixRange.selectNodeContents(refSpanToUnlink);
-            try {
-                suffixRange.setStart(selRange.endContainer, selRange.endOffset);
-            } catch (e) {
-                console.warn("Error setting start for suffixRange, assuming no suffix.", e);
-                suffixRange.collapse(true); 
-            }
-            const suffixFragment = suffixRange.extractContents();
-            const selectedFragment = selRange.extractContents();
-    
-            if (refSpanToUnlink.nextSibling) {
-                parentNode.insertBefore(selectedFragment, refSpanToUnlink.nextSibling);
-            } else {
-                parentNode.appendChild(selectedFragment);
-            }
-    
-            if (suffixFragment.childNodes.length > 0) {
-                const newSuffixSpan = document.createElement('span');
-                newSuffixSpan.className = 'referenced-text';
-                newSuffixSpan.dataset.refId = refId;
-                newSuffixSpan.appendChild(suffixFragment);
-                
-                let insertionPoint = null;
-                let currentPositionNode = refSpanToUnlink; 
-                if (selectedFragment.childNodes.length > 0) {
-                     currentPositionNode = selectedFragment.lastChild;
-                } else if (refSpanToUnlink.nextSibling && refSpanToUnlink.nextSibling.nodeType === Node.TEXT_NODE && refSpanToUnlink.nextSibling.textContent === selRange.toString()){
-                     currentPositionNode = refSpanToUnlink.nextSibling;
-                }
-    
-                if (currentPositionNode && currentPositionNode.nextSibling && parentNode.contains(currentPositionNode.nextSibling)) {
-                     insertionPoint = currentPositionNode.nextSibling;
-                }
-                
-                if (insertionPoint) {
-                    parentNode.insertBefore(newSuffixSpan, insertionPoint);
-                } else {
-                     parentNode.appendChild(newSuffixSpan);
-                }
-                updateEmptyReferenceSpansStyles(newSuffixSpan.parentElement);
-            }
-    
-            if (refSpanToUnlink.textContent.trim() === '') {
-                parentNode.removeChild(refSpanToUnlink);
-            } else {
-                updateEmptyReferenceSpansStyles(refSpanToUnlink.parentElement);
-            }
-            
-            const newRangeForCursor = document.createRange();
-            let nodeToPlaceCursorAfter = null;
-    
-            if (selectedFragment.lastChild && parentNode.contains(selectedFragment.lastChild)) {
-                nodeToPlaceCursorAfter = selectedFragment.lastChild;
-            } else if (refSpanToUnlink.nextSibling && parentNode.contains(refSpanToUnlink.nextSibling)) { 
-                nodeToPlaceCursorAfter = refSpanToUnlink.nextSibling;
-            } else if (parentNode.contains(refSpanToUnlink)) {
-                 nodeToPlaceCursorAfter = refSpanToUnlink; 
-            } else {
-                nodeToPlaceCursorAfter = parentNode.lastChild; 
-            }
-    
-            if (nodeToPlaceCursorAfter && parentNode.contains(nodeToPlaceCursorAfter)) {
-                try {
-                    newRangeForCursor.setStartAfter(nodeToPlaceCursorAfter);
-                    newRangeForCursor.collapse(true);
-                    const sel = window.getSelection();
-                    if (sel) {
-                        sel.removeAllRanges();
-                        sel.addRange(newRangeForCursor);
-                    }
-                } catch(e) {
-                    console.warn("Could not set cursor after unlinked text", e);
-                    placeCursorAtEndOf(activeEditorElement); 
-                }
-            } else {
-                placeCursorAtEndOf(activeEditorElement); 
-            }
-            
-            activeEditorElement.focus();
-            hideFloatingToolbar();
-    
-            await saveDocumentBody(true, true); 
-            renderReferences(); 
-        }
-    
-        function populateExistingRefsList() {
-            if (!existingRefListContainer || !currentDocumentData || !currentDocumentData.referencias) return;
-            existingRefListContainer.innerHTML = ''; 
-    
-            if (currentDocumentData.referencias.length === 0) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'no-refs-message';
-                messageDiv.textContent = "Nenhuma referência existente";
-                existingRefListContainer.appendChild(messageDiv);
-                if (confirmAppendRefBtn) confirmAppendRefBtn.disabled = true;
-                return;
-            }
-    
-            currentDocumentData.referencias.forEach(ref => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'ref-list-item';
-                itemDiv.textContent = escapeHTML(ref.tituloReferencia);
-                itemDiv.dataset.refId = ref.id;
-    
-                itemDiv.addEventListener('click', () => {
-                    const currentlySelected = existingRefListContainer.querySelector('.ref-list-item.selected');
-                    if (currentlySelected) {
-                        currentlySelected.classList.remove('selected');
-                    }
-                    itemDiv.classList.add('selected');
-                    if (confirmAppendRefBtn) confirmAppendRefBtn.disabled = false; 
-                });
-                existingRefListContainer.appendChild(itemDiv);
-            });
-            if (confirmAppendRefBtn) confirmAppendRefBtn.disabled = true; 
-        }
-    
-        function showSelectExistingRefPopup() {
-            if (!activeEditorElement) { alert("Nenhum editor ativo."); rangeForPendingReference = null; return; }
-            const rangeToUse = currentSelectionRange;
-            if (!rangeToUse || rangeToUse.collapsed || !activeEditorElement.contains(rangeToUse.commonAncestorContainer)) {
-                alert("Selecione o texto que deseja anexar a uma referência existente.");
-                rangeForPendingReference = null;
-                return;
-            }
-            rangeForPendingReference = rangeToUse.cloneRange(); 
-    
-            populateExistingRefsList(); 
-            if (selectExistingRefPopup) showPopup(selectExistingRefPopup);
-            hideFloatingToolbar();
-        }
-    
-        async function appendSelectionToExistingRef() {
-            if (!rangeForPendingReference || !existingRefListContainer || !activeEditorElement) { 
-                alert("Erro interno: seleção ou lista de referência não encontrada.");
-                rangeForPendingReference = null;
-                return;
-            }
-            
-            const selectedItem = existingRefListContainer.querySelector('.ref-list-item.selected');
-            if (!selectedItem || !selectedItem.dataset.refId) {
-                alert("Nenhuma referência selecionada na lista.");
-                return;
-            }
-            const selectedRefId = selectedItem.dataset.refId;
-    
-            const liveRange = rangeForPendingReference;
-             if (!activeEditorElement.contains(liveRange.commonAncestorContainer)) { 
-                alert("A seleção armazenada não é válida para o editor ativo."); 
-                rangeForPendingReference = null; 
-                return; 
-            }
-    
-            const span = document.createElement('span');
-            span.className = 'referenced-text';
-            span.setAttribute('data-ref-id', selectedRefId);
-    
-            try {
-                if (!liveRange.collapsed) {
-                    const selectedContents = liveRange.extractContents();
-                    span.appendChild(selectedContents);
-                }
-                liveRange.insertNode(span);
-                const newRangeForCursor = document.createRange();
-                const spaceNode = document.createTextNode('\u00A0'); 
-                if (span.parentNode) {
-                    span.parentNode.insertBefore(spaceNode, span.nextSibling);
-                    newRangeForCursor.setStart(spaceNode, 1); 
-                    newRangeForCursor.collapse(true);
-                    const sel = window.getSelection();
-                    if (sel) { sel.removeAllRanges(); sel.addRange(newRangeForCursor); }
-                }
-                 if(activeEditorElement) activeEditorElement.focus({ preventScroll: true });
-            } catch (e) {
-                console.error("Erro ao anexar texto à referência existente:", e);
-                alert("Erro ao anexar texto.");
-                rangeForPendingReference = null;
-                return;
-            }
-    
-            rangeForPendingReference = null; 
-            if (selectExistingRefPopup) hidePopup(selectExistingRefPopup);
-            
-            updateEmptyReferenceSpansStyles(activeEditorElement);
-            renderReferences(); 
-            await saveDocumentBody(true, true); 
-        }
-        
-        // ==========================================================
-        // INÍCIO DAS FUNÇÕES CORRIGIDAS E MELHORADAS
-        // ==========================================================
-        function cleanupEmptySpans(element) {
-            if (!element) return;
-            const emptySpans = element.querySelectorAll('span.referenced-text');
-            emptySpans.forEach(span => {
-                if (span.textContent.trim() === '' && !span.querySelector('img')) {
-                    span.remove();
-                }
-            });
-        }
-    
-        async function handleSplitSpanAndInsert() {
-            if (!activeEditorElement) {
-                console.warn("Nenhum editor ativo para dividir o texto.");
-                return;
-            }
-            const selection = window.getSelection();
-            if (!selection || !selection.rangeCount || !selection.isCollapsed) {
-                console.warn("Nenhuma seleção válida (colapsada) para dividir o parágrafo.");
-                return;
-            }
-    
-            const cursorRange = selection.getRangeAt(0).cloneRange();
-            const startNode = cursorRange.startContainer;
-            
-            const currentBlockContainer = startNode.nodeType === Node.TEXT_NODE 
-                ? startNode.parentElement.closest('p, div:not(.text-editor-chapter):not(.chapter-wrapper)')
-                : startNode.closest('p, div:not(.text-editor-chapter):not(.chapter-wrapper)');
-            
-            if (!currentBlockContainer || !activeEditorElement.contains(currentBlockContainer)) {
-                console.error("Não foi possível encontrar o bloco de parágrafo contêiner para a divisão.");
-                return;
-            }
-            
-            const rangeToMove = document.createRange();
-            rangeToMove.setStart(cursorRange.startContainer, cursorRange.startOffset);
-            rangeToMove.setEnd(currentBlockContainer, currentBlockContainer.childNodes.length);
-    
-            const fragmentToMove = rangeToMove.extractContents();
-    
-            const newParagraph = document.createElement('p');
-            newParagraph.style.fontFamily = DEFAULT_FONT_FAMILY; // CORREÇÃO: Adicionada formatação da fonte
-            newParagraph.style.fontSize = DEFAULT_FONT_SIZE;
-            newParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
-    
-            if (fragmentToMove.textContent.trim() === '' && !fragmentToMove.querySelector('img')) {
-                newParagraph.innerHTML = '<br>';
-            } else {
-                newParagraph.appendChild(fragmentToMove);
-            }
-            
-            // CORREÇÃO: Limpar spans vazios que possam ter sido criados no novo parágrafo
-            cleanupEmptySpans(newParagraph); 
-    
-            if (currentBlockContainer.parentNode) {
-                currentBlockContainer.parentNode.insertBefore(newParagraph, currentBlockContainer.nextSibling);
-            } else {
-                activeEditorElement.appendChild(newParagraph);
-            }
-            
-            // CORREÇÃO: Limpar spans vazios que possam ter ficado no parágrafo original
-            cleanupEmptySpans(currentBlockContainer);
-    
-            if (currentBlockContainer.textContent.trim() === '' && !currentBlockContainer.querySelector('img')) {
-                currentBlockContainer.innerHTML = '<br>';
-            }
-            
-            const sel = window.getSelection();
-            if (!sel) return;
-    
-            let lastNode = currentBlockContainer.lastChild;
-            while (lastNode && lastNode.nodeType === Node.TEXT_NODE && lastNode.textContent.trim() === '') {
-                lastNode = lastNode.previousSibling;
-            }
-    
-            if (lastNode && lastNode.nodeType === Node.ELEMENT_NODE && lastNode.matches('span.referenced-text[data-ref-id]')) {
-                const spaceNode = document.createTextNode('\u00A0');
-                currentBlockContainer.appendChild(spaceNode);
-                
-                const newRange = document.createRange();
-                newRange.setStart(spaceNode, 1);
-                newRange.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(newRange);
-            } else {
-                placeCursorAtEndOf(currentBlockContainer);
-            }
-    
-            if (activeEditorElement) activeEditorElement.focus({ preventScroll: true });
-    
-            hideReferenceEyeToolbar();
-            await saveDocumentBody(true, true);
-        }
-        // ==========================================================
-        // FIM DAS FUNÇÕES CORRIGIDAS
-        // ==========================================================
-    
-        function cleanupEmptyReferenceParagraphOnEnter() {
-        if (!activeEditorElement) return false;
-    
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount > 0 || !sel.isCollapsed) return false;
-    
-        const range = sel.getRangeAt(0);
-        let cursorNode = range.startContainer;
-        let currentBlock = null;
-    
-        if (cursorNode.nodeType === Node.TEXT_NODE) {
-            currentBlock = cursorNode.parentNode;
-        } else {
-            currentBlock = cursorNode;
-        }
-        currentBlock = currentBlock.closest('p, div:not(.text-editor-chapter):not(.chapter-wrapper)');
-    
-        if (!currentBlock || !activeEditorElement.contains(currentBlock)) {
-            return false;
-        }
-    
-        const emptyRefSpansInBlock = currentBlock.querySelectorAll('span.referenced-text.referenced-text-empty');
-    
-        if (emptyRefSpansInBlock.length === 1) {
-            const problemSpan = emptyRefSpansInBlock[0];
-            let hasOtherSignificantContent = false;
-    
-            for (const childNode of Array.from(problemSpan.childNodes)) {
-                if (childNode.nodeType === Node.TEXT_NODE && childNode.nodeValue.trim() !== '') {
-                    hasOtherSignificantContent = true;
-                    break;
-                }
-                if (childNode.nodeType === Node.ELEMENT_NODE && childNode.nodeName !== 'BR') {
-                    hasOtherSignificantContent = true;
-                    break;
-                }
-            }
-            if (hasOtherSignificantContent) return false;
-    
-            for (const childNode of Array.from(currentBlock.childNodes)) {
-                if (childNode === problemSpan) continue;
-                if (childNode.nodeName === 'BR') continue;
-    
-                if (childNode.nodeType === Node.TEXT_NODE && childNode.nodeValue.trim() !== '') {
-                    hasOtherSignificantContent = true;
-                    break;
-                }
-                if (childNode.nodeType === Node.ELEMENT_NODE) {
-                    if (childNode.matches('span.referenced-text') && !childNode.classList.contains('referenced-text-empty')) {
-                        hasOtherSignificantContent = true;
-                        break;
-                    } else if (!childNode.matches('span')) {
-                        hasOtherSignificantContent = true;
-                        break;
-                    }
-                }
-            }
-    
-            if (!hasOtherSignificantContent) {
-                const parent = currentBlock.parentNode;
-                const newEmptyParagraph = document.createElement('p');
-                newEmptyParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
-                newEmptyParagraph.style.fontSize = DEFAULT_FONT_SIZE;
-                newEmptyParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
-                newEmptyParagraph.innerHTML = '<br>';
-    
-                if (parent && parent.contains(currentBlock)) {
-                    parent.replaceChild(newEmptyParagraph, currentBlock);
-                    activeEditorElement.normalize();
-    
-                    const newCursorRange = document.createRange();
-                    const brNode = newEmptyParagraph.firstChild;
-                    if (brNode) {
-                        newCursorRange.setStartBefore(brNode);
-                        newCursorRange.collapse(true);
-                        sel.removeAllRanges();
-                        sel.addRange(newCursorRange);
-                    }
-                    return true;
-                }
-            }
-        }
-        return false;
+            documentsListContainerUl.appendChild(li);
+        });
+    } catch (e) {
+        console.error("Erro ao buscar documentos para carregar:", e);
+        documentsListContainerMsg.textContent = "Erro ao carregar.";
+    }
+}
+async function handleUnlinkSelection() {
+    if (!currentSelectionRange) return;
+    let element = currentSelectionRange.commonAncestorContainer;
+    if (element.nodeType !== Node.ELEMENT_NODE) element = element.parentElement;
+    const refSpan = element.closest('span.referenced-text[data-ref-id]');
+
+    if (refSpan) {
+        saveStateForUndo();
+        const textNode = document.createTextNode(refSpan.textContent);
+        refSpan.parentNode.replaceChild(textNode, refSpan);
+        textNode.parentNode.normalize();
+        hideFloatingToolbar();
+        renderReferences();
+        await saveDocumentBody(true, true);
+    } else {
+        alert("A seleção não está dentro de um trecho com referência.");
+    }
+}
+function populateExistingRefsList() {
+    if (!existingRefListContainer || !currentDocumentData?.referencias) return;
+    existingRefListContainer.innerHTML = '';
+    if (currentDocumentData.referencias.length === 0) {
+        existingRefListContainer.innerHTML = `<div class="no-refs-message">Nenhuma referência existente</div>`;
+        confirmAppendRefBtn.disabled = true;
+        return;
+    }
+    currentDocumentData.referencias.forEach(ref => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'ref-list-item';
+        itemDiv.textContent = escapeHTML(ref.tituloReferencia);
+        itemDiv.dataset.refId = ref.id;
+        itemDiv.addEventListener('click', () => {
+            existingRefListContainer.querySelector('.selected')?.classList.remove('selected');
+            itemDiv.classList.add('selected');
+            confirmAppendRefBtn.disabled = false;
+        });
+        existingRefListContainer.appendChild(itemDiv);
+    });
+    confirmAppendRefBtn.disabled = true;
+}
+function showSelectExistingRefPopup() {
+    if (!activeEditorElement || !currentSelectionRange || currentSelectionRange.collapsed) {
+        return alert("Selecione o texto que deseja anexar a uma referência existente.");
+    }
+    rangeForPendingReference = currentSelectionRange.cloneRange();
+    populateExistingRefsList();
+    showPopup(selectExistingRefPopup);
+}
+async function appendSelectionToExistingRef() {
+    const selectedRefDiv = existingRefListContainer.querySelector('.ref-list-item.selected');
+    if (!selectedRefDiv || !rangeForPendingReference) return;
+
+    saveStateForUndo();
+    const refId = selectedRefDiv.dataset.refId;
+    const span = document.createElement('span');
+    span.className = 'referenced-text';
+    span.dataset.refId = refId;
+
+    try {
+        rangeForPendingReference.surroundContents(span);
+    } catch (e) {
+        span.textContent = rangeForPendingReference.toString();
+        rangeForPendingReference.deleteContents();
+        rangeForPendingReference.insertNode(span);
+    }
+
+    renderReferences();
+    updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));
+    hidePopup(selectExistingRefPopup);
+    await saveDocumentBody(true, true);
+    rangeForPendingReference = null;
+}
+async function handleSplitSpanAndInsert() {
+    if (!activeEditorElement || !activeReferencedTextSpanForEye) return;
+
+    const parentBlock = activeReferencedTextSpanForEye.closest('p, div');
+    if (!parentBlock || !parentBlock.parentNode) {
+        return alert("Não foi possível determinar onde inserir o novo parágrafo.");
     }
     
+    saveStateForUndo();
+
+    const newParagraph = document.createElement('p');
+    newParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
+    newParagraph.style.fontSize = DEFAULT_FONT_SIZE;
+    newParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
+    newParagraph.innerHTML = '<br>';
+
+    parentBlock.parentNode.insertBefore(newParagraph, parentBlock.nextSibling);
+
+    hideReferenceEyeToolbar();
+    placeCursorAtEndOf(newParagraph);
+    newParagraph.focus();
+    await saveDocumentBody(true, true);
+}
+
+// Inicialização da Aplicação
+window.addEventListener('DOMContentLoaded', async () => {
+    function safelyAddEventListener(element, eventType, listener) { 
+        if (element) element.addEventListener(eventType, listener); 
+    }
+
+    safelyAddEventListener(initNewDocBtn, 'click', createNewDocument);
+    safelyAddEventListener(initLoadDocBtn, 'click', showLoadDocumentsPopup);
+    safelyAddEventListener(backToInitialScreenBtn, 'click', showInitialScreen);
+    safelyAddEventListener(docTitleInput, 'blur', saveDocumentTitle);
+    safelyAddEventListener(addChapterBtn, 'click', () => {
+        saveStateForUndo();
+        createNewChapterElement('', null, true); 
+        saveDocumentBody(true, true); 
+    });
+    safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup);
+    safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection); 
+    safelyAddEventListener(appendToRefBtn, 'click', showSelectExistingRefPopup);
+    safelyAddEventListener(saveNewRefBtnElement, 'click', () => { if(refTitleInput.value.trim()) addReferenceToDocument(refTitleInput.value.trim()); });
+    safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference);
+    safelyAddEventListener(deleteRefBtn, 'click', deleteReference);
+    safelyAddEventListener(confirmAppendRefBtn, 'click', appendSelectionToExistingRef);
+    safelyAddEventListener(splitAndInsertBtn, 'click', handleSplitSpanAndInsert);
+    safelyAddEventListener(addMoreUrlsToAddPopupBtn, 'click', () => createUrlInputEntry('addRefUrlsContainer', '', true));
+    safelyAddEventListener(addMoreUrlsToEditPopupBtn, 'click', () => createUrlInputEntry('editRefUrlsContainer', '', true));
     
+    document.querySelectorAll('.close-popup-btn').forEach(btn => safelyAddEventListener(btn, 'click', () => hidePopup(btn.closest('.popup'))));
     
-        function safelyAddEventListener(element, eventType, listener, elementName = 'Elemento') { 
-            if (element) { 
-                element.addEventListener(eventType, listener); 
-            } else { 
-                console.warn(`Elemento "${elementName}" não encontrado para adicionar listener.`); 
-            } 
+    safelyAddEventListener(referencesListUl, 'click', e => {
+        if (e.target.classList.contains('ref-title')) navigateToReferencedTextInEditor(e);
+        if (e.target.classList.contains('edit-ref-btn')) openEditReferencePopup(e.target.dataset.refId);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (editorInterfaceDiv.style.display === 'none' || document.querySelector('.popup.active')) return;
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); handleUndo(); }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); handleRedo(); }
+    });
+    
+    document.addEventListener('selectionchange', () => {
+        const sel = window.getSelection();
+        if (!activeEditorElement || !sel || !sel.rangeCount) { hideFloatingToolbar(); hideReferenceEyeToolbar(); return; }
+        currentSelectionRange = sel.getRangeAt(0);
+        if (activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) {
+            if (!sel.isCollapsed && sel.toString().trim() !== "") { showFloatingToolbar(); hideReferenceEyeToolbar(); } 
+            else if (sel.isCollapsed) {
+                hideFloatingToolbar();
+                const parentSpan = sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');
+                if (parentSpan) showReferenceEyeToolbar(parentSpan); else hideReferenceEyeToolbar();
+            } else { hideFloatingToolbar(); hideReferenceEyeToolbar(); }
         }
+    });
+
+    await showInitialScreen(); 
+});
     
-        // Inicialização da Aplicação
-        window.addEventListener('DOMContentLoaded', async () => {
-            if (initialScreenDiv) initialScreenDiv.style.display = 'block';
-            if (editorInterfaceDiv) editorInterfaceDiv.style.display = 'none';
-    
-            safelyAddEventListener(initNewDocBtn, 'click', createNewDocument, 'initNewDocBtn');
-            safelyAddEventListener(initLoadDocBtn, 'click', showLoadDocumentsPopup, 'initLoadDocBtn');
-            safelyAddEventListener(backToInitialScreenBtn, 'click', showInitialScreen, 'backToInitialScreenBtn');
-            
-            safelyAddEventListener(docTitleInput, 'blur', () => { saveDocumentTitle().catch(err => { console.error("Erro de saveDocumentTitle no blur:", err); }); }, 'docTitleInput');
-           
-            safelyAddEventListener(addChapterBtn, 'click', () => {
-                const newWrapper = createNewChapterElement('', null, true); 
-                saveDocumentBody(true, true); 
-            }, 'addChapterBtn');
-    
-            safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup, 'attachLinkBtn');
-            safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection, 'removeLinkBtn'); 
-            safelyAddEventListener(appendToRefBtn, 'click', showSelectExistingRefPopup, 'appendToRefBtn'); 
-            
-            safelyAddEventListener(saveNewRefBtnElement, 'click', () => { 
-                if(refTitleInput) { 
-                    const t = refTitleInput.value.trim(); 
-                    if (t) addReferenceToDocument(t); 
-                    else alert("Título da referência é obrigatório.");
-                } 
-            }, 'saveNewRefBtnElement');
-            
-            safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference, 'saveEditedRefBtn');
-            safelyAddEventListener(deleteRefBtn, 'click', deleteReference, 'deleteRefBtn');
-           
-            safelyAddEventListener(confirmAppendRefBtn, 'click', appendSelectionToExistingRef, 'confirmAppendRefBtn');
-    
-            safelyAddEventListener(splitAndInsertBtn, 'click', async (event) => { 
-                event.stopPropagation();
-                await handleSplitSpanAndInsert();
-            }, 'splitAndInsertBtn');
-    
-            document.querySelectorAll('.close-popup-btn').forEach(btn => btn.addEventListener('click', () => {
-                const popupToClose = btn.closest('.popup');
-                if (popupToClose) hidePopup(popupToClose);
-                if (popupToClose && (popupToClose.id === 'addReferencePopup' || popupToClose.id === 'selectExistingRefPopup')) {
-                     rangeForPendingReference = null; 
-                }
-            }));
-    
-            safelyAddEventListener(editorsContainer, 'click', async e => {
-                const chapterDiv = e.target.closest('.text-editor-chapter');
-                if (chapterDiv) {
-                    activeEditorElement = chapterDiv;
-                } else {
-                    if (!e.target.closest('#referenceEyeToolbar') && !e.target.closest('#floatingToolbar')) {
-                        hideReferenceEyeToolbar();
-                        hideFloatingToolbar();
-                    }
-                    return; 
-                }
-            }, 'editorsContainer (click)');
-    
-            document.addEventListener('selectionchange', () => {
-                const sel = window.getSelection();
-                if (!activeEditorElement || !sel || !sel.rangeCount) { 
-                    hideFloatingToolbar(); 
-                    hideReferenceEyeToolbar(); 
-                    currentSelectionRange = null; 
-                    if (removeLinkBtn) removeLinkBtn.disabled = true; 
-                    if (attachLinkBtn) attachLinkBtn.disabled = true; 
-                    if (appendToRefBtn) appendToRefBtn.disabled = true; 
-                    return; 
-                }
-                const range = sel.getRangeAt(0); 
-                currentSelectionRange = range; 
-                
-                if (activeEditorElement.contains(range.commonAncestorContainer)) {
-                    if (!sel.isCollapsed && sel.toString().trim() !== "") {
-                        showFloatingToolbar(); 
-                        hideReferenceEyeToolbar(); 
-                    } else if (sel.isCollapsed) { 
-                        hideFloatingToolbar();
-                        const common = range.commonAncestorContainer;
-                        let parentSpan = null;
-                        if (common.nodeType === Node.ELEMENT_NODE) {
-                            parentSpan = common.closest('span.referenced-text[data-ref-id]');
-                        } else if (common.nodeType === Node.TEXT_NODE && common.parentElement) {
-                            parentSpan = common.parentElement.closest('span.referenced-text[data-ref-id]');
-                        }
-    
-                        if (parentSpan && activeEditorElement.contains(parentSpan)) {
-                            showReferenceEyeToolbar(parentSpan); 
-                        } else {
-                            hideReferenceEyeToolbar(); 
-                        }
-                    } else { 
-                        hideFloatingToolbar();
-                        hideReferenceEyeToolbar();
-                        if (removeLinkBtn) removeLinkBtn.disabled = true; 
-                        if (attachLinkBtn) attachLinkBtn.disabled = true; 
-                        if (appendToRefBtn) appendToRefBtn.disabled = true; 
-                    }
-                } else { 
-                    hideFloatingToolbar();
-                    hideReferenceEyeToolbar();
-                    currentSelectionRange = null; 
-                    if (removeLinkBtn) removeLinkBtn.disabled = true; 
-                    if (attachLinkBtn) attachLinkBtn.disabled = true; 
-                    if (appendToRefBtn) appendToRefBtn.disabled = true; 
-                }
-            });
-            
-            document.addEventListener('mousedown', e => { 
-                if (!editorInterfaceDiv || editorInterfaceDiv.style.display === 'none') return; 
-                
-                const isClickOnAnyPopup = e.target.closest('.popup');
-                const isClickOnFloatingToolbar = floatingToolbar && floatingToolbar.contains(e.target);
-                const isClickOnEyeToolbar = referenceEyeToolbar && referenceEyeToolbar.contains(e.target);
-                
-                if (!isClickOnAnyPopup && !isClickOnEyeToolbar && !isClickOnFloatingToolbar) {
-                     if (!e.target.closest('.text-editor-chapter') && !e.target.closest('span.referenced-text[data-ref-id]')) {
-                         hideReferenceEyeToolbar();
-                     }
-                }
-                 if (!isClickOnFloatingToolbar && !isClickOnAnyPopup){
-                    const sel = window.getSelection();
-                    if(sel && sel.isCollapsed && !e.target.closest('#referenceEyeToolbar')){ 
-                        hideFloatingToolbar();
-                    }
-                 }
-            });
-            
-            safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', (event) => {
-                event.stopPropagation(); 
-                const targetRefId = referenceEyeToolbar.dataset.refId;
-                if (targetRefId && referencesListUl) {
-                    const referenceListItem = referencesListUl.querySelector(`li.reference-item[data-ref-id="${targetRefId}"]`);
-                    if (referenceListItem) {
-                        clearEditorHighlights(); 
-                        referenceListItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        referenceListItem.classList.add('highlight-scroll'); 
-                        
-                        const refSpanInEditor = editorsContainer.querySelector(`.chapter-wrapper .text-editor-chapter span.referenced-text[data-ref-id="${targetRefId}"]`);
-                        if (refSpanInEditor) {
-                            refSpanInEditor.classList.add('highlight-scroll');
-                        }
-    
-                        setTimeout(() => { 
-                            referenceListItem.classList.remove('highlight-scroll');
-                            if (refSpanInEditor) {
-                                refSpanInEditor.classList.remove('highlight-scroll');
-                            }
-                        }, 2500);
-                    } else {
-                        alert("Item da referência não encontrado na lista.");
-                    }
-                }
-                hideReferenceEyeToolbar(); 
-            }, 'viewReferenceFromToolbarBtn');
-    
-            if (cancelNewRefBtn) { 
-                cancelNewRefBtn.addEventListener('click', () => { 
-                    rangeForPendingReference = null; 
-                }); 
-            }
-    
-            if (addMoreUrlsToAddPopupBtn) { 
-                addMoreUrlsToAddPopupBtn.addEventListener('click', () => { 
-                    const container = document.getElementById('addRefUrlsContainer'); 
-                    if(!container) return; 
-                    if (container.childElementCount === 1) {
-                        const firstGroup = container.firstChild;
-                        if (firstGroup && !firstGroup.querySelector('button[type="button"]')) { 
-                            const urlInput = firstGroup.querySelector('.ref-url-input');
-                            const val = urlInput ? urlInput.value : '';
-                            firstGroup.remove();
-                            createUrlInputEntry('addRefUrlsContainer', val, true); 
-                        }
-                    }
-                    createUrlInputEntry('addRefUrlsContainer', '', true); 
-                }); 
-            }
-            if (addMoreUrlsToEditPopupBtn) { 
-                addMoreUrlsToEditPopupBtn.addEventListener('click', () => { 
-                    const container = document.getElementById('editRefUrlsContainer'); 
-                    if(!container) return; 
-                    if (container.childElementCount === 1) {
-                        const firstGroup = container.firstChild;
-                        if (firstGroup && !firstGroup.querySelector('button[type="button"]')) { 
-                            const urlInput = firstGroup.querySelector('.ref-url-input');
-                            const val = urlInput ? urlInput.value : '';
-                            firstGroup.remove();
-                            createUrlInputEntry('editRefUrlsContainer', val, true); 
-                        }
-                    }
-                    createUrlInputEntry('editRefUrlsContainer', '', true); 
-                }); 
-            }
-    
-            await showInitialScreen(); 
-        });
+        function safelyAddEventListener(element, eventType, listener) { 
+            if (element) element.addEventListener(eventType, listener); 
+        }
     </script>
 </body>
 </html>

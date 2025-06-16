@@ -59,7 +59,7 @@
         .list-view-card.type-evento .card-icon { color: #FFC107; }
         .list-view-card.type-nação .card-icon { color: #D9534F; }
 
-        /* --- Visão em Linha (COM ALTERAÇÕES) --- */
+        /* Visão em Linha */
         .timeline-line { position: absolute; left: 50%; width: 3px; height: 100%; background-color: var(--border-color); transform: translateX(-50%); }
         .timeline-item {
             position: absolute;
@@ -69,11 +69,9 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            /* ADICIONADO para efeito de hover */
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             z-index: 1; 
         }
-        /* NOVA REGRA :hover */
         .timeline-item:hover {
             z-index: 10;
             transform: scale(1.03);
@@ -100,7 +98,6 @@
         .popup-actions .save-btn { background-color: #4CAF50; color: white; }
         .popup-actions .cancel-btn { background-color: #777; color: white; }
         .popup-actions .delete-btn { background-color: var(--danger-color); color: white; margin-right: auto; }
-
     </style>
 </head>
 <body>
@@ -224,23 +221,42 @@
             });
         }
         
+        /**
+         * FUNÇÃO MODIFICADA PARA A LINHA DO TEMPO ESTICADA
+         */
         function renderTimelineView(events) {
+            const PIXELS_PER_YEAR = 2.5; // Fator de escala: 2.5 pixels para cada ano de diferença. Ajuste se necessário.
+
             const line = document.createElement('div');
             line.className = 'timeline-line';
             timelineContainer.appendChild(line);
 
             const years = events.flatMap(e => e.dataUnica || e.intervaloInicio).filter(Boolean);
             if (years.length === 0) return;
+
             const maxYear = Math.max(...years);
             const minYear = Math.min(...years);
-            const yearSpan = maxYear > minYear ? maxYear - minYear : 1;
+            const yearSpan = maxYear - minYear;
+
+            // Se houver apenas um ponto no tempo, ou nenhum, usa a visão de lista como fallback
+            if (yearSpan <= 0) {
+                renderListView(events);
+                return;
+            }
+
+            // Calcula e define a altura total do container
+            const totalHeight = yearSpan * PIXELS_PER_YEAR;
+            timelineContainer.style.height = `${totalHeight}px`;
 
             events.forEach(event => {
                 const item = document.createElement('div');
                 item.className = 'timeline-item';
                 const eventYear = event.dataUnica || event.intervaloInicio;
-                const percentageTop = ((maxYear - eventYear) / yearSpan) * 100;
-                item.style.top = `${percentageTop}%`;
+
+                // Calcula a posição do topo em pixels absolutos
+                const pixelTop = (maxYear - eventYear) * PIXELS_PER_YEAR;
+                item.style.top = `${pixelTop}px`;
+
                 const icons = getIcons();
                 item.innerHTML = `
                     <button class="edit-btn" data-id="${event.id}">✏️</button>
@@ -252,8 +268,15 @@
             });
         }
         
+        /**
+         * FUNÇÃO MODIFICADA PARA RESETAR A ALTURA DO CONTAINER
+         */
         function renderContent(events) {
             timelineContainer.innerHTML = '';
+            // Reseta a altura do container antes de renderizar.
+            // Essencial para quando se alterna da visão 'Linha' para 'Lista'.
+            timelineContainer.style.height = 'auto';
+
             if (events.length === 0) {
                 timelineContainer.innerHTML = '<p class="message">Nenhum evento encontrado.</p>';
                 return;

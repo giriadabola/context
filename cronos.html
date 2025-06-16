@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronologia Mundial (A.C.)</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg-color: #1e1e1e;
+            --surface-color: #2d2d2d;
+            --sidebar-color: #252526;
+            --text-color: #d4d4d4;
+            --primary-color: #3a7ca5;
+            --primary-hover-color: #4a90c2;
+            --border-color: #3a3a3a;
+            --danger-color: #D9534F;
+        }
+
+        body { font-family: sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); }
+        .main-container { display: flex; height: 100vh; }
+        .sidebar { flex: 0 0 280px; background-color: var(--sidebar-color); padding: 20px; overflow-y: auto; border-right: 1px solid var(--border-color); }
+        .sidebar h2 { margin-top: 0; color: var(--primary-hover-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .filter-group { margin-bottom: 25px; }
+        .filter-group h3 { margin-bottom: 10px; font-size: 1.1em; }
+        .filter-group label { display: block; margin-bottom: 8px; cursor: pointer; padding: 4px; border-radius: 4px; }
+        .filter-group label:hover { background-color: var(--surface-color); }
+        .filter-group input { margin-right: 8px; }
+        .content-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .content-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+        #openPopupBtn { background: none; border: none; font-size: 2em; color: var(--text-color); cursor: pointer; }
+        #openPopupBtn:hover { color: var(--primary-hover-color); }
+        .view-switcher button { padding: 8px 15px; font-size: 1em; cursor: pointer; border: 1px solid var(--primary-color); background-color: var(--surface-color); color: var(--text-color); border-radius: 5px; margin-left: 10px; }
+        .view-switcher button.active { background-color: var(--primary-color); color: white; }
+        #timeline-container { flex-grow: 1; position: relative; }
+        .message { text-align: center; color: #888; font-size: 1.2em; margin-top: 50px; }
+        
+        .edit-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 5px;
+        }
+        .edit-btn:hover { color: #fff; }
+
+        /* Visão em Lista */
+        .list-view-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-left: 5px solid var(--primary-color); border-radius: 5px; padding: 12px 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; position: relative; }
+        .list-view-card .card-icon { font-size: 1.3em; }
+        .list-view-card .card-text { flex-grow: 1; color: var(--text-color); line-height: 1.4; padding-right: 25px; }
+        .list-view-card.type-pessoa { border-left-color: #4CAF50; }
+        .list-view-card.type-evento { border-left-color: #FFC107; }
+        .list-view-card.type-nação { border-left-color: #D9534F; }
+        .list-view-card.type-pessoa .card-icon { color: #4CAF50; }
+        .list-view-card.type-evento .card-icon { color: #FFC107; }
+        .list-view-card.type-nação .card-icon { color: #D9534F; }
+
+        /* --- Visão em Linha (COM ALTERAÇÕES) --- */
+        .timeline-line { position: absolute; left: 50%; width: 3px; height: 100%; background-color: var(--border-color); transform: translateX(-50%); }
+        .timeline-item {
+            position: absolute;
+            width: 45%;
+            padding: 15px;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            /* ADICIONADO para efeito de hover */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            z-index: 1; 
+        }
+        /* NOVA REGRA :hover */
+        .timeline-item:hover {
+            z-index: 10;
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .timeline-item:nth-child(odd) { left: 0; }
+        .timeline-item:nth-child(even) { left: 55%; }
+        .timeline-item::after { content: ''; position: absolute; top: 20px; width: 0; height: 0; border: 10px solid transparent; }
+        .timeline-item:nth-child(odd)::after { right: -20px; border-left-color: var(--border-color); }
+        .timeline-item:nth-child(even)::after { left: -20px; border-right-color: var(--border-color); }
+        .timeline-item .item-text { line-height: 1.4; padding-right: 25px; }
+        .timeline-item .item-icon { font-size: 1.2em; margin-right: 8px; }
+
+        /* Popup */
+        .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1001; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
+        .popup-content { background: var(--surface-color); padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; z-index: 1002; }
+        .popup-content h3 { margin-top: 0; }
+        .popup-content form label { display: block; margin-top: 15px; margin-bottom: 5px; }
+        .popup-content form input, .popup-content form textarea, .popup-content form select { width: 100%; padding: 10px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color); border-radius: 4px; box-sizing: border-box; }
+        .date-interval-group { display: flex; gap: 10px; align-items: center; }
+        .popup-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        .popup-actions button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        .popup-actions .save-btn { background-color: #4CAF50; color: white; }
+        .popup-actions .cancel-btn { background-color: #777; color: white; }
+        .popup-actions .delete-btn { background-color: var(--danger-color); color: white; margin-right: auto; }
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <aside class="sidebar">
+            <h2>Filtros</h2>
+            <div class="filter-group" id="date-filters"></div>
+            <div class="filter-group" id="type-filters"></div>
+            <div class="filter-group" id="subtype-filters"></div>
+        </aside>
+
+        <main class="content-area">
+            <div class="content-header">
+                <h1>Cronologia Mundial (A.C.)</h1>
+                <div class="header-actions">
+                    <div class="view-switcher">
+                        <button id="listViewBtn" class="active">Lista</button>
+                        <button id="timelineViewBtn">Linha</button>
+                    </div>
+                    <button id="openPopupBtn" title="Adicionar Novo Evento">⚙️</button>
+                </div>
+            </div>
+            <div id="timeline-container"></div>
+        </main>
+    </div>
+
+    <div id="eventPopup" class="popup">
+        <div class="popup-content">
+            <h3 id="popupTitle">Adicionar Evento</h3>
+            <form id="eventForm">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" name="nome" required>
+                <label for="nota">Nota (opcional):</label>
+                <textarea id="nota" name="nota" rows="3"></textarea>
+                <label for="tipo">Tipo:</label>
+                <select id="tipo" name="tipo">
+                    <option value="pessoa">Pessoa</option>
+                    <option value="evento">Evento</option>
+                    <option value="nação">Nação</option>
+                </select>
+                <label for="subtipo">Subtipo (opcional):</label>
+                <select id="subtipo" name="subtipo">
+                    <option value="">Nenhum</option>
+                    <option value="nascimento">Nascimento</option>
+                    <option value="falecimento">Falecimento</option>
+                    <option value="ungido">Ungido</option>
+                </select>
+                <label for="dataUnica">Data Única (a.C.) - opcional:</label>
+                <input type="number" id="dataUnica" name="dataUnica" placeholder="Ex: 1500">
+                <label>Intervalo de Tempo (a.C.) - opcional:</label>
+                <div class="date-interval-group">
+                    <input type="number" id="intervaloInicio" name="intervaloInicio" placeholder="Início (Ex: 2000)">
+                    <span>-</span>
+                    <input type="number" id="intervaloFim" name="intervaloFim" placeholder="Fim (Ex: 1800)">
+                </div>
+                <div class="popup-actions">
+                    <button type="button" id="deleteBtn" class="delete-btn" style="display: none;">Excluir</button>
+                    <button type="button" id="cancelPopupBtn" class="cancel-btn">Cancelar</button>
+                    <button type="submit" class="save-btn">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module">
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY",
+            authDomain: "bibliacontexto.firebaseapp.com",
+            projectId: "bibliacontexto",
+            storageBucket: "bibliacontexto.firebasestorage.app",
+            messagingSenderId: "266293600679",
+            appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
+        };
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        let db;
+        try { initializeApp(firebaseConfig); db = getFirestore(); } catch (e) { console.error(e); }
+        
+        let allEvents = [];
+        let currentView = 'lista';
+        let currentEditingId = null;
+        
+        const timelineContainer = document.getElementById('timeline-container');
+        const openPopupBtn = document.getElementById('openPopupBtn');
+        const eventPopup = document.getElementById('eventPopup');
+        const popupTitle = document.getElementById('popupTitle');
+        const cancelPopupBtn = document.getElementById('cancelPopupBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const eventForm = document.getElementById('eventForm');
+        const listViewBtn = document.getElementById('listViewBtn');
+        const timelineViewBtn = document.getElementById('timelineViewBtn');
+        const dateFiltersContainer = document.getElementById('date-filters');
+        const typeFiltersContainer = document.getElementById('type-filters');
+        const subtypeFiltersContainer = document.getElementById('subtype-filters');
+
+        const getIcons = () => ({ pessoa: '👤', evento: '📜', nação: '🏛️' });
+
+        function buildTextParts(event) {
+            const textParts = [];
+            const subtipoText = event.subtipo ? ` (${event.subtipo.charAt(0).toUpperCase() + event.subtipo.slice(1)})` : '';
+            textParts.push(`<strong>${event.nome}</strong>${subtipoText}`);
+            const dateText = event.dataUnica ? `${event.dataUnica} a.C.` : `${event.intervaloInicio} - ${event.intervaloFim} a.C.`;
+            textParts.push(dateText);
+            if (event.nota) textParts.push(event.nota);
+            return textParts.join(' - ');
+        }
+
+        function renderListView(events) {
+            events.forEach(event => {
+                const card = document.createElement('div');
+                card.className = `list-view-card type-${event.tipo}`;
+                const icons = getIcons();
+                card.innerHTML = `
+                    <button class="edit-btn" data-id="${event.id}">✏️</button>
+                    <span class="card-icon">${icons[event.tipo] || ''}</span>
+                    <div class="card-text">${buildTextParts(event)}</div>
+                `;
+                timelineContainer.appendChild(card);
+            });
+        }
+        
+        function renderTimelineView(events) {
+            const line = document.createElement('div');
+            line.className = 'timeline-line';
+            timelineContainer.appendChild(line);
+
+            const years = events.flatMap(e => e.dataUnica || e.intervaloInicio).filter(Boolean);
+            if (years.length === 0) return;
+            const maxYear = Math.max(...years);
+            const minYear = Math.min(...years);
+            const yearSpan = maxYear > minYear ? maxYear - minYear : 1;
+
+            events.forEach(event => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                const eventYear = event.dataUnica || event.intervaloInicio;
+                const percentageTop = ((maxYear - eventYear) / yearSpan) * 100;
+                item.style.top = `${percentageTop}%`;
+                const icons = getIcons();
+                item.innerHTML = `
+                    <button class="edit-btn" data-id="${event.id}">✏️</button>
+                    <div class="item-text">
+                        <span class="item-icon">${icons[event.tipo] || ''}</span>
+                        ${buildTextParts(event)}
+                    </div>`;
+                timelineContainer.appendChild(item);
+            });
+        }
+        
+        function renderContent(events) {
+            timelineContainer.innerHTML = '';
+            if (events.length === 0) {
+                timelineContainer.innerHTML = '<p class="message">Nenhum evento encontrado.</p>';
+                return;
+            }
+            (currentView === 'lista' ? renderListView : renderTimelineView)(events);
+        }
+
+        function showPopup(eventId = null) {
+            eventForm.reset();
+            if (eventId) {
+                currentEditingId = eventId;
+                const event = allEvents.find(e => e.id === eventId);
+                if (!event) return;
+                popupTitle.textContent = "Editar Evento";
+                document.getElementById('nome').value = event.nome;
+                document.getElementById('nota').value = event.nota;
+                document.getElementById('tipo').value = event.tipo;
+                document.getElementById('subtipo').value = event.subtipo;
+                document.getElementById('dataUnica').value = event.dataUnica;
+                document.getElementById('intervaloInicio').value = event.intervaloInicio;
+                document.getElementById('intervaloFim').value = event.intervaloFim;
+                deleteBtn.style.display = 'block';
+            } else {
+                currentEditingId = null;
+                popupTitle.textContent = "Adicionar Evento";
+                deleteBtn.style.display = 'none';
+            }
+            eventPopup.classList.add('active');
+        }
+
+        function hidePopup() {
+            eventPopup.classList.remove('active');
+            currentEditingId = null;
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(eventForm);
+            const eventData = {
+                nome: formData.get('nome'),
+                nota: formData.get('nota') || '',
+                tipo: formData.get('tipo'),
+                subtipo: formData.get('subtipo') || '',
+                dataUnica: formData.get('dataUnica') ? parseInt(formData.get('dataUnica')) : null,
+                intervaloInicio: formData.get('intervaloInicio') ? parseInt(formData.get('intervaloInicio')) : null,
+                intervaloFim: formData.get('intervaloFim') ? parseInt(formData.get('intervaloFim')) : null,
+            };
+             if (!eventData.dataUnica && !eventData.intervaloInicio) return alert("Preencha a 'Data Única' ou o 'Intervalo'.");
+
+            try {
+                if (currentEditingId) {
+                    await updateDoc(doc(db, "cronos", currentEditingId), eventData);
+                } else {
+                    await addDoc(collection(db, "cronos"), eventData);
+                }
+                hidePopup();
+                fetchAndRenderEvents();
+            } catch (error) { console.error("Erro ao salvar: ", error); }
+        }
+
+        async function handleDelete() {
+            if (!currentEditingId) return;
+            if (confirm(`Tem certeza que deseja excluir o evento "${document.getElementById('nome').value}"?`)) {
+                try {
+                    await deleteDoc(doc(db, "cronos", currentEditingId));
+                    hidePopup();
+                    fetchAndRenderEvents();
+                } catch (error) { console.error("Erro ao excluir: ", error); }
+            }
+        }
+
+        function applyFiltersAndRender() {
+            const selectedDates = Array.from(document.querySelectorAll('input[name="date_filter"]:checked')).map(cb => cb.value);
+            const selectedTypes = Array.from(document.querySelectorAll('input[name="type_filter"]:checked')).map(cb => cb.value);
+            const selectedSubtypes = Array.from(document.querySelectorAll('input[name="subtype_filter"]:checked')).map(cb => cb.value);
+            
+            let filtered = allEvents;
+            if (selectedDates.length > 0) filtered = filtered.filter(e => selectedDates.some(r => (e.dataUnica || e.intervaloInicio) >= r.split('-')[1] && (e.dataUnica || e.intervaloInicio) <= r.split('-')[0]));
+            if (selectedTypes.length > 0) filtered = filtered.filter(e => selectedTypes.includes(e.tipo));
+            if (selectedSubtypes.length > 0) filtered = filtered.filter(e => selectedSubtypes.includes(e.subtipo));
+            
+            filtered.sort((a, b) => (b.dataUnica || b.intervaloInicio) - (a.dataUnica || a.intervaloInicio));
+            renderContent(filtered);
+        }
+
+        async function fetchAndRenderEvents() {
+            try {
+                const q = query(collection(db, "cronos"), orderBy("intervaloInicio", "desc"));
+                const snapshot = await getDocs(q);
+                allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                applyFiltersAndRender();
+            } catch (error) { console.error(error); }
+        }
+        
+        function setupEventListeners() {
+            openPopupBtn.addEventListener('click', () => showPopup());
+            cancelPopupBtn.addEventListener('click', hidePopup);
+            deleteBtn.addEventListener('click', handleDelete);
+            eventForm.addEventListener('submit', handleFormSubmit);
+
+            timelineContainer.addEventListener('click', (e) => {
+                const editButton = e.target.closest('.edit-btn');
+                if (editButton) {
+                    showPopup(editButton.dataset.id);
+                }
+            });
+
+            listViewBtn.addEventListener('click', () => { currentView = 'lista'; listViewBtn.classList.add('active'); timelineViewBtn.classList.remove('active'); applyFiltersAndRender(); });
+            timelineViewBtn.addEventListener('click', () => { currentView = 'linha'; timelineViewBtn.classList.add('active'); listViewBtn.classList.remove('active'); applyFiltersAndRender(); });
+        }
+
+        function setupFilters() {
+            const dateRanges = [{ start: 4000, end: 3500 }, { start: 3500, end: 3000 }, { start: 3000, end: 2500 }, { start: 2500, end: 2000 }, { start: 2000, end: 1500 }, { start: 1500, end: 1000 }, { start: 1000, end: 500 }, { start: 500, end: 1 }];
+            dateFiltersContainer.innerHTML = '<h3>Período (a.C.)</h3>';
+            dateRanges.forEach(range => { dateFiltersContainer.innerHTML += `<label><input type="checkbox" name="date_filter" value="${range.start}-${range.end}"> ${range.start} - ${range.end}</label>`; });
+            
+            const types = ['pessoa', 'evento', 'nação'];
+            typeFiltersContainer.innerHTML = '<h3>Tipo</h3>';
+            const icons = getIcons();
+            types.forEach(type => { typeFiltersContainer.innerHTML += `<label><input type="checkbox" name="type_filter" value="${type}"> ${icons[type]} ${type.charAt(0).toUpperCase() + type.slice(1)}</label>`; });
+            
+            const subtypes = { nascimento: 'Nascimento', falecimento: 'Falecimento', ungido: 'Ungido' };
+            subtypeFiltersContainer.innerHTML = '<h3>Subtipo</h3>';
+            Object.entries(subtypes).forEach(([value, text]) => { subtypeFiltersContainer.innerHTML += `<label><input type="checkbox" name="subtype_filter" value="${value}"> ${text}</label>`; });
+
+            document.querySelectorAll('input[name="date_filter"], input[name="type_filter"], input[name="subtype_filter"]').forEach(cb => cb.addEventListener('change', applyFiltersAndRender));
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            setupFilters();
+            fetchAndRenderEvents();
+        });
+    </script>
+</body>
+</html>

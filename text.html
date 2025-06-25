@@ -579,7 +579,7 @@ function showReferenceEyeToolbar(targetSpan) {
     activeReferencedTextSpanForEye.classList.add('eye-icon-active'); 
 }
 
-// Funções de Capítulo
+// FUNÇÃO COMPLETA E CORRIGIDA (COM SOLUÇÕES PARA 'ENTER' E 'ESPAÇO')
 function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterCreation = false) {
     const wrapper = document.createElement('div');
     wrapper.className = 'chapter-wrapper';
@@ -609,7 +609,7 @@ function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterC
     chapterDiv.setAttribute('contenteditable', 'true');
     chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
     applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-    updateEmptyReferenceSpansStyles(chapterDiv); 
+    updateEmptyReferenceSpansStyles(chapterDiv);
 
     let isTypingStateSavedForThisSession = false;
 
@@ -620,34 +620,90 @@ function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterC
         isTypingStateSavedForThisSession = false;
     });
 
-    chapterDiv.addEventListener('input', () => {
+    // CORREÇÃO PARA O 'ESPAÇO' (usando o evento input)
+    chapterDiv.addEventListener('input', (event) => {
+        const selection = window.getSelection();
+        if (selection && selection.isCollapsed && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const node = range.startContainer;
+            if (node.nodeType === Node.TEXT_NODE && node.parentNode.classList.contains('referenced-text')) {
+                const span = node.parentNode;
+                const parentBlock = span.closest('p, div');
+                if (/\s+$/.test(node.textContent) && range.startOffset === node.textContent.length) {
+                    const trailingSpaces = node.textContent.match(/\s+$/)[0];
+                    node.textContent = node.textContent.replace(/\s+$/, '');
+                    const spaceNode = document.createTextNode(trailingSpaces);
+                    parentBlock.insertBefore(spaceNode, span.nextSibling);
+                    const newRange = document.createRange();
+                    newRange.setStart(spaceNode, spaceNode.length);
+                    newRange.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                }
+            }
+        }
+
         if (!isTypingStateSavedForThisSession) {
             saveStateForUndo();
             isTypingStateSavedForThisSession = true;
         }
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            if (activeEditorElement === chapterDiv) { 
+            if (activeEditorElement === chapterDiv) {
                 applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-                updateEmptyReferenceSpansStyles(chapterDiv); 
-                saveDocumentBody(true, false); 
+                updateEmptyReferenceSpansStyles(chapterDiv);
+                saveDocumentBody(true, false);
             }
         }, 1500);
     });
-    
+
     chapterDiv.addEventListener('paste', (event) => {
-        saveStateForUndo(); 
-        event.preventDefault(); 
+        saveStateForUndo();
+        event.preventDefault();
         const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
         if (plainText) {
             document.execCommand('insertText', false, plainText);
             setTimeout(() => {
-                if (activeEditorElement) { 
+                if (activeEditorElement) {
                     applyDefaultStylesToBlocks(activeEditorElement, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-                    updateEmptyReferenceSpansStyles(activeEditorElement); 
+                    updateEmptyReferenceSpansStyles(activeEditorElement);
                 }
-                saveDocumentBody(true, true); 
+                saveDocumentBody(true, true);
             }, 0);
+        }
+    });
+
+    // CORREÇÃO PARA O 'ENTER' (usando o evento keydown)
+    chapterDiv.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0 && selection.isCollapsed) {
+                const range = selection.getRangeAt(0);
+                const node = range.startContainer;
+                const offset = range.startOffset;
+
+                if (node.nodeType === Node.TEXT_NODE && offset === node.length) {
+                    const parentSpan = node.parentElement.closest('span.referenced-text');
+                    if (parentSpan) {
+                        let next = parentSpan.nextSibling;
+                        while(next && next.nodeType === Node.TEXT_NODE && next.textContent.trim() === '') {
+                           next = next.nextSibling;
+                        }
+                        if (!next) {
+                             event.preventDefault();
+                             const parentBlock = parentSpan.closest('p, div');
+                             const newParagraph = document.createElement('p');
+                             newParagraph.innerHTML = '<br>';
+                             newParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
+                             newParagraph.style.fontSize = DEFAULT_FONT_SIZE;
+                             newParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
+                             parentBlock.parentNode.insertBefore(newParagraph, parentBlock.nextSibling);
+                             selection.collapse(newParagraph, 0);
+                             saveDocumentBody(true, true);
+                        }
+                    }
+                }
+            }
         }
     });
 
@@ -656,12 +712,11 @@ function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterC
     updateChapterActionButtonsState();
     if (focusAfterCreation) {
         placeCursorAtEndOf(chapterDiv);
-        chapterDiv.focus({ preventScroll: true }); 
+        chapterDiv.focus({ preventScroll: true });
         activeEditorElement = chapterDiv;
     }
     return wrapper;
 }
-
 function updateChapterActionButtonsState() {
     if (!editorsContainer) return;
     const chapterWrappers = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));
@@ -779,6 +834,24 @@ async function loadDocument(id) {
         } 
     } catch (e) { console.error("Erro ao carregar documento:", e); alert("Erro ao carregar o documento."); await showInitialScreen(); } 
 }
+// Coloque esta função junto com as outras funções do seu script
+function handleViewReference() {
+    if (!referenceEyeToolbar || !referenceEyeToolbar.dataset.refId) return;
+
+    const refId = referenceEyeToolbar.dataset.refId;
+    const refListItem = referencesListUl.querySelector(`li.reference-item[data-ref-id="${refId}"]`);
+
+    clearEditorHighlights(); // Reutiliza sua função para limpar destaques antigos
+
+    if (refListItem) {
+        refListItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        refListItem.classList.add('highlight-scroll'); // Reutiliza sua classe de destaque
+        setTimeout(clearEditorHighlights, 2500); // Remove o destaque após 2.5s
+    } else {
+        alert("Detalhes da referência não encontrados na lista.");
+    }
+    hideReferenceEyeToolbar(); // Esconde a barra de ferramentas após o uso
+}
 function displayDocumentContent(title, corpoData, references = []) {
     docTitleInput.value = title || "";
     editorsContainer.innerHTML = '';
@@ -786,6 +859,8 @@ function displayDocumentContent(title, corpoData, references = []) {
     let chaptersToRender = corpoData && corpoData.length > 0 ? corpoData : [{ id: generateId('chptr-'), html: '' }];
     chaptersToRender.forEach(chapterObj => {
         createNewChapterElement(chapterObj.html, chapterObj.id);
+
+
     });
     editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => updateEmptyReferenceSpansStyles(editor));
     updateChapterActionButtonsState();
@@ -882,18 +957,63 @@ function updateEmptyReferenceSpansStyles(container) {
     });
 }
 function renderReferences() {
-    if (!referencesListUl) return;
+    if (!referencesListUl || !editorsContainer) return;
     referencesListUl.innerHTML = "";
-    const allRefs = currentDocumentData?.referencias || [];
-    if (allRefs.length === 0) {
+
+    const allRefsOriginal = currentDocumentData?.referencias || [];
+    if (allRefsOriginal.length === 0) {
         referencesListUl.innerHTML = "<li>Nenhuma referência adicionada.</li>";
         return;
     }
-    const refIdsInText = new Set(Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]')).map(span => span.dataset.refId));
-    allRefs.forEach(ref => {
+
+    // --- INÍCIO DA NOVA LÓGICA DE ORDENAÇÃO ---
+
+    // 1. Encontrar todas as marcações de referência no texto, na ordem em que aparecem.
+    const refSpansInText = editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]');
+
+    // 2. Criar uma lista de IDs de referência únicos, na ordem de sua primeira aparição.
+    const orderedRefIds = [];
+    const seenIds = new Set();
+    refSpansInText.forEach(span => {
+        const refId = span.dataset.refId;
+        if (refId && !seenIds.has(refId)) {
+            seenIds.add(refId);
+            orderedRefIds.push(refId);
+        }
+    });
+
+    // 3. Clonar o array de referências para poder ordená-lo.
+    const sortedRefs = [...allRefsOriginal];
+
+    // 4. Ordenar o array de referências com base na lista de IDs ordenados.
+    // Referências não encontradas no texto (não utilizadas) serão movidas para o final.
+    sortedRefs.sort((a, b) => {
+        const indexA = orderedRefIds.indexOf(a.id);
+        const indexB = orderedRefIds.indexOf(b.id);
+
+        // Se 'a' não está no texto, mas 'b' está, 'a' vem depois.
+        if (indexA === -1 && indexB !== -1) return 1;
+        // Se 'b' não está no texto, mas 'a' está, 'b' vem depois.
+        if (indexB === -1 && indexA !== -1) return -1;
+        // Se ambos não estão no texto, mantém a ordem original entre eles.
+        if (indexA === -1 && indexB === -1) return 0;
+
+        // Se ambos estão no texto, ordena por sua posição de aparição.
+        return indexA - indexB;
+    });
+
+    // --- FIM DA NOVA LÓGICA DE ORDENAÇÃO ---
+
+    // 5. Renderizar a lista usando o array agora ordenado (sortedRefs).
+    const refIdsInTextNow = new Set(Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]')).map(span => span.dataset.refId));
+
+    sortedRefs.forEach(ref => {
         const li = document.createElement('li');
         li.className = 'reference-item';
-        if (!refIdsInText.has(ref.id)) li.classList.add('reference-item-unlinked');
+        // A classe 'unlinked' ainda é útil para destacar visualmente as que não estão no texto.
+        if (!refIdsInTextNow.has(ref.id)) {
+            li.classList.add('reference-item-unlinked');
+        }
         li.dataset.refId = ref.id;
         const urlsHTML = (ref.urls || []).map(url => `<a>${escapeHTML(url)}</a>`).join('<br>');
         li.innerHTML = `<div class="ref-content"><span class="ref-title" data-ref-id="${ref.id}">${escapeHTML(ref.tituloReferencia)}: </span><div style="margin-top: 3px; font-size: 0.9em;">${urlsHTML}</div></div><button class="edit-ref-btn" data-ref-id="${ref.id}">✎</button>`;
@@ -1101,6 +1221,7 @@ async function handleSplitSpanAndInsert() {
 
 // Inicialização da Aplicação
 window.addEventListener('DOMContentLoaded', async () => {
+    safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', handleViewReference);
     function safelyAddEventListener(element, eventType, listener) { 
         if (element) element.addEventListener(eventType, listener); 
     }

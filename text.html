@@ -175,6 +175,56 @@
             cursor: not-allowed;
             opacity: 0.5;
         }
+
+        #documentsListContainer {
+    max-height: 400px; /* Define uma altura máxima. Você pode ajustar este valor. */
+    overflow-y: auto;   /* Adiciona uma barra de rolagem vertical APENAS se o conteúdo exceder a altura máxima. */
+    border: 1px solid #444; /* Uma borda sutil para delimitar a área de rolagem. */
+    border-radius: 4px;     /* Cantos arredondados para combinar com o estilo geral. */
+    margin-bottom: 20px;    /* Espaço entre a lista e os botões de ação abaixo. */
+    padding: 5px;           /* Um pequeno preenchimento interno para a lista não colar na borda. */
+}
+
+#hiddenChaptersListContainer {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+#hiddenChaptersListContainer ul {
+    list-style: none;
+    padding: 0;
+}
+#hiddenChaptersListContainer li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #404040;
+}
+#hiddenChaptersListContainer li:last-child {
+    border-bottom: none;
+}
+#hiddenChaptersListContainer .chapter-preview {
+    flex-grow: 1;
+    margin-right: 15px;
+    color: #c0c0c0;
+    font-size: 0.9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#hiddenChaptersListContainer button {
+    padding: 5px 10px;
+    background-color: #4CAF50; /* Verde */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+#hiddenChaptersListContainer button:hover {
+    background-color: #5cb85c;
+}
         
         .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1001; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
         .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
@@ -286,6 +336,7 @@
         <div class="container">
             <div class="doc-actions" style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;">
                 <button id="backToInitialScreenBtn" title="Voltar à Tela Inicial">Voltar</button>
+                <button id="showHiddenBtn" title="Ver Capítulos Ocultos">Ocultos</button>
             </div>
             <input type="text" id="docTitle" placeholder="Título do Documento">
             
@@ -312,6 +363,23 @@
         <button id="viewReferenceFromToolbarBtn" title="Ver Referência">👁️</button>
         <button id="splitAndInsertBtn" title="Inserir Texto Divisor Aqui">✂️+📝</button>
     </div>
+
+<!-- Pop-up para Listar Capítulos Ocultos -->
+<div id="hiddenChaptersPopup" class="popup">
+    <div class="popup-content">
+        <h3>Capítulos Ocultos</h3>
+        <div id="hiddenChaptersListContainer">
+            <ul>
+                <!-- A lista será preenchida pelo JavaScript -->
+            </ul>
+            <p style="display: none; color: #999;">Nenhum capítulo oculto.</p>
+        </div>
+        <div class="popup-actions">
+            <button id="closeHiddenPopupBtn" class="close-popup-btn">Fechar</button>
+        </div>
+    </div>
+</div>
+
 
     <!-- Pop-up para Adicionar Referência -->
     <div id="addReferencePopup" class="popup">
@@ -450,6 +518,8 @@ let activeEditorElement = null;
 let activeReferencedTextSpanForEye = null; 
 let undoStack = [];
 let redoStack = [];
+let rangeForSplitting = null;
+
 
 // Constantes Globais
 const DEFAULT_FONT_SIZE = '25px'; 
@@ -601,7 +671,7 @@ function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterC
     toolbar.children[3].addEventListener('click', (e) => { e.stopPropagation(); handleRedo(); });
     toolbar.children[4].addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontFamily(wrapper); });
     toolbar.children[5].addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontSize(wrapper); });
-    toolbar.children[6].addEventListener('click', (e) => { e.stopPropagation(); handleRemoveChapter(wrapper); });
+    toolbar.children[6].addEventListener('click', (e) => { e.stopPropagation(); handleHideChapter(wrapper); });
 
     wrapper.appendChild(toolbar);
     const chapterDiv = document.createElement('div');
@@ -675,37 +745,94 @@ function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterC
 
     // CORREÇÃO PARA O 'ENTER' (usando o evento keydown)
     chapterDiv.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0 && selection.isCollapsed) {
-                const range = selection.getRangeAt(0);
-                const node = range.startContainer;
-                const offset = range.startOffset;
+    if (event.key === 'Enter') {
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return;
 
-                if (node.nodeType === Node.TEXT_NODE && offset === node.length) {
-                    const parentSpan = node.parentElement.closest('span.referenced-text');
-                    if (parentSpan) {
-                        let next = parentSpan.nextSibling;
-                        while(next && next.nodeType === Node.TEXT_NODE && next.textContent.trim() === '') {
-                           next = next.nextSibling;
-                        }
-                        if (!next) {
-                             event.preventDefault();
-                             const parentBlock = parentSpan.closest('p, div');
-                             const newParagraph = document.createElement('p');
-                             newParagraph.innerHTML = '<br>';
-                             newParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
-                             newParagraph.style.fontSize = DEFAULT_FONT_SIZE;
-                             newParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
-                             parentBlock.parentNode.insertBefore(newParagraph, parentBlock.nextSibling);
-                             selection.collapse(newParagraph, 0);
-                             saveDocumentBody(true, true);
-                        }
-                    }
-                }
+        const range = selection.getRangeAt(0);
+        const container = range.startContainer;
+        const parentSpan = container.parentElement.closest('span.referenced-text');
+
+        if (parentSpan) {
+            const parentBlock = parentSpan.closest('p, div');
+
+            // --- INÍCIO DA NOVA LÓGICA DE CORREÇÃO ---
+            // Cenário 0: Pressionar 'Enter' no início absoluto de uma linha referenciada.
+            if (parentBlock && isCursorAtStartOfBlock(parentBlock, range)) {
+                event.preventDefault();
+                saveStateForUndo();
+
+                // Cria um parágrafo novo e LIMPO acima do atual para "escapar" da referência.
+                const newCleanParagraph = document.createElement('p');
+                newCleanParagraph.innerHTML = '<br>';
+                newCleanParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
+                newCleanParagraph.style.fontSize = DEFAULT_FONT_SIZE;
+                newCleanParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
+
+                // Insere o parágrafo limpo ANTES do bloco atual.
+                parentBlock.parentNode.insertBefore(newCleanParagraph, parentBlock);
+                
+                // O cursor permanece no bloco original (que agora é a segunda linha), o que é bom.
+                // O usuário vê uma linha em branco aparecer acima e o texto dele descer.
+                saveDocumentBody(true, true);
+                return; // Impede que o resto da lógica de divisão seja executado.
             }
+            // --- FIM DA NOVA LÓGICA DE CORREÇÃO ---
+            
+            event.preventDefault(); 
+            saveStateForUndo();
+
+            // Cenário A: O span está vazio (o caso [vazio]). Vamos transformá-lo em uma linha normal.
+            if (parentSpan.textContent.trim() === '') {
+                parentSpan.remove();
+                if (parentBlock.innerHTML.trim() === '') {
+                    parentBlock.innerHTML = '<br>';
+                }
+                selection.collapse(parentBlock, 0);
+            }
+            // Cenário B: O cursor está no final de um span com conteúdo. Vamos "escapar".
+            else if (range.collapsed && isCursorAtEnd(parentSpan, range)) {
+                const newCleanParagraph = document.createElement('p');
+                newCleanParagraph.innerHTML = '<br>';
+                newCleanParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
+                newCleanParagraph.style.fontSize = DEFAULT_FONT_SIZE;
+                newCleanParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
+                parentBlock.parentNode.insertBefore(newCleanParagraph, parentBlock.nextSibling);
+                selection.collapse(newCleanParagraph, 0); 
+            }
+            // Cenário C: O cursor está no meio de um span com conteúdo. Vamos dividi-lo.
+            else {
+                const rangeToEndOfBlock = document.createRange();
+                rangeToEndOfBlock.setStart(range.startContainer, range.startOffset);
+                rangeToEndOfBlock.setEnd(parentBlock, parentBlock.childNodes.length);
+                const contentToMove = rangeToEndOfBlock.extractContents();
+                const newReferencedParagraph = document.createElement('p');
+                newReferencedParagraph.appendChild(contentToMove);
+                newReferencedParagraph.style.fontFamily = getComputedStyle(parentBlock).fontFamily;
+                newReferencedParagraph.style.fontSize = getComputedStyle(parentBlock).fontSize;
+                newReferencedParagraph.style.lineHeight = getComputedStyle(parentBlock).lineHeight;
+                if (newReferencedParagraph.innerHTML.trim() === '') {
+                    newReferencedParagraph.innerHTML = '<br>';
+                }
+                parentBlock.parentNode.insertBefore(newReferencedParagraph, parentBlock.nextSibling);
+                selection.collapse(newReferencedParagraph, 0);
+            }
+            saveDocumentBody(true, true);
         }
-    });
+    }
+});
+
+// Função auxiliar para verificar se o cursor está no final de um elemento.
+// Adicione esta função em algum lugar no seu script, fora de outras funções.
+function isCursorAtEnd(element, range) {
+    if (!range.collapsed) return false;
+
+    let testRange = range.cloneRange();
+    testRange.selectNodeContents(element);
+    testRange.setStart(range.endContainer, range.endOffset);
+
+    return testRange.toString().trim() === '';
+}
 
     wrapper.appendChild(chapterDiv);
     editorsContainer.appendChild(wrapper);
@@ -716,6 +843,13 @@ function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterC
         activeEditorElement = chapterDiv;
     }
     return wrapper;
+}
+function isCursorAtStartOfBlock(blockElement, range) {
+    if (!range.collapsed) return false;
+    const testRange = document.createRange();
+    testRange.selectNodeContents(blockElement);
+    testRange.setEnd(range.startContainer, range.startOffset);
+    return testRange.toString().trim() === '';
 }
 function updateChapterActionButtonsState() {
     if (!editorsContainer) return;
@@ -730,19 +864,32 @@ function updateChapterActionButtonsState() {
         if (removeBtn) removeBtn.disabled = (totalChapters <= 1);
     });
 }
-function handleRemoveChapter(chapterWrapperElement) {
-    if (editorsContainer.querySelectorAll('.chapter-wrapper').length <= 1) return alert("Não é possível remover o único capítulo.");
-    if (window.confirm(`Tem certeza de que deseja remover este capítulo?`)) { 
+function handleHideChapter(chapterWrapperElement) {
+    const visibleChapters = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).filter(w => w.style.display !== 'none');
+    if (visibleChapters.length <= 1) {
+        return alert("Não é possível ocultar o único capítulo visível.");
+    }
+
+    if (window.confirm("Tem certeza de que deseja OCULTAR este capítulo? Ele poderá ser restaurado a qualquer momento.")) {
         saveStateForUndo();
-        const chapterIdToRemove = chapterWrapperElement.dataset.chapterId;
-        chapterWrapperElement.remove();
-        if (activeEditorElement && chapterWrapperElement.contains(activeEditorElement)) activeEditorElement = null;
-        if (currentDocumentData?.corpo) currentDocumentData.corpo = currentDocumentData.corpo.filter(ch => ch.id !== chapterIdToRemove);
-        updateChapterActionButtonsState();
-        renderReferences(); 
-        saveDocumentBody(true, true); 
+        const chapterIdToHide = chapterWrapperElement.dataset.chapterId;
+
+        // Encontra o capítulo no nosso objeto de dados
+        const chapterIndex = currentDocumentData.corpo.findIndex(ch => ch.id === chapterIdToHide);
+        if (chapterIndex > -1) {
+            // Marca como oculto em vez de remover
+            currentDocumentData.corpo[chapterIndex].isHidden = true;
+            
+            // Oculta visualmente da tela
+            chapterWrapperElement.style.display = 'none';
+
+            updateChapterActionButtonsState();
+            saveDocumentBody(true, true); // Salva a mudança no Firebase
+            console.log(`Capítulo ${chapterIdToHide} ocultado.`);
+        }
     }
 }
+
 function handleFormatFontFamily(chapterWrapperElement) {
     const editorDiv = chapterWrapperElement.querySelector('.text-editor-chapter');
     if (!editorDiv) return;
@@ -856,29 +1003,52 @@ function displayDocumentContent(title, corpoData, references = []) {
     docTitleInput.value = title || "";
     editorsContainer.innerHTML = '';
     activeEditorElement = null;
-    let chaptersToRender = corpoData && corpoData.length > 0 ? corpoData : [{ id: generateId('chptr-'), html: '' }];
+
+    let chaptersToRender = (corpoData && corpoData.length > 0) ? corpoData : [{ id: generateId('chptr-'), html: '' }];
+    
+    // Agora, iteramos sobre TODOS os capítulos, visíveis ou não.
     chaptersToRender.forEach(chapterObj => {
-        createNewChapterElement(chapterObj.html, chapterObj.id);
+        // Criamos o elemento para cada um.
+        const wrapper = createNewChapterElement(chapterObj.html, chapterObj.id);
 
-
+        // SE o capítulo estiver marcado como oculto, nós o escondemos com CSS.
+        if (chapterObj.isHidden) {
+            wrapper.style.display = 'none';
+        }
     });
+
     editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => updateEmptyReferenceSpansStyles(editor));
     updateChapterActionButtonsState();
-    renderReferences(); 
+    renderReferences();
 }
 async function saveDocumentBody(forceImmediateSave = false, isStructuralChange = false) {
-    if (!currentDocId || !editorsContainer) return;
+    if (!currentDocId || !editorsContainer || !currentDocumentData) return;
     if (!forceImmediateSave) return;
-    
-    const chapterDataForSave = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(wrapper => ({
-        id: wrapper.dataset.chapterId,
-        html: wrapper.querySelector('.text-editor-chapter').innerHTML
-    }));
-   
-    if (currentDocumentData) currentDocumentData.corpo = chapterDataForSave;
+
+    // Percorre a nossa fonte de dados confiável (currentDocumentData.corpo)
+    currentDocumentData.corpo.forEach(chapter => {
+        // Tenta encontrar o elemento correspondente na tela
+        const wrapperElement = editorsContainer.querySelector(`.chapter-wrapper[data-chapter-id="${chapter.id}"]`);
+
+        // Se o elemento existe na tela (ou seja, é um capítulo visível),
+        // atualizamos seu conteúdo HTML na nossa estrutura de dados.
+        if (wrapperElement && wrapperElement.style.display !== 'none') {
+            chapter.html = wrapperElement.querySelector('.text-editor-chapter').innerHTML;
+        }
+        // Se o capítulo está oculto, não fazemos nada, pois seu estado 'isHidden: true'
+        // e seu conteúdo HTML já estão corretos em 'currentDocumentData.corpo'.
+    });
+
     try {
-        await updateDoc(doc(db, "documentos", currentDocId), { corpo: chapterDataForSave, atualizadoEm: serverTimestamp() });
-    } catch (e) { console.error("Erro ao salvar corpo do documento:", e); }
+        // Agora salvamos a estrutura de dados 'corpo' inteira e correta no Firebase.
+        await updateDoc(doc(db, "documentos", currentDocId), {
+            corpo: currentDocumentData.corpo,
+            atualizadoEm: serverTimestamp()
+        });
+        console.log("Corpo do documento salvo com sucesso, incluindo o estado 'oculto'.");
+    } catch (e) {
+        console.error("Erro ao salvar corpo do documento:", e);
+    }
 }
 async function saveDocumentTitle() { 
     if (!currentDocId || !docTitleInput) return; 
@@ -947,6 +1117,61 @@ async function addReferenceToDocument(title) {
         alert("Ocorreu um erro ao salvar a referência. Tente novamente.");
     } finally {
         rangeForPendingReference = null;
+    }
+}
+function showHiddenChaptersPopup() {
+    const hiddenChapters = (currentDocumentData?.corpo || []).filter(ch => ch.isHidden);
+    const listUl = document.querySelector('#hiddenChaptersListContainer ul');
+    const messageP = document.querySelector('#hiddenChaptersListContainer p');
+    listUl.innerHTML = '';
+
+    if (hiddenChapters.length === 0) {
+        messageP.style.display = 'block';
+    } else {
+        messageP.style.display = 'none';
+        hiddenChapters.forEach(chapter => {
+            const li = document.createElement('li');
+            
+            // Cria um preview do texto
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = chapter.html;
+            const previewText = tempDiv.textContent.trim().substring(0, 80) + '...';
+
+            li.innerHTML = `<span class="chapter-preview" title="${escapeHTML(tempDiv.textContent.trim())}">${escapeHTML(previewText)}</span>
+                            <button data-chapter-id="${chapter.id}">Re-exibir</button>`;
+            
+            li.querySelector('button').addEventListener('click', (e) => {
+                const chapterId = e.target.dataset.chapterId;
+                handleUnhideChapter(chapterId);
+            });
+            listUl.appendChild(li);
+        });
+    }
+    showPopup(document.getElementById('hiddenChaptersPopup'));
+}
+
+// NOVO: Função para tornar um capítulo oculto visível novamente
+async function handleUnhideChapter(chapterId) {
+    saveStateForUndo();
+    const chapterIndex = currentDocumentData.corpo.findIndex(ch => ch.id === chapterId);
+    if (chapterIndex > -1) {
+        // Remove a marcação 'isHidden'
+        delete currentDocumentData.corpo[chapterIndex].isHidden;
+        
+        // Salva no Firebase
+        await saveDocumentBody(true, true);
+        
+        // Recarrega a visualização do documento para mostrar o capítulo restaurado
+        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
+        
+        // Atualiza a lista no pop-up (o capítulo restaurado desaparecerá dela)
+        showHiddenChaptersPopup();
+        
+        // Se não houver mais capítulos ocultos, fecha o pop-up
+        const remainingHidden = (currentDocumentData?.corpo || []).filter(ch => ch.isHidden);
+        if (remainingHidden.length === 0) {
+            hidePopup(document.getElementById('hiddenChaptersPopup'));
+        }
     }
 }
 function updateEmptyReferenceSpansStyles(container) {
@@ -1195,85 +1420,155 @@ async function appendSelectionToExistingRef() {
     await saveDocumentBody(true, true);
     rangeForPendingReference = null;
 }
-async function handleSplitSpanAndInsert() {
-    if (!activeEditorElement || !activeReferencedTextSpanForEye) return;
+// SUBSTITUA A FUNÇÃO ANTIGA POR ESTA:
+async function handleSplitSpanAndInsert(event) {
+    event.preventDefault(); 
 
-    const parentBlock = activeReferencedTextSpanForEye.closest('p, div');
-    if (!parentBlock || !parentBlock.parentNode) {
-        return alert("Não foi possível determinar onde inserir o novo parágrafo.");
+    if (!rangeForSplitting || !activeEditorElement) {
+        alert("Não foi possível determinar a posição do cursor para dividir o texto. Por favor, clique no texto novamente.");
+        hideReferenceEyeToolbar();
+        return;
     }
     
     saveStateForUndo();
+    const parentBlock = rangeForSplitting.startContainer.parentElement.closest('p, div');
 
+    if (!parentBlock || !parentBlock.parentNode) {
+        alert("Erro ao encontrar o parágrafo para dividir.");
+        hideReferenceEyeToolbar();
+        return;
+    }
+
+    const rangeToEnd = document.createRange();
+    rangeToEnd.setStart(rangeForSplitting.startContainer, rangeForSplitting.startOffset);
+    rangeToEnd.setEnd(parentBlock, parentBlock.childNodes.length);
+
+    const contentToMove = rangeToEnd.extractContents();
     const newParagraph = document.createElement('p');
     newParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
     newParagraph.style.fontSize = DEFAULT_FONT_SIZE;
     newParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
-    newParagraph.innerHTML = '<br>';
+    newParagraph.appendChild(contentToMove);
+
+    if (newParagraph.innerHTML.trim() === '') {
+        newParagraph.innerHTML = '<br>';
+    }
 
     parentBlock.parentNode.insertBefore(newParagraph, parentBlock.nextSibling);
 
     hideReferenceEyeToolbar();
-    placeCursorAtEndOf(newParagraph);
-    newParagraph.focus();
+
+    // --- INÍCIO DA MUDANÇA ---
+    // Em vez de mover para o novo parágrafo, restauramos o cursor para sua posição original.
+    const selection = window.getSelection();
+    selection.removeAllRanges();         // Limpa a seleção atual
+    selection.addRange(rangeForSplitting); // Restaura a posição original do cursor
+    // --- FIM DA MUDANÇA ---
+    
+    activeEditorElement.focus();
+    
     await saveDocumentBody(true, true);
+    rangeForSplitting = null; 
 }
+
+// GARANTA QUE O LISTENER ESTÁ USANDO 'mousedown':
+safelyAddEventListener(splitAndInsertBtn, 'mousedown', handleSplitSpanAndInsert);
+
 
 // Inicialização da Aplicação
 window.addEventListener('DOMContentLoaded', async () => {
-    safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', handleViewReference);
-    function safelyAddEventListener(element, eventType, listener) { 
-        if (element) element.addEventListener(eventType, listener); 
+
+// --- Elementos para a nova funcionalidade de Ocultar ---
+const showHiddenBtn = document.getElementById('showHiddenBtn');
+const hiddenChaptersPopup = document.getElementById('hiddenChaptersPopup');
+
+// Função auxiliar para adicionar listeners de forma segura
+function safelyAddEventListener(element, eventType, listener) { 
+    if (element) element.addEventListener(eventType, listener); 
+}
+
+// Listeners originais
+safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', handleViewReference);
+safelyAddEventListener(initNewDocBtn, 'click', createNewDocument);
+safelyAddEventListener(initLoadDocBtn, 'click', showLoadDocumentsPopup);
+safelyAddEventListener(backToInitialScreenBtn, 'click', showInitialScreen);
+safelyAddEventListener(docTitleInput, 'blur', saveDocumentTitle);
+safelyAddEventListener(addChapterBtn, 'click', () => {
+    saveStateForUndo();
+    createNewChapterElement('', null, true); 
+    saveDocumentBody(true, true); 
+});
+safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup);
+safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection); 
+safelyAddEventListener(appendToRefBtn, 'click', showSelectExistingRefPopup);
+safelyAddEventListener(saveNewRefBtnElement, 'click', () => { if(refTitleInput.value.trim()) addReferenceToDocument(refTitleInput.value.trim()); });
+safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference);
+safelyAddEventListener(deleteRefBtn, 'click', deleteReference);
+safelyAddEventListener(confirmAppendRefBtn, 'click', appendSelectionToExistingRef);
+safelyAddEventListener(splitAndInsertBtn, 'mousedown', handleSplitSpanAndInsert);
+safelyAddEventListener(addMoreUrlsToAddPopupBtn, 'click', () => createUrlInputEntry('addRefUrlsContainer', '', true));
+safelyAddEventListener(addMoreUrlsToEditPopupBtn, 'click', () => createUrlInputEntry('editRefUrlsContainer', '', true));
+
+// NOVO: Adiciona o listener para o botão "Ocultos"
+safelyAddEventListener(showHiddenBtn, 'click', showHiddenChaptersPopup);
+
+// Este seletor genérico já cobre todos os botões de fechar, incluindo o novo
+document.querySelectorAll('.close-popup-btn').forEach(btn => {
+    safelyAddEventListener(btn, 'click', () => {
+        hidePopup(btn.closest('.popup'));
+    });
+});
+
+// Listener para a lista de referências
+safelyAddEventListener(referencesListUl, 'click', e => {
+    if (e.target.classList.contains('ref-title')) navigateToReferencedTextInEditor(e);
+    if (e.target.classList.contains('edit-ref-btn')) openEditReferencePopup(e.target.dataset.refId);
+});
+
+// Listener para atalhos de teclado (Undo/Redo)
+document.addEventListener('keydown', (event) => {
+    if (editorInterfaceDiv.style.display === 'none' || document.querySelector('.popup.active')) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); handleUndo(); }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); handleRedo(); }
+});
+
+// Listener para a seleção de texto (gerencia as barras de ferramentas flutuantes)
+document.addEventListener('selectionchange', () => {
+    const sel = window.getSelection();
+    
+    if (!activeEditorElement || !sel || !sel.rangeCount) {
+        hideFloatingToolbar();
+        hideReferenceEyeToolbar();
+        return;
     }
 
-    safelyAddEventListener(initNewDocBtn, 'click', createNewDocument);
-    safelyAddEventListener(initLoadDocBtn, 'click', showLoadDocumentsPopup);
-    safelyAddEventListener(backToInitialScreenBtn, 'click', showInitialScreen);
-    safelyAddEventListener(docTitleInput, 'blur', saveDocumentTitle);
-    safelyAddEventListener(addChapterBtn, 'click', () => {
-        saveStateForUndo();
-        createNewChapterElement('', null, true); 
-        saveDocumentBody(true, true); 
-    });
-    safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup);
-    safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection); 
-    safelyAddEventListener(appendToRefBtn, 'click', showSelectExistingRefPopup);
-    safelyAddEventListener(saveNewRefBtnElement, 'click', () => { if(refTitleInput.value.trim()) addReferenceToDocument(refTitleInput.value.trim()); });
-    safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference);
-    safelyAddEventListener(deleteRefBtn, 'click', deleteReference);
-    safelyAddEventListener(confirmAppendRefBtn, 'click', appendSelectionToExistingRef);
-    safelyAddEventListener(splitAndInsertBtn, 'click', handleSplitSpanAndInsert);
-    safelyAddEventListener(addMoreUrlsToAddPopupBtn, 'click', () => createUrlInputEntry('addRefUrlsContainer', '', true));
-    safelyAddEventListener(addMoreUrlsToEditPopupBtn, 'click', () => createUrlInputEntry('editRefUrlsContainer', '', true));
-    
-    document.querySelectorAll('.close-popup-btn').forEach(btn => safelyAddEventListener(btn, 'click', () => hidePopup(btn.closest('.popup'))));
-    
-    safelyAddEventListener(referencesListUl, 'click', e => {
-        if (e.target.classList.contains('ref-title')) navigateToReferencedTextInEditor(e);
-        if (e.target.classList.contains('edit-ref-btn')) openEditReferencePopup(e.target.dataset.refId);
-    });
+    currentSelectionRange = sel.getRangeAt(0);
 
-    document.addEventListener('keydown', (event) => {
-        if (editorInterfaceDiv.style.display === 'none' || document.querySelector('.popup.active')) return;
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); handleUndo(); }
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); handleRedo(); }
-    });
-    
-    document.addEventListener('selectionchange', () => {
-        const sel = window.getSelection();
-        if (!activeEditorElement || !sel || !sel.rangeCount) { hideFloatingToolbar(); hideReferenceEyeToolbar(); return; }
-        currentSelectionRange = sel.getRangeAt(0);
-        if (activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) {
-            if (!sel.isCollapsed && sel.toString().trim() !== "") { showFloatingToolbar(); hideReferenceEyeToolbar(); } 
-            else if (sel.isCollapsed) {
-                hideFloatingToolbar();
-                const parentSpan = sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');
-                if (parentSpan) showReferenceEyeToolbar(parentSpan); else hideReferenceEyeToolbar();
-            } else { hideFloatingToolbar(); hideReferenceEyeToolbar(); }
+    if (activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) {
+        if (sel.isCollapsed) {
+            hideFloatingToolbar();
+            const parentSpan = sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');
+            
+            if (parentSpan) {
+                rangeForSplitting = currentSelectionRange.cloneRange();
+                showReferenceEyeToolbar(parentSpan);
+            } else {
+                hideReferenceEyeToolbar();
+            }
+        } 
+        else if (sel.toString().trim() !== "") {
+            hideReferenceEyeToolbar();
+            showFloatingToolbar();
+        } 
+        else {
+            hideFloatingToolbar();
+            hideReferenceEyeToolbar();
         }
-    });
+    } 
+});
 
-    await showInitialScreen(); 
+// Inicia a aplicação na tela inicial
+await showInitialScreen(); 
 });
     
         function safelyAddEventListener(element, eventType, listener) { 

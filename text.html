@@ -26,65 +26,62 @@
         }
         #initialScreen { text-align: center; padding: 40px 20px; }
         #initialScreen h1 { margin-bottom: 30px; color: #e0e0e0; }
-        .initial-actions button { padding: 12px 25px; font-size: 1.1em; cursor: pointer; border: 1px solid #3a7ca5; background-color: #3a7ca5; color: white; border-radius: 5px; margin: 0 10px 20px 10px; }
-        .initial-actions button:hover { background-color: #4a90c2; border-color: #4a90c2; }
-        
-        /* --- ESTILOS ADICIONADOS PARA O LINK DO STUDIO --- */
-        .studio-links {
-            margin-top: 40px;
-        }
-        .studio-links ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .studio-links li {
-            margin-bottom: 10px;
-        }
-        .studio-links a {
-            color: #7aa0c7; /* Cor azulada, consistente com outros links */
-            text-decoration: none;
+        .initial-actions button {
+            padding: 12px 25px;
             font-size: 1.1em;
+            cursor: pointer;
+            border: 1px solid #3a7ca5;
+            background-color: #3a7ca5;
+            color: white;
+            border-radius: 5px;
+            margin: 0 10px 20px 10px;
         }
-        .studio-links a:hover {
-            text-decoration: underline;
-            color: #87cefa; /* Cor mais clara no hover */
+        .initial-actions button:hover {
+            background-color: #4a90c2;
+            border-color: #4a90c2;
         }
-        /* --- FIM DOS ESTILOS ADICIONADOS --- */
-        
-        #docTitle { width: calc(100% - 22px); padding: 10px; font-size: 1.5em; margin-bottom: 10px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4 !important; }
-        #docTitle::placeholder { color: #777; }
-
-        /* --- ESTILOS PARA CAPÍTULOS E SUAS TOOLBARS --- */
+        .studio-links { margin-top: 40px; }
+        .studio-links ul { list-style: none; padding: 0; margin: 0; }
+        .studio-links li { margin-bottom: 10px; }
+        .studio-links a { color: #7aa0c7; text-decoration: none; font-size: 1.1em; }
+        .studio-links a:hover { text-decoration: underline; color: #87cefa; }
+    
+        #docTitle {
+            width: calc(100% - 22px);
+            padding: 10px;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #252525;
+            color: #d4d4d4 !important;
+        }
         .chapter-wrapper {
             position: relative;
             margin-bottom: 25px;
-            padding-top: 40px; 
+            padding-top: 40px;
             border: 1px solid #3a3a3a;
             border-radius: 4px;
             background-color: #252525;
         }
         .chapter-wrapper.active-chapter-wrapper {
-             border-color: #5a90c2;
-             box-shadow: 0 0 0 1px rgba(58, 124, 165, 0.25);
+            border-color: #5a90c2;
+            box-shadow: 0 0 0 1px rgba(58, 124, 165, 0.25);
         }
         .chapter-toolbar {
-    /* position: absolute;  <-- REMOVA OU COMENTE ESTA LINHA */
-    position: -webkit-sticky; /* Para compatibilidade com o Safari */
-    position: sticky;        /* <-- ADICIONE ESTA LINHA */
-    top: 6px;                /* Esta linha agora define a posição "grudada" */
-    right: 6px;
-    display: flex;
-    gap: 6px;
-    background-color: rgba(56, 56, 56, 0.85);
-    padding: 5px;
-    border-radius: 4px;
-    z-index: 10;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-
-
+            position: -webkit-sticky;
+            position: sticky;
+            top: 6px;
+            display: flex;
+            gap: 6px;
+            background-color: rgba(56, 56, 56, 0.85);
+            padding: 5px;
+            border-radius: 4px;
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            margin-left: auto;
+            width: fit-content;
+        }
         .chapter-toolbar button {
             background: none;
             border: 1px solid #666;
@@ -107,1475 +104,443 @@
             border-color: #555 !important;
             opacity: 0.6;
         }
+    
         #editorsContainer .text-editor-chapter {
-            min-height: 100px; 
-            border: none; 
-            padding: 10px 15px; 
-            border-radius: 0; 
-            margin-bottom: 0; 
+            min-height: 100px;
+            border: none;
+            padding: 10px 15px;
             outline: none;
-            line-height: 1.6; 
-            background-color: transparent; 
+            line-height: 1.6;
+            background-color: transparent;
             color: #d4d4d4;
         }
-        #editorsContainer .text-editor-chapter:focus {
-            border-color: transparent; 
-            box-shadow: none;
+        #editorsContainer .text-editor-chapter .referenced-text {
+            background-color: #384858;
+            padding: 1px 2px;
+            border-radius: 3px;
+            cursor: default;
+            color: #a8c8e8;
         }
-        #editorsContainer .text-editor-chapter p, #editorsContainer .text-editor-chapter div { 
-            margin-bottom: 0.5em; 
-            color: inherit; 
-        }
-        
-        #editorsContainer .text-editor-chapter .referenced-text { 
-            background-color: #384858; padding: 1px 2px; border-radius: 3px; 
-            cursor: default; color: #a8c8e8; 
-        }
-        #editorsContainer .text-editor-chapter .referenced-text.eye-icon-active { /* Destaque para span com olho ativo */
-            background-color: #304050; 
+        #editorsContainer .text-editor-chapter .referenced-text.eye-icon-active {
+            background-color: #304050;
             outline: 1px dotted #7aa0c7;
         }
-        /* Style for empty referenced text spans */
         #editorsContainer .text-editor-chapter .referenced-text.referenced-text-empty {
-            color: #FF6B6B; /* A light red, suitable for dark mode */
-            border-bottom: 1px dashed #FF6B6B; /* Makes it more obvious */
-             padding: 0 1px; /* Small padding to make the border visible even if truly empty */
+            color: #FF6B6B;
+            border-bottom: 1px dashed #FF6B6B;
         }
         #editorsContainer .text-editor-chapter .referenced-text.referenced-text-empty::before {
-            content: "[vazio]"; /* Placeholder text */
+            content: "[vazio]";
             font-style: italic;
-            color: #FF8B8B; /* Slightly different red for the placeholder */
+            color: #FF8B8B;
         }
-
-
-        .toolbar { 
-            position: absolute; 
-            background: #444; 
-            color: white; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.4); 
-            z-index: 1000; 
-            display: flex; 
-            gap: 5px; 
+        .toolbar {
+            position: absolute;
+            background: #444;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
         }
-        .toolbar button { 
-            background: none; 
-            border: none; 
-            color: white; 
-            font-size: 1.2em; 
-            cursor: pointer; 
-            padding: 5px; 
-        }
-        .toolbar button:hover { 
-            background-color: #555; 
+        .toolbar button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
         }
         .toolbar button:disabled {
-            color: #888;
-            cursor: not-allowed;
             opacity: 0.5;
+            cursor: not-allowed;
         }
-
-        #documentsListContainer {
-    max-height: 400px; /* Define uma altura máxima. Você pode ajustar este valor. */
-    overflow-y: auto;   /* Adiciona uma barra de rolagem vertical APENAS se o conteúdo exceder a altura máxima. */
-    border: 1px solid #444; /* Uma borda sutil para delimitar a área de rolagem. */
-    border-radius: 4px;     /* Cantos arredondados para combinar com o estilo geral. */
-    margin-bottom: 20px;    /* Espaço entre a lista e os botões de ação abaixo. */
-    padding: 5px;           /* Um pequeno preenchimento interno para a lista não colar na borda. */
-}
-
-#hiddenChaptersListContainer {
-    max-height: 400px;
-    overflow-y: auto;
-    margin-bottom: 20px;
-}
-#hiddenChaptersListContainer ul {
-    list-style: none;
-    padding: 0;
-}
-#hiddenChaptersListContainer li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #404040;
-}
-#hiddenChaptersListContainer li:last-child {
-    border-bottom: none;
-}
-#hiddenChaptersListContainer .chapter-preview {
-    flex-grow: 1;
-    margin-right: 15px;
-    color: #c0c0c0;
-    font-size: 0.9em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-#hiddenChaptersListContainer button {
-    padding: 5px 10px;
-    background-color: #4CAF50; /* Verde */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-#hiddenChaptersListContainer button:hover {
-    background-color: #5cb85c;
-}
-        
-        .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1001; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
-        .popup.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease; }
-        .popup-content { background: #333; color: #d4d4d4; padding: 25px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 450px; max-height: 80vh; display: flex; flex-direction: column; }
-        .popup-content h3 { margin-top: 0; margin-bottom: 15px; color: #e0e0e0; }
-        .popup-content input[type="text"], .popup-content input[type="url"], .popup-content select { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4 !important; }
-        .popup-content input[type="text"]::placeholder, .popup-content input[type="url"]::placeholder { color: #777; }
-        .popup-content button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; }
-        .popup-content .popup-actions { margin-top: auto; padding-top: 15px; border-top: 1px solid #444; text-align: right; }
-        .popup-content .popup-actions button { background-color: #5a6268; color: white; }
-        .popup-content .popup-actions button:hover { background-color: #6c757d; }
-        .popup-content .popup-actions button.danger-btn { background-color: #d9534f; }
-        .popup-content .popup-actions button.danger-btn:hover { background-color: #c9302c; }
-        .popup-content .popup-actions button.save-btn { background-color: #4CAF50; }
-        .popup-content .popup-actions button.save-btn:hover { background-color: #5cb85c; }
-        
-        #referencesSection { margin-top: 30px; border-top: 1px solid #444; padding-top: 20px; }
-        #referencesSection h2 { color: #c0c0c0; }
-        #referencesList { list-style: none; padding: 0; }
-        #referencesList li { background: #353535; padding: 10px 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #484848; position: relative; }
-        #referencesList li .ref-content { padding-right: 30px; } 
-        #referencesList li .ref-title { font-weight: bold; display: block; margin-bottom: 3px; cursor: pointer; color: #b0c4de;}
-        #referencesList li .ref-title:hover { color: #87cefa; text-decoration: underline; }
-        #referencesList li a { text-decoration: none; color: #7aa0c7; word-break: break-all; }
-        #referencesList li a:hover { text-decoration: underline; color: #87cefa; }
-        .edit-ref-btn { position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 1em; cursor: pointer; padding: 5px; color: #999; }
-        .edit-ref-btn:hover { color: #bbb; }
-
-        #referencesList li.reference-item-unlinked .ref-title { color: #FF8B8B; }
-        #referencesList li.reference-item-unlinked .ref-title:hover { color: #FF6B6B; text-decoration: underline; }
-
-        #loadDocumentPopup .popup-content { background: #333; }
-        #documentsListContainer ul li button { background-color: #3a7ca5; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 10px; }
-        #documentsListContainer ul li button:hover { background-color: #4a90c2; }
-        #documentsListContainer ul li { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #404040; color: #d4d4d4; }
-        #documentsListContainer ul li:last-child { border-bottom: none; }
-        #documentsListContainer ul li span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #documentsListContainer p { color: #999; }
-
-        .url-input-group { display: flex; align-items: center; margin-bottom: 10px; }
-        .url-input-group .ref-url-input { flex-grow: 1; padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #252525; color: #d4d4d4; }
-        .url-input-group .ref-url-input::placeholder { color: #777; }
-        .url-input-group button[type="button"] { padding: 10px 15px; border: none; border-radius: 4px; background-color: #d9534f; color: white; cursor: pointer; flex-shrink: 0; margin-left: 10px; }
-        #addMoreUrlsToAddPopupBtn, #addMoreUrlsToEditPopupBtn { padding: 8px 12px; font-size:0.9em; margin-bottom: 15px; background-color: #5a6268; color:white; border:none; border-radius:4px; cursor:pointer; }
-        #addMoreUrlsToAddPopupBtn:hover, #addMoreUrlsToEditPopupBtn:hover { background-color: #6c757d; }
-        #editorsContainer .text-editor-chapter .referenced-text.highlight-scroll {
-    background-color: rgba(255, 223, 100, 0.25) !important; /* A light, transparent yellow background */
-    border-bottom: 2px solid #FFC107; /* A solid yellow underline */
-    padding-bottom: 1px; /* A little space for the underline */
-    border-radius: 2px;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-}        .reference-item.highlight-scroll { background-color: #5a512e !important; } 
-
-        /* CSS for scrollable reference list in popup */
-        .scrollable-ref-list {
-            max-height: 200px; /* Adjust as needed */
+    
+        #documentsListContainer, #hiddenChaptersListContainer, #backupListContainer, .scrollable-ref-list {
+            flex-grow: 1; 
+            max-height: 400px;
             overflow-y: auto;
-            border: 1px solid #555;
-            border-radius: 4px;
-            background-color: #252525;
-            padding: 5px;
             margin-bottom: 20px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        #hiddenChaptersListContainer ul, #backupListContainer ul, #documentsListContainer ul, .scrollable-ref-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        #hiddenChaptersListContainer li, #backupListContainer li, #documentsListContainer li, .scrollable-ref-list .ref-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #404040;
         }
         .scrollable-ref-list .ref-list-item {
-            padding: 8px 10px;
-            color: #d4d4d4;
             cursor: pointer;
-            border-bottom: 1px solid #404040;
-            list-style-type: none; 
+            list-style-type: none;
         }
-        .scrollable-ref-list .ref-list-item:last-child {
-            border-bottom: none;
-        }
-        .scrollable-ref-list .ref-list-item:hover {
+        .scrollable-ref-list .ref-list-item:hover, #backupListContainer li:hover {
             background-color: #3a3a3a;
         }
         .scrollable-ref-list .ref-list-item.selected {
-            background-color: #3a7ca5; 
+            background-color: #3a7ca5;
             color: white;
         }
-        .scrollable-ref-list .no-refs-message {
-            padding: 10px;
-            color: #888;
-            text-align: center;
+        #backupListContainer li {
+            cursor: pointer;
         }
-
+        
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
+        .popup.active {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        .popup-content {
+            background: #333;
+            color: #d4d4d4;
+            padding: 25px;
+            border-radius: 8px;
+            width: 450px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .popup-content h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .popup-content input, .popup-content button {
+            padding: 10px 15px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #252525;
+            color: #d4d4d4;
+        }
+        .popup-content button {
+            cursor: pointer;
+            background-color: #5a6268;
+            border: none;
+        }
+        .popup-content button:hover {
+            background-color: #6c757d;
+        }
+        .popup-content .popup-actions {
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #444;
+            text-align: right;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .popup-content .popup-actions button {
+            margin-left: 0;
+        }
+        /* ---- NOVAS REGRAS DE CORES PARA BOTÕES ---- */
+        .popup-content button.save-btn, .popup-content button.confirm-btn {
+            background-color: #4CAF50;
+        }
+        .popup-content button.save-btn:hover, .popup-content button.confirm-btn:hover {
+            background-color: #5cb85c;
+        }
+        .popup-content button.danger-btn {
+            background-color: #d9534f;
+        }
+         .popup-content button.danger-btn:hover {
+            background-color: #c9302c;
+        }
+        .edit-btn {
+            background-color: #3a7ca5 !important;
+            border-color: #3a7ca5 !important;
+            color: white !important;
+        }
+        .edit-btn:hover {
+            background-color: #4a90c2 !important;
+            border-color: #4a90c2 !important;
+        }
+        .restore-btn {
+            background-color: #f0ad4e !important;
+            border-color: #eea236 !important;
+            color: white !important;
+        }
+        .restore-btn:hover {
+            background-color: #ec971f !important;
+            border-color: #d58512 !important;
+        }
+        /* ------------------------------------------- */
+        .url-input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .url-input-group input {
+            flex-grow: 1;
+        }
+        .url-input-group button {
+            flex-shrink: 0;
+            margin-left: 10px;
+            padding: 8px 12px;
+        }
+    
+        #referencesSection {
+            margin-top: 30px;
+            border-top: 1px solid #444;
+            padding-top: 20px;
+        }
+        #referencesList {
+            list-style: none;
+            padding: 0;
+        }
+        #referencesList li {
+            background: #353535;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            position: relative;
+        }
+        #referencesList li .ref-title {
+            font-weight: bold;
+            cursor: pointer;
+            color: #b0c4de;
+        }
+         #referencesList li .ref-title:hover {
+            text-decoration: underline;
+        }
+        .edit-ref-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+        }
+        .edit-ref-btn:hover {
+            color: #fff;
+        }
+        #archiveDocBtn {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        #archiveDocBtn:hover {
+            background-color: #c9302c;
+        }
+    
+        #editorsContainer .text-editor-chapter .referenced-text.highlight-scroll, .reference-item.highlight-scroll {
+            background-color: rgba(255, 223, 100, 0.25) !important;
+            border-bottom: 2px solid #FFC107;
+        }
     </style>
 </head>
 <body>
-    <div id="initialScreen">
-        <h1>Meu Editor de Documentos</h1>
-        <div class="initial-actions">
-            <button id="initNewDocBtn">Novo Documento</button>
-            <button id="initLoadDocBtn">Carregar Documento</button>
-        </div>
-        
-        <!-- Bloco HTML adicionado -->
-        <div class="studio-links">
-          <ul>
-            <li><a href="studiomusic.html">Studio: Music</a></li>
-    <li><a href="timelinekings.html">Cronologia: Reis</a></li>
-    <li><a href="cronos.html">Cronologia: Mundial</a></li>
-          </ul>
-        </div>
-        <!-- Fim do bloco HTML adicionado -->
-    </div>
-
-    <div id="editorInterface" style="display: none;">
-        <div class="container">
-            <div class="doc-actions" style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button id="backToInitialScreenBtn" title="Voltar à Tela Inicial">Voltar</button>
-                <button id="showHiddenBtn" title="Ver Capítulos Ocultos">Ocultos</button>
-            </div>
-            <input type="text" id="docTitle" placeholder="Título do Documento">
-            
-            <div id="editorsContainer">
-                <!-- Capítulos serão inseridos aqui dinamicamente -->
-            </div>
-            <button id="addChapterBtn" style="margin-top: 15px; padding: 8px 15px; font-size: 0.9em; cursor: pointer; background-color: #3a7ca5; color:white; border:none; border-radius:4px;">+ Adicionar Novo Capítulo</button>
-            
-            <div id="floatingToolbar" class="toolbar" style="display: none;">
-                <button id="attachLinkBtn" title="Anexar Novo Link/Referência">🔗</button>
-                <button id="appendToRefBtn" title="Anexar a Link/Referência Existente">➕🔗</button> 
-                <button id="removeLinkBtn" title="Remover Link/Referência do Trecho">🚫</button> 
-            </div>
-            
-            <div id="referencesSection">
-                <h2>Referências</h2>
-                <ul id="referencesList"></ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toolbar do Olho para Referências -->
-    <div id="referenceEyeToolbar" class="toolbar" style="display: none;">
-        <button id="viewReferenceFromToolbarBtn" title="Ver Referência">👁️</button>
-        <button id="splitAndInsertBtn" title="Inserir Texto Divisor Aqui">✂️+📝</button>
-    </div>
-
-<!-- Pop-up para Listar Capítulos Ocultos -->
-<div id="hiddenChaptersPopup" class="popup">
-    <div class="popup-content">
-        <h3>Capítulos Ocultos</h3>
-        <div id="hiddenChaptersListContainer">
-            <ul>
-                <!-- A lista será preenchida pelo JavaScript -->
-            </ul>
-            <p style="display: none; color: #999;">Nenhum capítulo oculto.</p>
-        </div>
-        <div class="popup-actions">
-            <button id="closeHiddenPopupBtn" class="close-popup-btn">Fechar</button>
-        </div>
-    </div>
-</div>
-
-
-    <!-- Pop-up para Adicionar Referência -->
-    <div id="addReferencePopup" class="popup">
-        <div class="popup-content">
-            <h3>Adicionar Nova Referência</h3>
-            <input type="text" id="refTitleInput" placeholder="Título da Referência">
-            <label style="display:block; margin-bottom:5px; margin-top:10px; color: #c0c0c0;">URLs do Link:</label>
-            <div id="addRefUrlsContainer" style="margin-bottom: 10px;">
-            </div>
-            <button type="button" id="addMoreUrlsToAddPopupBtn">+ Adicionar Outro Link</button>
-            <div class="popup-actions">
-                <button id="saveNewRefBtnElement" class="save-btn">Salvar Referência</button>
-                <button id="cancelNewRefBtn" class="close-popup-btn">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pop-up para Editar Referência -->
-    <div id="editReferencePopup" class="popup">
-        <div class="popup-content">
-            <h3>Editar Referência</h3>
-            <input type="text" id="editRefTitleInput" placeholder="Título da Referência">
-            <label style="display:block; margin-bottom:5px; margin-top:10px; color: #c0c0c0;">URLs do Link:</label>
-            <div id="editRefUrlsContainer" style="margin-bottom: 10px;">
-            </div>
-            <button type="button" id="addMoreUrlsToEditPopupBtn">+ Adicionar Outro Link</button>
-            <input type="hidden" id="editingRefIdInput">
-            <div class="popup-actions">
-                <button id="saveEditedRefBtn" class="save-btn">Salvar Alterações</button>
-                <button id="deleteRefBtn" class="danger-btn">Excluir Referência</button>
-                <button id="cancelEditRefBtn" class="close-popup-btn">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pop-up para Carregar Documento -->
-    <div id="loadDocumentPopup" class="popup">
-        <div class="popup-content">
-            <h3>Carregar Documento Existente</h3>
-            <div id="documentsListContainer">
-                <p>Carregando lista de documentos...</p>
-                <ul></ul>
-            </div>
-            <div class="popup-actions">
-                <button id="closeLoadDocPopupBtn" class="close-popup-btn">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pop-up para Selecionar Referência Existente para Anexar -->
-    <div id="selectExistingRefPopup" class="popup">
-        <div class="popup-content">
-            <h3>Anexar Texto a Referência Existente</h3>
-            <label style="display:block; margin-bottom:10px; color: #c0c0c0;">Selecione a Referência:</label>
-            <div id="existingRefListContainer" class="scrollable-ref-list">
-                <!-- Reference items will be populated here by JavaScript -->
-            </div>
-            <div class="popup-actions">
-                <button id="confirmAppendRefBtn" class="save-btn" disabled>Anexar</button>
-                <button id="cancelAppendRefBtn" class="close-popup-btn">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="initialScreen"><h1>Meu Editor</h1><div class="initial-actions"><button id="initNewDocBtn">Novo Documnento</button><button id="initLoadDocBtn">Carregar Documento</button></div><div class="studio-links"><ul><li><a href="studiomusic.html">Studio: Music</a></li><li><a href="timelinekings.html">Cronologia: Reis</a></li><li><a href="cronos.html">Cronologia: Mundial</a></li></ul></div></div>
+    <div id="editorInterface" style="display: none;"><div class="container"><div class="doc-actions" style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;"><button id="backToInitialScreenBtn">Voltar</button><button id="showHiddenBtn">Ocultos</button><button id="showBackupBtn">Backup</button></div><input type="text" id="docTitle" placeholder="Título"><div id="editorsContainer"></div><button id="addChapterBtn">+ Capítulo</button><div id="floatingToolbar" class="toolbar" style="display: none;"><button id="attachLinkBtn">🔗</button><button id="appendToRefBtn">➕🔗</button><button id="removeLinkBtn">🚫</button></div><div id="referencesSection"><h2>Referências</h2><ul id="referencesList"></ul></div><button id="archiveDocBtn">Arquivar Documento</button></div></div>
+    <div id="referenceEyeToolbar" class="toolbar" style="display: none;"><button id="viewReferenceFromToolbarBtn">👁️</button><button id="splitAndInsertBtn">✂️+📝</button></div>
+    <div id="hiddenChaptersPopup" class="popup"><div class="popup-content"><h3>Ocultos</h3><div id="hiddenChaptersListContainer"><ul></ul><p>Nenhum.</p></div><div class="popup-actions"><button class="close-popup-btn">Fechar</button></div></div></div>
+    <div id="backupPopup" class="popup"><div class="popup-content"><h3>Backups</h3><button id="createBackupBtn" style="width:100%; margin-bottom: 20px;">Criar Backup</button><div id="backupListContainer"><ul></ul><p>Nenhum.</p></div><div class="popup-actions"><button class="close-popup-btn">Fechar</button></div></div></div>
+    <div id="addReferencePopup" class="popup"><div class="popup-content"><h3>Adicionar Referência</h3><input type="text" id="refTitleInput" placeholder="Título"><div id="addRefUrlsContainer"></div><button type="button" id="addMoreUrlsToAddPopupBtn">+ URL</button><div class="popup-actions"><button id="saveNewRefBtnElement" class="save-btn">Salvar</button><button class="close-popup-btn">Cancelar</button></div></div></div>
+    <div id="editReferencePopup" class="popup"><div class="popup-content"><h3>Editar Referência</h3><input type="text" id="editRefTitleInput" placeholder="Título"><div id="editRefUrlsContainer"></div><button type="button" id="addMoreUrlsToEditPopupBtn">+ URL</button><input type="hidden" id="editingRefIdInput"><div class="popup-actions"><button id="saveEditedRefBtn" class="save-btn">Salvar</button><button id="deleteRefBtn" class="danger-btn">Excluir</button><button class="close-popup-btn">Cancelar</button></div></div></div>
+    <div id="loadDocumentPopup" class="popup"><div class="popup-content"><h3>Carregar Documento Existente</h3><div id="documentsListContainer"><p>Carregando...</p><ul></ul></div><div class="popup-actions"></div></div></div>
+    <div id="selectExistingRefPopup" class="popup"><div class="popup-content"><h3>Anexar</h3><div id="existingRefListContainer" class="scrollable-ref-list"><ul></ul></div><div class="popup-actions"><button id="confirmAppendRefBtn" disabled>Anexar</button><button class="close-popup-btn">Cancelar</button></div></div></div>
+    <div id="splitChapterPopup" class="popup"><div class="popup-content"><h3>Dividir</h3><p>Criar novo capítulo?</p><div class="popup-actions"><button id="confirmSplitBtn" class="confirm-btn">Sim</button><button id="cancelSplitBtn" class="close-popup-btn">Não</button></div></div></div>
 
     <script type="module">
-        // Seus valores "oficiais" do firebaseConfig, conforme fornecido:
         const firebaseConfig = {
-  apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // IMPORTANT: Replace with your actual API key if this is a placeholder
-  authDomain: "bibliacontexto.firebaseapp.com",
-  projectId: "bibliacontexto",
-  storageBucket: "bibliacontexto.firebasestorage.app",
-  messagingSenderId: "266293600679",
-  appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
-};
+            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", authDomain: "bibliacontexto.firebaseapp.com", projectId: "bibliacontexto", storageBucket: "bibliacontexto.firebasestorage.app", messagingSenderId: "266293600679", appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
+        };
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-    getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        let app, db;
+        try { app = initializeApp(firebaseConfig); db = getFirestore(app); console.log("Firebase inicializado!"); } catch (e) { console.error("ERRO AO INICIALIZAR O FIREBASE:", e); alert("Falha na conexão com o Firebase."); throw e; }
 
-let app;
-let db;
-try {
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    console.log("Firebase inicializado com sucesso! Project ID:", firebaseConfig.projectId);
-} catch (error) {
-    console.error("ERRO CRÍTICO AO INICIALIZAR O FIREBASE:", error);
-    alert("Falha crítica ao conectar com o Firebase. Verifique o console para detalhes, confirme suas credenciais em 'firebaseConfig' e se o projeto Firebase está acessível.");
-    throw new Error("Falha na inicialização do Firebase. O aplicativo não pode continuar.");
-}
-
-// IDs dos Elementos
-const initialScreenDiv = document.getElementById('initialScreen');
-const editorInterfaceDiv = document.getElementById('editorInterface');
-const initNewDocBtn = document.getElementById('initNewDocBtn');
-const initLoadDocBtn = document.getElementById('initLoadDocBtn');
-const backToInitialScreenBtn = document.getElementById('backToInitialScreenBtn');
-const editorsContainer = document.getElementById('editorsContainer');
-const addChapterBtn = document.getElementById('addChapterBtn');
-const floatingToolbar = document.getElementById('floatingToolbar');
-const attachLinkBtn = document.getElementById('attachLinkBtn');
-const removeLinkBtn = document.getElementById('removeLinkBtn'); 
-const appendToRefBtn = document.getElementById('appendToRefBtn'); 
-const docTitleInput = document.getElementById('docTitle');
-const referencesListUl = document.getElementById('referencesList');
-const addReferencePopup = document.getElementById('addReferencePopup');
-const refTitleInput = document.getElementById('refTitleInput');
-const saveNewRefBtnElement = document.getElementById('saveNewRefBtnElement');
-const cancelNewRefBtn = document.getElementById('cancelNewRefBtn');
-const editReferencePopup = document.getElementById('editReferencePopup');
-const editRefTitleInput = document.getElementById('editRefTitleInput');
-const editingRefIdInput = document.getElementById('editingRefIdInput');
-const saveEditedRefBtn = document.getElementById('saveEditedRefBtn');
-const deleteRefBtn = document.getElementById('deleteRefBtn');
-const loadDocumentPopup = document.getElementById('loadDocumentPopup');
-const documentsListContainerUl = document.querySelector('#documentsListContainer ul');
-const documentsListContainerMsg = document.querySelector('#documentsListContainer p');
-const addMoreUrlsToAddPopupBtn = document.getElementById('addMoreUrlsToAddPopupBtn');
-const addMoreUrlsToEditPopupBtn = document.getElementById('addMoreUrlsToEditPopupBtn');
-const referenceEyeToolbar = document.getElementById('referenceEyeToolbar');
-const viewReferenceFromToolbarBtn = document.getElementById('viewReferenceFromToolbarBtn');
-const splitAndInsertBtn = document.getElementById('splitAndInsertBtn'); 
-const selectExistingRefPopup = document.getElementById('selectExistingRefPopup');
-const existingRefListContainer = document.getElementById('existingRefListContainer'); 
-const confirmAppendRefBtn = document.getElementById('confirmAppendRefBtn');
-
-// Variáveis de Estado Global
-let currentDocId = null;
-let currentDocumentData = null; 
-let debounceTimer;
-let currentSelectionRange = null;
-let rangeForPendingReference = null; 
-let activeEditorElement = null; 
-let activeReferencedTextSpanForEye = null; 
-let undoStack = [];
-let redoStack = [];
-let rangeForSplitting = null;
-
-
-// Constantes Globais
-const DEFAULT_FONT_SIZE = '25px'; 
-const DEFAULT_FONT_FAMILY = 'Arial, sans-serif';
-const DEFAULT_LINE_HEIGHT = '1.6'; 
-
-// --- Funções de Undo/Redo (Versão Final e Corrigida) ---
-function saveStateForUndo() {
-    if (!currentDocumentData) return;
-    const stateSnapshot = JSON.parse(JSON.stringify(currentDocumentData));
-    undoStack.push(stateSnapshot);
-    redoStack = []; 
-    if (undoStack.length > 30) {
-        undoStack.shift(); 
-    }
-}
-
-async function handleUndo() {
-    clearTimeout(debounceTimer);
-
-    if (undoStack.length === 0) {
-        console.log("Nada para desfazer.");
-        return;
-    }
-
-    const currentStateForRedo = JSON.parse(JSON.stringify(currentDocumentData));
-    redoStack.push(currentStateForRedo);
-
-    const previousState = undoStack.pop();
-    
-    try {
-        currentDocumentData = previousState;
-        await updateDoc(doc(db, "documentos", currentDocId), {
-            titulo: currentDocumentData.titulo,
-            corpo: currentDocumentData.corpo,
-            referencias: currentDocumentData.referencias,
-            atualizadoEm: serverTimestamp()
-        });
-        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
-        console.log("Ação desfeita com sucesso e salva.");
-    } catch (error) {
-        console.error("Falha ao salvar o estado desfeito:", error);
-        alert("Ocorreu um erro ao tentar desfazer a ação.");
-        undoStack.push(previousState);
-        redoStack.pop();
-    }
-}
-
-async function handleRedo() {
-    clearTimeout(debounceTimer);
-    
-    if (redoStack.length === 0) {
-        console.log("Nada para refazer.");
-        return;
-    }
-
-    const currentStateForUndo = JSON.parse(JSON.stringify(currentDocumentData));
-    undoStack.push(currentStateForUndo);
-
-    const nextState = redoStack.pop();
-
-    try {
-        currentDocumentData = nextState;
-        await updateDoc(doc(db, "documentos", currentDocId), {
-            titulo: currentDocumentData.titulo,
-            corpo: currentDocumentData.corpo,
-            referencias: currentDocumentData.referencias,
-            atualizadoEm: serverTimestamp()
-        });
-        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
-        console.log("Ação refeita com sucesso e salva.");
-    } catch (error) {
-        console.error("Falha ao salvar o estado refeito:", error);
-        alert("Ocorreu um erro ao tentar refazer a ação.");
-        redoStack.push(nextState);
-        undoStack.pop();
-    }
-}
-
-// Funções Utilitárias
-function generateId(prefix = 'entity-') { return prefix + Date.now() + '-' + Math.random().toString(36).substring(2, 7); }
-function showPopup(popupElement) { if (popupElement) popupElement.classList.add('active'); }
-function hidePopup(popupElement) { if (popupElement) popupElement.classList.remove('active'); }
-function applyDefaultStylesToBlocks(container, targetFontSizeCSS, targetLineHeight) { 
-    if (!container) return; 
-    container.querySelectorAll('p, div').forEach(el => { 
-        if (!el.style.fontSize || el.style.fontSize === "") el.style.fontSize = targetFontSizeCSS; 
-        if (!el.style.lineHeight || el.style.lineHeight === "") el.style.lineHeight = targetLineHeight; 
-    }); 
-}
-    function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }function createUrlInputEntry(containerId, urlValue = '', canBeRemoved = true) { const container = document.getElementById(containerId); if (!container) return null; const inputGroup = document.createElement('div'); inputGroup.className = 'url-input-group'; const urlInput = document.createElement('input'); urlInput.type = 'url'; urlInput.className = 'ref-url-input'; urlInput.placeholder = 'URL do Link'; urlInput.value = urlValue; inputGroup.appendChild(urlInput); if (canBeRemoved) { urlInput.style.marginRight = '10px'; const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = 'Remover'; removeBtn.addEventListener('click', () => { inputGroup.remove(); if (container.childElementCount === 0) { createUrlInputEntry(container.id, '', false); } }); inputGroup.appendChild(removeBtn); } container.appendChild(inputGroup); return urlInput; }
-
-// Funções de Toolbar
-function hideFloatingToolbar(){ if(floatingToolbar) floatingToolbar.style.display='none'; }
-function showFloatingToolbar(){ 
-    if(!currentSelectionRange || !activeEditorElement || !floatingToolbar) return; 
-    if (floatingToolbar.style.display === 'flex' && currentSelectionRange.collapsed) return; 
-    const rect = currentSelectionRange.getBoundingClientRect(); 
-    floatingToolbar.style.left = `${rect.left + window.scrollX + (rect.width/2) - (floatingToolbar.offsetWidth/2)}px`; 
-    floatingToolbar.style.top = `${rect.top + window.scrollY - floatingToolbar.offsetHeight - 10}px`; 
-    floatingToolbar.style.display = 'flex'; 
-    let elementToCheckForClosest = currentSelectionRange.commonAncestorContainer.nodeType === Node.ELEMENT_NODE ? currentSelectionRange.commonAncestorContainer : currentSelectionRange.commonAncestorContainer.parentElement;
-    const isSelectionInsideRefSpan = currentSelectionRange && !currentSelectionRange.collapsed && elementToCheckForClosest && elementToCheckForClosest.closest('span.referenced-text[data-ref-id]');
-    const hasExistingReferences = currentDocumentData?.referencias?.length > 0;
-    if (attachLinkBtn) attachLinkBtn.disabled = !!isSelectionInsideRefSpan;
-    if (removeLinkBtn) removeLinkBtn.disabled = !isSelectionInsideRefSpan;
-    if (appendToRefBtn) appendToRefBtn.disabled = !!isSelectionInsideRefSpan || !hasExistingReferences;
-}
-function hideReferenceEyeToolbar() {
-    if (referenceEyeToolbar) referenceEyeToolbar.style.display = 'none';
-    if (activeReferencedTextSpanForEye) {
-        activeReferencedTextSpanForEye.classList.remove('eye-icon-active'); 
-        activeReferencedTextSpanForEye = null;
-    }
-}
-function showReferenceEyeToolbar(targetSpan) {
-    if (!referenceEyeToolbar || !targetSpan) return;
-    hideFloatingToolbar(); 
-    const rect = targetSpan.getBoundingClientRect();
-    referenceEyeToolbar.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (referenceEyeToolbar.offsetWidth / 2)}px`;
-    referenceEyeToolbar.style.top = `${rect.top + window.scrollY - referenceEyeToolbar.offsetHeight - 5}px`; 
-    referenceEyeToolbar.style.display = 'flex';
-    referenceEyeToolbar.dataset.refId = targetSpan.dataset.refId; 
-    if (splitAndInsertBtn) splitAndInsertBtn.disabled = !targetSpan.closest('.text-editor-chapter');
-    if (activeReferencedTextSpanForEye && activeReferencedTextSpanForEye !== targetSpan) activeReferencedTextSpanForEye.classList.remove('eye-icon-active');
-    activeReferencedTextSpanForEye = targetSpan;
-    activeReferencedTextSpanForEye.classList.add('eye-icon-active'); 
-}
-
-// FUNÇÃO COMPLETA E CORRIGIDA (COM SOLUÇÕES PARA 'ENTER' E 'ESPAÇO')
-function createNewChapterElement(contentHTML = '', chapterId = null, focusAfterCreation = false) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'chapter-wrapper';
-    wrapper.dataset.chapterId = chapterId || generateId('chptr-');
-    const toolbar = document.createElement('div');
-    toolbar.className = 'chapter-toolbar';
-
-    toolbar.innerHTML = `<button title="Mover Capítulo Para Cima">🔼</button>` +
-                        `<button title="Mover Capítulo Para Baixo">🔽</button>` +
-                        `<button title="Desfazer (Ctrl+Z)">↶</button>` +
-                        `<button title="Refazer (Ctrl+Y)">↷</button>` +
-                        `<button title="Formatar Fonte (Arial)" style="font-family: serif; font-weight: bold;">T</button>` +
-                        `<button title="Formatar Tamanho (25px)">Aa</button>` +
-                        `<button title="Remover Capítulo">🗑️</button>`;
-
-    toolbar.children[0].addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'up'); });
-    toolbar.children[1].addEventListener('click', (e) => { e.stopPropagation(); handleMoveChapter(wrapper, 'down'); });
-    toolbar.children[2].addEventListener('click', (e) => { e.stopPropagation(); handleUndo(); });
-    toolbar.children[3].addEventListener('click', (e) => { e.stopPropagation(); handleRedo(); });
-    toolbar.children[4].addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontFamily(wrapper); });
-    toolbar.children[5].addEventListener('click', (e) => { e.stopPropagation(); handleFormatFontSize(wrapper); });
-    toolbar.children[6].addEventListener('click', (e) => { e.stopPropagation(); handleHideChapter(wrapper); });
-
-    wrapper.appendChild(toolbar);
-    const chapterDiv = document.createElement('div');
-    chapterDiv.className = 'text-editor-chapter';
-    chapterDiv.setAttribute('contenteditable', 'true');
-    chapterDiv.innerHTML = contentHTML.trim() === '' ? `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>` : contentHTML;
-    applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-    updateEmptyReferenceSpansStyles(chapterDiv);
-
-    let isTypingStateSavedForThisSession = false;
-
-    chapterDiv.addEventListener('focus', () => {
-        activeEditorElement = chapterDiv;
-        document.querySelectorAll('.chapter-wrapper.active-chapter-wrapper').forEach(w => w.classList.remove('active-chapter-wrapper'));
-        wrapper.classList.add('active-chapter-wrapper');
-        isTypingStateSavedForThisSession = false;
-    });
-
-    // CORREÇÃO PARA O 'ESPAÇO' (usando o evento input)
-    chapterDiv.addEventListener('input', (event) => {
-        const selection = window.getSelection();
-        if (selection && selection.isCollapsed && selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const node = range.startContainer;
-            if (node.nodeType === Node.TEXT_NODE && node.parentNode.classList.contains('referenced-text')) {
-                const span = node.parentNode;
-                const parentBlock = span.closest('p, div');
-                if (/\s+$/.test(node.textContent) && range.startOffset === node.textContent.length) {
-                    const trailingSpaces = node.textContent.match(/\s+$/)[0];
-                    node.textContent = node.textContent.replace(/\s+$/, '');
-                    const spaceNode = document.createTextNode(trailingSpaces);
-                    parentBlock.insertBefore(spaceNode, span.nextSibling);
-                    const newRange = document.createRange();
-                    newRange.setStart(spaceNode, spaceNode.length);
-                    newRange.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(newRange);
-                }
-            }
-        }
-
-        if (!isTypingStateSavedForThisSession) {
-            saveStateForUndo();
-            isTypingStateSavedForThisSession = true;
-        }
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            if (activeEditorElement === chapterDiv) {
-                applyDefaultStylesToBlocks(chapterDiv, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-                updateEmptyReferenceSpansStyles(chapterDiv);
-                saveDocumentBody(true, false);
-            }
-        }, 1500);
-    });
-
-    chapterDiv.addEventListener('paste', (event) => {
-        saveStateForUndo();
-        event.preventDefault();
-        const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
-        if (plainText) {
-            document.execCommand('insertText', false, plainText);
-            setTimeout(() => {
-                if (activeEditorElement) {
-                    applyDefaultStylesToBlocks(activeEditorElement, DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT);
-                    updateEmptyReferenceSpansStyles(activeEditorElement);
-                }
-                saveDocumentBody(true, true);
-            }, 0);
-        }
-    });
-
-    // CORREÇÃO PARA O 'ENTER' (usando o evento keydown)
-    chapterDiv.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-        const selection = window.getSelection();
-        if (!selection || !selection.rangeCount) return;
-
-        const range = selection.getRangeAt(0);
-        const container = range.startContainer;
-        const parentSpan = container.parentElement.closest('span.referenced-text');
-
-        if (parentSpan) {
-            const parentBlock = parentSpan.closest('p, div');
-
-            // --- INÍCIO DA NOVA LÓGICA DE CORREÇÃO ---
-            // Cenário 0: Pressionar 'Enter' no início absoluto de uma linha referenciada.
-            if (parentBlock && isCursorAtStartOfBlock(parentBlock, range)) {
-                event.preventDefault();
-                saveStateForUndo();
-
-                // Cria um parágrafo novo e LIMPO acima do atual para "escapar" da referência.
-                const newCleanParagraph = document.createElement('p');
-                newCleanParagraph.innerHTML = '<br>';
-                newCleanParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
-                newCleanParagraph.style.fontSize = DEFAULT_FONT_SIZE;
-                newCleanParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
-
-                // Insere o parágrafo limpo ANTES do bloco atual.
-                parentBlock.parentNode.insertBefore(newCleanParagraph, parentBlock);
-                
-                // O cursor permanece no bloco original (que agora é a segunda linha), o que é bom.
-                // O usuário vê uma linha em branco aparecer acima e o texto dele descer.
-                saveDocumentBody(true, true);
-                return; // Impede que o resto da lógica de divisão seja executado.
-            }
-            // --- FIM DA NOVA LÓGICA DE CORREÇÃO ---
-            
-            event.preventDefault(); 
-            saveStateForUndo();
-
-            // Cenário A: O span está vazio (o caso [vazio]). Vamos transformá-lo em uma linha normal.
-            if (parentSpan.textContent.trim() === '') {
-                parentSpan.remove();
-                if (parentBlock.innerHTML.trim() === '') {
-                    parentBlock.innerHTML = '<br>';
-                }
-                selection.collapse(parentBlock, 0);
-            }
-            // Cenário B: O cursor está no final de um span com conteúdo. Vamos "escapar".
-            else if (range.collapsed && isCursorAtEnd(parentSpan, range)) {
-                const newCleanParagraph = document.createElement('p');
-                newCleanParagraph.innerHTML = '<br>';
-                newCleanParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
-                newCleanParagraph.style.fontSize = DEFAULT_FONT_SIZE;
-                newCleanParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
-                parentBlock.parentNode.insertBefore(newCleanParagraph, parentBlock.nextSibling);
-                selection.collapse(newCleanParagraph, 0); 
-            }
-            // Cenário C: O cursor está no meio de um span com conteúdo. Vamos dividi-lo.
-            else {
-                const rangeToEndOfBlock = document.createRange();
-                rangeToEndOfBlock.setStart(range.startContainer, range.startOffset);
-                rangeToEndOfBlock.setEnd(parentBlock, parentBlock.childNodes.length);
-                const contentToMove = rangeToEndOfBlock.extractContents();
-                const newReferencedParagraph = document.createElement('p');
-                newReferencedParagraph.appendChild(contentToMove);
-                newReferencedParagraph.style.fontFamily = getComputedStyle(parentBlock).fontFamily;
-                newReferencedParagraph.style.fontSize = getComputedStyle(parentBlock).fontSize;
-                newReferencedParagraph.style.lineHeight = getComputedStyle(parentBlock).lineHeight;
-                if (newReferencedParagraph.innerHTML.trim() === '') {
-                    newReferencedParagraph.innerHTML = '<br>';
-                }
-                parentBlock.parentNode.insertBefore(newReferencedParagraph, parentBlock.nextSibling);
-                selection.collapse(newReferencedParagraph, 0);
-            }
-            saveDocumentBody(true, true);
-        }
-    }
-});
-
-// Função auxiliar para verificar se o cursor está no final de um elemento.
-// Adicione esta função em algum lugar no seu script, fora de outras funções.
-function isCursorAtEnd(element, range) {
-    if (!range.collapsed) return false;
-
-    let testRange = range.cloneRange();
-    testRange.selectNodeContents(element);
-    testRange.setStart(range.endContainer, range.endOffset);
-
-    return testRange.toString().trim() === '';
-}
-
-    wrapper.appendChild(chapterDiv);
-    editorsContainer.appendChild(wrapper);
-    updateChapterActionButtonsState();
-    if (focusAfterCreation) {
-        placeCursorAtEndOf(chapterDiv);
-        chapterDiv.focus({ preventScroll: true });
-        activeEditorElement = chapterDiv;
-    }
-    return wrapper;
-}
-function isCursorAtStartOfBlock(blockElement, range) {
-    if (!range.collapsed) return false;
-    const testRange = document.createRange();
-    testRange.selectNodeContents(blockElement);
-    testRange.setEnd(range.startContainer, range.startOffset);
-    return testRange.toString().trim() === '';
-}
-function updateChapterActionButtonsState() {
-    if (!editorsContainer) return;
-    const chapterWrappers = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));
-    const totalChapters = chapterWrappers.length;
-    chapterWrappers.forEach((wrapper, index) => {
-        const upBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(1)'); 
-        const downBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(2)'); 
-        const removeBtn = wrapper.querySelector('.chapter-toolbar button:nth-child(7)'); // Ajustado o índice para o botão de remover
-        if (upBtn) upBtn.disabled = (index === 0);
-        if (downBtn) downBtn.disabled = (index === totalChapters - 1);
-        if (removeBtn) removeBtn.disabled = (totalChapters <= 1);
-    });
-}
-function handleHideChapter(chapterWrapperElement) {
-    const visibleChapters = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).filter(w => w.style.display !== 'none');
-    if (visibleChapters.length <= 1) {
-        return alert("Não é possível ocultar o único capítulo visível.");
-    }
-
-    if (window.confirm("Tem certeza de que deseja OCULTAR este capítulo? Ele poderá ser restaurado a qualquer momento.")) {
-        saveStateForUndo();
-        const chapterIdToHide = chapterWrapperElement.dataset.chapterId;
-
-        // Encontra o capítulo no nosso objeto de dados
-        const chapterIndex = currentDocumentData.corpo.findIndex(ch => ch.id === chapterIdToHide);
-        if (chapterIndex > -1) {
-            // Marca como oculto em vez de remover
-            currentDocumentData.corpo[chapterIndex].isHidden = true;
-            
-            // Oculta visualmente da tela
-            chapterWrapperElement.style.display = 'none';
-
-            updateChapterActionButtonsState();
-            saveDocumentBody(true, true); // Salva a mudança no Firebase
-            console.log(`Capítulo ${chapterIdToHide} ocultado.`);
-        }
-    }
-}
-
-function handleFormatFontFamily(chapterWrapperElement) {
-    const editorDiv = chapterWrapperElement.querySelector('.text-editor-chapter');
-    if (!editorDiv) return;
-    saveStateForUndo();
-    editorDiv.querySelectorAll('p, div, span, strong, em, b, i, u').forEach(el => {
-        el.style.fontFamily = DEFAULT_FONT_FAMILY;
-    });
-    saveDocumentBody(true, false);
-    alert('Fonte do capítulo formatada para Arial.');
-}
-function handleFormatFontSize(chapterWrapperElement) {
-    const editorDiv = chapterWrapperElement.querySelector('.text-editor-chapter');
-    if (!editorDiv) return;
-    saveStateForUndo();
-    editorDiv.querySelectorAll('p, div, span, strong, em, b, i, u').forEach(el => {
-        el.style.fontSize = DEFAULT_FONT_SIZE;
-    });
-    saveDocumentBody(true, false);
-    alert('Tamanho da fonte do capítulo formatado para 25px.');
-}
-function handleMoveChapter(chapterWrapperElement, direction) {
-    if (!editorsContainer || !chapterWrapperElement) return;
-    const sibling = direction === 'up' ? chapterWrapperElement.previousElementSibling : chapterWrapperElement.nextElementSibling;
-    if (sibling) {
-        saveStateForUndo();
-        const parent = chapterWrapperElement.parentNode;
-        parent.insertBefore(direction === 'up' ? chapterWrapperElement : sibling, direction === 'up' ? sibling : chapterWrapperElement);
-        if (currentDocumentData?.corpo) {
-            const newOrderIds = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(w => w.dataset.chapterId);
-            currentDocumentData.corpo.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
-        }
-        updateChapterActionButtonsState();
-        saveDocumentBody(true, true);
-    }
-}
-
-// Funções do Editor e Documento
-function placeCursorAtEndOf(element) {
-    if (!element) return;
-    const sel = window.getSelection();
-    if (sel) {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        range.collapse(false); // Colapsa para o final
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
-}
-function showEditorInterfaceScreen() { 
-    initialScreenDiv.style.display = 'none'; 
-    editorInterfaceDiv.style.display = 'block'; 
-}
-async function showInitialScreen() {
-    editorInterfaceDiv.style.display = 'none';
-    initialScreenDiv.style.display = 'block';
-    currentDocId = null; currentDocumentData = null;
-    docTitleInput.value = '';
-    editorsContainer.innerHTML = '';
-    referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
-    hideFloatingToolbar(); hideReferenceEyeToolbar();
-}
-async function createNewDocument() {
-    undoStack = []; redoStack = [];
-    showEditorInterfaceScreen();
-    currentDocId = generateId('doc-');
-    const initialChapterId = generateId('chptr-');
-    const initialChapterHTML = `<p style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${DEFAULT_FONT_SIZE}; line-height: ${DEFAULT_LINE_HEIGHT};"><br></p>`;
-    currentDocumentData = { titulo: "Novo Documento Sem Título", corpo: [{ id: initialChapterId, html: initialChapterHTML }], referencias: [], criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() };
-    try {
-        await setDoc(doc(db, "documentos", currentDocId), currentDocumentData);
-        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
-    } catch (e) { console.error("Erro ao criar novo documento:", e); alert("Erro ao criar documento."); }
-}
-async function loadDocument(id) { 
-    if (!id) return; 
-    undoStack = []; redoStack = [];
-    showEditorInterfaceScreen(); 
-    editorsContainer.innerHTML = "<p>Carregando...</p>"; 
-    docTitleInput.value = "Carregando..."; 
-    referencesListUl.innerHTML = "<li>Carregando...</li>"; 
-    currentDocId = id; 
-    try { 
-        const docSnap = await getDoc(doc(db, "documentos", currentDocId)); 
-        if (docSnap.exists()) { 
-            currentDocumentData = docSnap.data(); 
-            displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias); 
-        } else { 
-            alert("Documento não encontrado."); await showInitialScreen(); 
-        } 
-    } catch (e) { console.error("Erro ao carregar documento:", e); alert("Erro ao carregar o documento."); await showInitialScreen(); } 
-}
-// Coloque esta função junto com as outras funções do seu script
-function handleViewReference() {
-    if (!referenceEyeToolbar || !referenceEyeToolbar.dataset.refId) return;
-
-    const refId = referenceEyeToolbar.dataset.refId;
-    const refListItem = referencesListUl.querySelector(`li.reference-item[data-ref-id="${refId}"]`);
-
-    clearEditorHighlights(); // Reutiliza sua função para limpar destaques antigos
-
-    if (refListItem) {
-        refListItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        refListItem.classList.add('highlight-scroll'); // Reutiliza sua classe de destaque
-        setTimeout(clearEditorHighlights, 2500); // Remove o destaque após 2.5s
-    } else {
-        alert("Detalhes da referência não encontrados na lista.");
-    }
-    hideReferenceEyeToolbar(); // Esconde a barra de ferramentas após o uso
-}
-function displayDocumentContent(title, corpoData, references = []) {
-    docTitleInput.value = title || "";
-    editorsContainer.innerHTML = '';
-    activeEditorElement = null;
-
-    let chaptersToRender = (corpoData && corpoData.length > 0) ? corpoData : [{ id: generateId('chptr-'), html: '' }];
-    
-    // Agora, iteramos sobre TODOS os capítulos, visíveis ou não.
-    chaptersToRender.forEach(chapterObj => {
-        // Criamos o elemento para cada um.
-        const wrapper = createNewChapterElement(chapterObj.html, chapterObj.id);
-
-        // SE o capítulo estiver marcado como oculto, nós o escondemos com CSS.
-        if (chapterObj.isHidden) {
-            wrapper.style.display = 'none';
-        }
-    });
-
-    editorsContainer.querySelectorAll('.text-editor-chapter').forEach(editor => updateEmptyReferenceSpansStyles(editor));
-    updateChapterActionButtonsState();
-    renderReferences();
-}
-async function saveDocumentBody(forceImmediateSave = false, isStructuralChange = false) {
-    if (!currentDocId || !editorsContainer || !currentDocumentData) return;
-    if (!forceImmediateSave) return;
-
-    // Percorre a nossa fonte de dados confiável (currentDocumentData.corpo)
-    currentDocumentData.corpo.forEach(chapter => {
-        // Tenta encontrar o elemento correspondente na tela
-        const wrapperElement = editorsContainer.querySelector(`.chapter-wrapper[data-chapter-id="${chapter.id}"]`);
-
-        // Se o elemento existe na tela (ou seja, é um capítulo visível),
-        // atualizamos seu conteúdo HTML na nossa estrutura de dados.
-        if (wrapperElement && wrapperElement.style.display !== 'none') {
-            chapter.html = wrapperElement.querySelector('.text-editor-chapter').innerHTML;
-        }
-        // Se o capítulo está oculto, não fazemos nada, pois seu estado 'isHidden: true'
-        // e seu conteúdo HTML já estão corretos em 'currentDocumentData.corpo'.
-    });
-
-    try {
-        // Agora salvamos a estrutura de dados 'corpo' inteira e correta no Firebase.
-        await updateDoc(doc(db, "documentos", currentDocId), {
-            corpo: currentDocumentData.corpo,
-            atualizadoEm: serverTimestamp()
-        });
-        console.log("Corpo do documento salvo com sucesso, incluindo o estado 'oculto'.");
-    } catch (e) {
-        console.error("Erro ao salvar corpo do documento:", e);
-    }
-}
-async function saveDocumentTitle() { 
-    if (!currentDocId || !docTitleInput) return; 
-    const newTitle = docTitleInput.value.trim() || "Documento Sem Título"; 
-    saveStateForUndo();
-    try { 
-        await updateDoc(doc(db, "documentos", currentDocId), { titulo: newTitle, atualizadoEm: serverTimestamp() }); 
-        if(currentDocumentData) currentDocumentData.titulo = newTitle; 
-    } catch (e) { 
-        console.error("Erro ao salvar título do documento:", e); 
-        alert("Falha ao salvar o título."); 
-    } 
-}
-async function addReferenceToDocument(title) {
-    saveStateForUndo();
-
-    if (!rangeForPendingReference) {
-        alert("Erro: Nenhuma seleção de texto foi encontrada para criar o link. Por favor, selecione o texto novamente.");
-        hidePopup(addReferencePopup);
-        return;
-    }
-
-    const urls = Array.from(document.querySelectorAll('#addRefUrlsContainer .ref-url-input'))
-                      .map(input => input.value.trim())
-                      .filter(Boolean);
-
-    if (urls.length === 0) {
-        return alert("É necessário fornecer pelo menos uma URL para a referência.");
-    }
-
-    const newRefId = generateId('ref-');
-    const newReference = { id: newRefId, tituloReferencia: title, urls: urls };
-    const span = document.createElement('span');
-    span.className = 'referenced-text';
-    span.dataset.refId = newRefId;
-
-    try {
-        rangeForPendingReference.surroundContents(span);
-    } catch (e) {
-        span.textContent = rangeForPendingReference.toString();
-        rangeForPendingReference.deleteContents();
-        rangeForPendingReference.insertNode(span);
-    }
-
-    if (!currentDocumentData.referencias) currentDocumentData.referencias = [];
-    currentDocumentData.referencias.push(newReference);
-
-    try {
-        const chapterDataForSave = Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(wrapper => ({
-            id: wrapper.dataset.chapterId,
-            html: wrapper.querySelector('.text-editor-chapter').innerHTML
-        }));
-        currentDocumentData.corpo = chapterDataForSave;
+        const initialScreenDiv=document.getElementById('initialScreen'),editorInterfaceDiv=document.getElementById('editorInterface'),initNewDocBtn=document.getElementById('initNewDocBtn'),initLoadDocBtn=document.getElementById('initLoadDocBtn'),backToInitialScreenBtn=document.getElementById('backToInitialScreenBtn'),editorsContainer=document.getElementById('editorsContainer'),addChapterBtn=document.getElementById('addChapterBtn'),floatingToolbar=document.getElementById('floatingToolbar'),attachLinkBtn=document.getElementById('attachLinkBtn'),removeLinkBtn=document.getElementById('removeLinkBtn'),appendToRefBtn=document.getElementById('appendToRefBtn'),docTitleInput=document.getElementById('docTitle'),referencesListUl=document.getElementById('referencesList'),addReferencePopup=document.getElementById('addReferencePopup'),refTitleInput=document.getElementById('refTitleInput'),saveNewRefBtnElement=document.getElementById('saveNewRefBtnElement'),editReferencePopup=document.getElementById('editReferencePopup'),editRefTitleInput=document.getElementById('editRefTitleInput'),editingRefIdInput=document.getElementById('editingRefIdInput'),saveEditedRefBtn=document.getElementById('saveEditedRefBtn'),deleteRefBtn=document.getElementById('deleteRefBtn'),loadDocumentPopup=document.getElementById('loadDocumentPopup'),documentsListContainerUl=document.querySelector('#documentsListContainer ul'),documentsListContainerMsg=document.querySelector('#documentsListContainer p'),addMoreUrlsToAddPopupBtn=document.getElementById('addMoreUrlsToAddPopupBtn'),addMoreUrlsToEditPopupBtn=document.getElementById('addMoreUrlsToEditPopupBtn'),referenceEyeToolbar=document.getElementById('referenceEyeToolbar'),viewReferenceFromToolbarBtn=document.getElementById('viewReferenceFromToolbarBtn'),splitAndInsertBtn=document.getElementById('splitAndInsertBtn'),selectExistingRefPopup=document.getElementById('selectExistingRefPopup'),existingRefListContainer=document.getElementById('existingRefListContainer'),confirmAppendRefBtn=document.getElementById('confirmAppendRefBtn'),splitChapterPopup=document.getElementById('splitChapterPopup'),confirmSplitBtn=document.getElementById('confirmSplitBtn'),cancelSplitBtn=document.getElementById('cancelSplitBtn'),showHiddenBtn=document.getElementById('showHiddenBtn'),showBackupBtn=document.getElementById('showBackupBtn'),backupPopup=document.getElementById('backupPopup'),createBackupBtn=document.getElementById('createBackupBtn'),backupListContainer=document.getElementById('backupListContainer'),archiveDocBtn=document.getElementById('archiveDocBtn');
         
-        await updateDoc(doc(db, "documentos", currentDocId), {
-            corpo: currentDocumentData.corpo,
-            referencias: currentDocumentData.referencias,
-            atualizadoEm: serverTimestamp()
-        });
+        let currentDocId, currentDocumentData, debounceTimer, currentSelectionRange, rangeForPendingReference, activeEditorElement, activeReferencedTextSpanForEye, rangeForSplitting, rangeForSplittingChapter;
+        let undoStack = [], redoStack = [];
+        const DEFAULT_FONT_SIZE = '25px', DEFAULT_FONT_FAMILY = 'Arial, sans-serif', DEFAULT_LINE_HEIGHT = '1.6';
 
-        renderReferences();
-        updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));
-        hidePopup(addReferencePopup);
-    } catch (error) {
-        console.error("Falha ao salvar a nova referência no Firebase:", error);
-        alert("Ocorreu um erro ao salvar a referência. Tente novamente.");
-    } finally {
-        rangeForPendingReference = null;
-    }
-}
-function showHiddenChaptersPopup() {
-    const hiddenChapters = (currentDocumentData?.corpo || []).filter(ch => ch.isHidden);
-    const listUl = document.querySelector('#hiddenChaptersListContainer ul');
-    const messageP = document.querySelector('#hiddenChaptersListContainer p');
-    listUl.innerHTML = '';
-
-    if (hiddenChapters.length === 0) {
-        messageP.style.display = 'block';
-    } else {
-        messageP.style.display = 'none';
-        hiddenChapters.forEach(chapter => {
-            const li = document.createElement('li');
-            
-            // Cria um preview do texto
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = chapter.html;
-            const previewText = tempDiv.textContent.trim().substring(0, 80) + '...';
-
-            li.innerHTML = `<span class="chapter-preview" title="${escapeHTML(tempDiv.textContent.trim())}">${escapeHTML(previewText)}</span>
-                            <button data-chapter-id="${chapter.id}">Re-exibir</button>`;
-            
-            li.querySelector('button').addEventListener('click', (e) => {
-                const chapterId = e.target.dataset.chapterId;
-                handleUnhideChapter(chapterId);
+        function generateId(p='e-'){return p+Date.now()+'-'+Math.random().toString(36).substring(2,7)}
+        function showPopup(el){if(el)el.classList.add('active')}
+        function hidePopup(el){if(el)el.classList.remove('active')}
+        function applyDefaultStylesToBlocks(c){if(!c)return;c.querySelectorAll('p, div').forEach(el=>{if(!el.style.fontSize)el.style.fontSize=DEFAULT_FONT_SIZE;if(!el.style.lineHeight)el.style.lineHeight=DEFAULT_LINE_HEIGHT;})}
+            function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        function createUrlInputEntry(cId,val='',canRemove=true){const c=document.getElementById(cId);if(!c)return;const ig=document.createElement('div');ig.className='url-input-group';const ui=document.createElement('input');ui.type='url';ui.className='ref-url-input';ui.placeholder='URL';ui.value=val;ig.appendChild(ui);if(canRemove){const rb=document.createElement('button');rb.type='button';rb.textContent='X';rb.addEventListener('click',()=>{ig.remove();if(c.childElementCount===0)createUrlInputEntry(c.id,'',false)});ig.appendChild(rb)}c.appendChild(ig)}
+        function formatDate(ts){if(!ts||!ts.toDate)return'Data inválida';const d=ts.toDate();return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+        
+        function syncDocumentStateFromDOM(){if(!editorsContainer||!currentDocumentData)return;currentDocumentData.titulo=docTitleInput.value.trim()||"Sem Título";const order=Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(w=>w.dataset.chapterId);const existingChapterIds=new Set(currentDocumentData.corpo.map(ch=>ch.id));editorsContainer.querySelectorAll('.chapter-wrapper').forEach(wrapper=>{if(!existingChapterIds.has(wrapper.dataset.chapterId)){currentDocumentData.corpo.push({id:wrapper.dataset.chapterId,html:'',isHidden:wrapper.style.display==='none'})}});currentDocumentData.corpo.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));currentDocumentData.corpo.forEach(ch=>{const wrapper=editorsContainer.querySelector(`.chapter-wrapper[data-chapter-id="${ch.id}"]`);if(wrapper&&wrapper.style.display!=='none'){ch.html=wrapper.querySelector('.text-editor-chapter').innerHTML}})}
+        function saveStateForUndo(){if(!currentDocumentData)return;syncDocumentStateFromDOM();undoStack.push(JSON.parse(JSON.stringify(currentDocumentData)));redoStack=[];if(undoStack.length>30)undoStack.shift()}
+        async function handleUndo(){if(undoStack.length===0)return;redoStack.push(JSON.parse(JSON.stringify(currentDocumentData)));const state=undoStack.pop();try{currentDocumentData=state;await updateDoc(doc(db,"documentos",currentDocId),{titulo:state.titulo,corpo:state.corpo,referencias:state.referencias,atualizadoEm:serverTimestamp()});displayDocumentContent(state.titulo,state.corpo,state.referencias)}catch(e){console.error("Erro ao desfazer:",e);undoStack.push(state);redoStack.pop();alert("Erro ao desfazer.")}}
+        async function handleRedo(){if(redoStack.length===0)return;undoStack.push(JSON.parse(JSON.stringify(currentDocumentData)));const state=redoStack.pop();try{currentDocumentData=state;await updateDoc(doc(db,"documentos",currentDocId),{titulo:state.titulo,corpo:state.corpo,referencias:state.referencias,atualizadoEm:serverTimestamp()});displayDocumentContent(state.titulo,state.corpo,state.referencias)}catch(e){console.error("Erro ao refazer:",e);redoStack.push(state);undoStack.pop();alert("Erro ao refazer.")}}
+        
+        function hideFloatingToolbar(){if(floatingToolbar)floatingToolbar.style.display='none'}
+        function showFloatingToolbar(){if(!currentSelectionRange||!activeEditorElement||!floatingToolbar||currentSelectionRange.collapsed)return;const r=currentSelectionRange.getBoundingClientRect();floatingToolbar.style.left=`${r.left+window.scrollX+(r.width/2)-(floatingToolbar.offsetWidth/2)}px`;floatingToolbar.style.top=`${r.top+window.scrollY-floatingToolbar.offsetHeight-10}px`;floatingToolbar.style.display='flex';const el=currentSelectionRange.commonAncestorContainer.nodeType===Node.ELEMENT_NODE?currentSelectionRange.commonAncestorContainer:currentSelectionRange.commonAncestorContainer.parentElement;const inRef=el.closest('span.referenced-text[data-ref-id]');attachLinkBtn.disabled=!!inRef;removeLinkBtn.disabled=!inRef;appendToRefBtn.disabled=!!inRef||!(currentDocumentData?.referencias?.length>0)}
+        function hideReferenceEyeToolbar(){if(referenceEyeToolbar)referenceEyeToolbar.style.display='none';if(activeReferencedTextSpanForEye){activeReferencedTextSpanForEye.classList.remove('eye-icon-active');activeReferencedTextSpanForEye=null}}
+        function showReferenceEyeToolbar(span){if(!referenceEyeToolbar||!span)return;hideFloatingToolbar();const r=span.getBoundingClientRect();referenceEyeToolbar.style.left=`${r.left+window.scrollX+(r.width/2)-(referenceEyeToolbar.offsetWidth/2)}px`;referenceEyeToolbar.style.top=`${r.top+window.scrollY-referenceEyeToolbar.offsetHeight-5}px`;referenceEyeToolbar.style.display='flex';referenceEyeToolbar.dataset.refId=span.dataset.refId;splitAndInsertBtn.disabled=!span.closest('.text-editor-chapter');if(activeReferencedTextSpanForEye&&activeReferencedTextSpanForEye!==span)activeReferencedTextSpanForEye.classList.remove('eye-icon-active');activeReferencedTextSpanForEye=span;activeReferencedTextSpanForEye.classList.add('eye-icon-active')}
+        
+        function showEditorInterfaceScreen(){initialScreenDiv.style.display='none';editorInterfaceDiv.style.display='block'}
+        async function showInitialScreen(){editorInterfaceDiv.style.display='none';initialScreenDiv.style.display='block';currentDocId=null;currentDocumentData=null;docTitleInput.value='';editorsContainer.innerHTML='';referencesListUl.innerHTML="<li>Nenhuma referência.</li>";hideFloatingToolbar();hideReferenceEyeToolbar()}
+        
+        async function createNewDocument(){undoStack=[];redoStack=[];showEditorInterfaceScreen();currentDocId=generateId('doc-');const chId=generateId('ch-');currentDocumentData={titulo:"Novo Documento",corpo:[{id:chId,html:''}],referencias:[],criadoEm:serverTimestamp(),atualizadoEm:serverTimestamp(),ativo:true};try{await setDoc(doc(db,"documentos",currentDocId),currentDocumentData);displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias)}catch(e){console.error("Erro ao criar documento:",e);alert("Erro ao criar documento.")}}
+        async function loadDocument(id){if(!id)return;undoStack=[];redoStack=[];showEditorInterfaceScreen();editorsContainer.innerHTML="<p>Carregando...</p>";docTitleInput.value="Carregando...";currentDocId=id;try{const docSnap=await getDoc(doc(db,"documentos",currentDocId));if(docSnap.exists()){currentDocumentData=docSnap.data();displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias)}else{alert("Documento não encontrado.");editorsContainer.innerHTML="<p>Documento não encontrado.</p>"}}catch(e){console.error("Erro ao carregar documento:",e);alert("Erro ao carregar o documento.");editorsContainer.innerHTML=`<p style="color:red;">Falha ao carregar: ${e.message}</p>`}}
+        async function saveDocumentBody(force=false){if(!currentDocId||!force)return;syncDocumentStateFromDOM();try{await updateDoc(doc(db,"documentos",currentDocId),{corpo:currentDocumentData.corpo,atualizadoEm:serverTimestamp()})}catch(e){console.error("Erro ao salvar corpo:",e)}}
+        async function saveDocumentTitle(){if(!currentDocId)return;const title=docTitleInput.value.trim()||"Sem Título";saveStateForUndo();try{await updateDoc(doc(db,"documentos",currentDocId),{titulo:title,atualizadoEm:serverTimestamp()});if(currentDocumentData)currentDocumentData.titulo=title}catch(e){console.error("Erro ao salvar título:",e)}}
+        function displayDocumentContent(title,corpo,refs){docTitleInput.value=title||"";editorsContainer.innerHTML='';activeEditorElement=null;(corpo&&corpo.length>0?corpo:[{id:generateId('ch-'),html:''}]).forEach(ch=>{const w=createNewChapterElement(ch.html,ch.id);if(ch.isHidden)w.style.display='none'});updateChapterActionButtonsState();renderReferences()}
+        
+        function updateEmptyReferenceSpansStyles(c){if(!c)return;c.querySelectorAll('span.referenced-text[data-ref-id]').forEach(s=>s.classList.toggle('referenced-text-empty',s.textContent.trim()===''))}
+        function createNewChapterElement(html='',id=null,focus=false){const wrapper=document.createElement('div');wrapper.className='chapter-wrapper';wrapper.dataset.chapterId=id||generateId('ch-');const toolbar=document.createElement('div');toolbar.className='chapter-toolbar';toolbar.innerHTML=`<button title="Cima">🔼</button><button title="Baixo">🔽</button><button title="Desfazer">↶</button><button title="Refazer">↷</button><button title="Fonte">T</button><button title="Tamanho">Aa</button><button title="Ocultar">🗑️</button><button title="Dividir">🔨</button>`;toolbar.children[0].addEventListener('click',e=>{e.stopPropagation();handleMoveChapter(wrapper,'up')});toolbar.children[1].addEventListener('click',e=>{e.stopPropagation();handleMoveChapter(wrapper,'down')});toolbar.children[2].addEventListener('click',e=>{e.stopPropagation();handleUndo()});toolbar.children[3].addEventListener('click',e=>{e.stopPropagation();handleRedo()});toolbar.children[4].addEventListener('click',e=>{e.stopPropagation();handleFormatFontFamily(wrapper)});toolbar.children[5].addEventListener('click',e=>{e.stopPropagation();handleFormatFontSize(wrapper)});toolbar.children[6].addEventListener('click',e=>{e.stopPropagation();handleHideChapter(wrapper)});toolbar.children[7].addEventListener('click',e=>{e.stopPropagation();const editor=wrapper.querySelector('.text-editor-chapter');const sel=window.getSelection();if(sel.rangeCount>0&&editor.contains(sel.anchorNode))showSplitChapterPopup(wrapper,sel.getRangeAt(0));else alert("Clique no texto para dividir.")});wrapper.appendChild(toolbar);const chapterDiv=document.createElement('div');chapterDiv.className='text-editor-chapter';chapterDiv.setAttribute('contenteditable','true');chapterDiv.innerHTML=html.trim()===''?`<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`:html;applyDefaultStylesToBlocks(chapterDiv);updateEmptyReferenceSpansStyles(chapterDiv);let typingSaved=false;chapterDiv.addEventListener('focus',()=>{activeEditorElement=chapterDiv;document.querySelectorAll('.chapter-wrapper.active-chapter-wrapper').forEach(w=>w.classList.remove('active-chapter-wrapper'));wrapper.classList.add('active-chapter-wrapper');typingSaved=false});chapterDiv.addEventListener('input',()=>{const sel=window.getSelection();if(sel&&sel.isCollapsed&&sel.rangeCount>0){const n=sel.getRangeAt(0).startContainer;if(n.nodeType===Node.TEXT_NODE&&n.parentNode.classList.contains('referenced-text')){const s=n.parentNode;if(/\s+$/.test(n.textContent)&&sel.getRangeAt(0).startOffset===n.textContent.length){const sp=n.textContent.match(/\s+$/)[0];n.textContent=n.textContent.replace(/\s+$/,'');const sn=document.createTextNode(sp);s.parentNode.insertBefore(sn,s.nextSibling);const nr=document.createRange();nr.setStart(sn,sn.length);nr.collapse(true);sel.removeAllRanges();sel.addRange(nr)}}}if(!typingSaved){saveStateForUndo();typingSaved=true}clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{if(activeEditorElement===chapterDiv){applyDefaultStylesToBlocks(chapterDiv);updateEmptyReferenceSpansStyles(chapterDiv);saveDocumentBody(true)}},1500)});chapterDiv.addEventListener('paste',e=>{saveStateForUndo();e.preventDefault();const text=(e.clipboardData||window.clipboardData).getData('text/plain');if(text){document.execCommand('insertText',false,text);setTimeout(()=>{if(activeEditorElement){applyDefaultStylesToBlocks(activeEditorElement);updateEmptyReferenceSpansStyles(activeEditorElement)}saveDocumentBody(true)},0)}});chapterDiv.addEventListener('keydown',e=>{if(e.key==='Enter'){const sel=window.getSelection();if(!sel||!sel.rangeCount)return;const range=sel.getRangeAt(0);const span=range.startContainer.parentElement.closest('span.referenced-text');if(span){e.preventDefault();saveStateForUndo();const block=span.closest('p, div');if(isCursorAtEnd(span,range)){const p=document.createElement('p');p.innerHTML='<br>';Object.assign(p.style,{fontFamily:DEFAULT_FONT_FAMILY,fontSize:DEFAULT_FONT_SIZE,lineHeight:DEFAULT_LINE_HEIGHT});block.parentNode.insertBefore(p,block.nextSibling);sel.collapse(p,0)}else{const endRange=document.createRange();endRange.setStart(range.startContainer,range.startOffset);endRange.setEnd(block,block.childNodes.length);const content=endRange.extractContents();const p=document.createElement('p');p.appendChild(content);if(p.innerHTML.trim()==='')p.innerHTML='<br>';Object.assign(p.style,{fontFamily:getComputedStyle(block).fontFamily,fontSize:getComputedStyle(block).fontSize,lineHeight:getComputedStyle(block).lineHeight});block.parentNode.insertBefore(p,block.nextSibling);sel.collapse(p,0)}saveDocumentBody(true)}}});function isCursorAtEnd(el,r){if(!r.collapsed)return false;const tr=r.cloneRange();tr.selectNodeContents(el);tr.setStart(r.endContainer,r.endOffset);return tr.toString().trim()===''}wrapper.appendChild(chapterDiv);editorsContainer.appendChild(wrapper);updateChapterActionButtonsState();if(focus){placeCursorAtEndOf(chapterDiv);chapterDiv.focus({preventScroll:true});activeEditorElement=chapterDiv}return wrapper}
+        function updateChapterActionButtonsState(){const w=Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));w.forEach((el,i)=>{const up=el.querySelector('.chapter-toolbar button:nth-child(1)');if(up)up.disabled=(i===0);const down=el.querySelector('.chapter-toolbar button:nth-child(2)');if(down)down.disabled=(i===w.length-1);const rem=el.querySelector('.chapter-toolbar button:nth-child(7)');if(rem)rem.disabled=(w.length<=1)})}
+        function handleHideChapter(w){if(editorsContainer.querySelectorAll('.chapter-wrapper:not([style*="display: none"])').length<=1)return alert("Não pode ocultar.");if(window.confirm("Ocultar capítulo?")){saveStateForUndo();const id=w.dataset.chapterId;const i=currentDocumentData.corpo.findIndex(c=>c.id===id);if(i>-1){currentDocumentData.corpo[i].isHidden=true;w.style.display='none';updateChapterActionButtonsState();saveDocumentBody(true)}}}
+        function handleFormatFontFamily(w){const e=w.querySelector('.text-editor-chapter');if(!e)return;saveStateForUndo();e.querySelectorAll('p, div, span, strong, em, b, i, u').forEach(el=>el.style.fontFamily=DEFAULT_FONT_FAMILY);saveDocumentBody(true);alert('Fonte formatada.')}
+        function handleFormatFontSize(w){const e=w.querySelector('.text-editor-chapter');if(!e)return;saveStateForUndo();e.querySelectorAll('p, div, span, strong, em, b, i, u').forEach(el=>el.style.fontSize=DEFAULT_FONT_SIZE);saveDocumentBody(true);alert('Tamanho formatado.')}
+        function handleMoveChapter(w,dir){const s=dir==='up'?w.previousElementSibling:w.nextElementSibling;if(s){saveStateForUndo();const p=w.parentNode;p.insertBefore(dir==='up'?w:s,dir==='up'?s:w);updateChapterActionButtonsState();saveDocumentBody(true)}}
+        function placeCursorAtEndOf(el){if(!el)return;const s=window.getSelection();const r=document.createRange();r.selectNodeContents(el);r.collapse(false);s.removeAllRanges();s.addRange(r)}
+        
+        function showAddReferencePopup(){if(!activeEditorElement||!currentSelectionRange||currentSelectionRange.collapsed)return alert("Selecione texto para criar o link.");rangeForPendingReference=currentSelectionRange.cloneRange();refTitleInput.value="";document.getElementById('addRefUrlsContainer').innerHTML='';createUrlInputEntry('addRefUrlsContainer','',false);showPopup(addReferencePopup);refTitleInput.focus()}
+        async function addReferenceToDocument(title){saveStateForUndo();if(!rangeForPendingReference){alert("Nenhuma seleção.");hidePopup(addReferencePopup);return}const urls=Array.from(document.querySelectorAll('#addRefUrlsContainer .ref-url-input')).map(i=>i.value.trim()).filter(Boolean);if(urls.length===0)return alert("Pelo menos uma URL.");const newRef={id:generateId('ref-'),tituloReferencia:title,urls:urls};const span=document.createElement('span');span.className='referenced-text';span.dataset.refId=newRef.id;try{rangeForPendingReference.surroundContents(span);if(!currentDocumentData.referencias)currentDocumentData.referencias=[];currentDocumentData.referencias.push(newRef);await saveDocumentBody(true);await updateDoc(doc(db,"documentos",currentDocId),{referencias:currentDocumentData.referencias});renderReferences();updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));hidePopup(addReferencePopup);rangeForPendingReference=null}catch(e){console.error("Falha ao salvar referência:",e);alert("Erro ao salvar.")}}
+        function renderReferences(){if(!referencesListUl||!editorsContainer)return;referencesListUl.innerHTML="";const refs=currentDocumentData?.referencias||[];if(refs.length===0){referencesListUl.innerHTML="<li>Nenhuma referência.</li>";return}const idsInText=new Set(Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]')).map(s=>s.dataset.refId));refs.forEach(r=>{const li=document.createElement('li');li.className='reference-item';li.classList.toggle('reference-item-unlinked',!idsInText.has(r.id));li.dataset.refId=r.id;const urlsHTML=(r.urls||[]).map(u=>`<a>${escapeHTML(u)}</a>`).join('<br>');li.innerHTML=`<div class="ref-content"><span class="ref-title" data-ref-id="${r.id}">${escapeHTML(r.tituloReferencia)}:</span><div style="margin-top:3px;font-size:0.9em;">${urlsHTML}</div></div><button class="edit-ref-btn" data-ref-id="${r.id}">✎</button>`;referencesListUl.appendChild(li)})}
+        function openEditReferencePopup(id){const r=currentDocumentData?.referencias.find(ref=>ref.id===id);if(!r)return;editingRefIdInput.value=id;editRefTitleInput.value=r.tituloReferencia;const c=document.getElementById('editRefUrlsContainer');c.innerHTML='';(r.urls||[]).forEach(u=>createUrlInputEntry('editRefUrlsContainer',u,true));if((r.urls||[]).length===0)createUrlInputEntry('editRefUrlsContainer','',false);showPopup(editReferencePopup)}
+        async function saveEditedReference(){const id=editingRefIdInput.value,title=editRefTitleInput.value.trim();if(!id||!title)return alert("Título obrigatório.");saveStateForUndo();const urls=Array.from(document.querySelectorAll('#editRefUrlsContainer .ref-url-input')).map(i=>i.value.trim()).filter(Boolean);if(urls.length===0)return alert("Pelo menos uma URL.");const i=currentDocumentData.referencias.findIndex(r=>r.id===id);if(i>-1){currentDocumentData.referencias[i].tituloReferencia=title;currentDocumentData.referencias[i].urls=urls;await updateDoc(doc(db,"documentos",currentDocId),{referencias:currentDocumentData.referencias});renderReferences();hidePopup(editReferencePopup)}}
+        async function deleteReference(){const id=editingRefIdInput.value;if(!id||!window.confirm("Excluir referência e marcações?"))return;saveStateForUndo();editorsContainer.querySelectorAll(`span.referenced-text[data-ref-id="${id}"]`).forEach(s=>s.replaceWith(s.textContent));currentDocumentData.referencias=currentDocumentData.referencias.filter(r=>r.id!==id);await saveDocumentBody(true);await updateDoc(doc(db,"documentos",currentDocId),{referencias:currentDocumentData.referencias});renderReferences();hidePopup(editReferencePopup)}
+        async function handleUnlinkSelection(){const el=currentSelectionRange.commonAncestorContainer.nodeType!==Node.ELEMENT_NODE?currentSelectionRange.commonAncestorContainer.parentElement:currentSelectionRange.commonAncestorContainer;const s=el.closest('span.referenced-text[data-ref-id]');if(s){saveStateForUndo();s.replaceWith(s.textContent);hideFloatingToolbar();renderReferences();await saveDocumentBody(true)}else{alert("Seleção não está em um link.")}}
+        
+        function createLoadPopupActions(actionsContainer, isArchivedView) {
+            actionsContainer.innerHTML = ''; 
+            const toggleBtn = document.createElement('button');
+            toggleBtn.textContent = isArchivedView ? 'Carregar Documento' : 'Recuperar Documento';
+            toggleBtn.addEventListener('click', () => {
+                if (isArchivedView) {
+                    showLoadDocumentsPopup();
+                } else {
+                    showArchivedDocumentsList();
+                }
             });
-            listUl.appendChild(li);
-        });
-    }
-    showPopup(document.getElementById('hiddenChaptersPopup'));
-}
-
-// NOVO: Função para tornar um capítulo oculto visível novamente
-async function handleUnhideChapter(chapterId) {
-    saveStateForUndo();
-    const chapterIndex = currentDocumentData.corpo.findIndex(ch => ch.id === chapterId);
-    if (chapterIndex > -1) {
-        // Remove a marcação 'isHidden'
-        delete currentDocumentData.corpo[chapterIndex].isHidden;
-        
-        // Salva no Firebase
-        await saveDocumentBody(true, true);
-        
-        // Recarrega a visualização do documento para mostrar o capítulo restaurado
-        displayDocumentContent(currentDocumentData.titulo, currentDocumentData.corpo, currentDocumentData.referencias);
-        
-        // Atualiza a lista no pop-up (o capítulo restaurado desaparecerá dela)
-        showHiddenChaptersPopup();
-        
-        // Se não houver mais capítulos ocultos, fecha o pop-up
-        const remainingHidden = (currentDocumentData?.corpo || []).filter(ch => ch.isHidden);
-        if (remainingHidden.length === 0) {
-            hidePopup(document.getElementById('hiddenChaptersPopup'));
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Fechar';
+            closeBtn.className = 'close-popup-btn';
+            closeBtn.addEventListener('click', () => hidePopup(loadDocumentPopup));
+            actionsContainer.appendChild(toggleBtn);
+            actionsContainer.appendChild(closeBtn);
         }
-    }
-}
-function updateEmptyReferenceSpansStyles(container) {
-    if (!container) return;
-    container.querySelectorAll('span.referenced-text[data-ref-id]').forEach(span => {
-        if (span.textContent.trim() === '') span.classList.add('referenced-text-empty');
-        else span.classList.remove('referenced-text-empty');
-    });
-}
-function renderReferences() {
-    if (!referencesListUl || !editorsContainer) return;
-    referencesListUl.innerHTML = "";
 
-    const allRefsOriginal = currentDocumentData?.referencias || [];
-    if (allRefsOriginal.length === 0) {
-        referencesListUl.innerHTML = "<li>Nenhuma referência adicionada.</li>";
-        return;
-    }
-
-    // --- INÍCIO DA NOVA LÓGICA DE ORDENAÇÃO ---
-
-    // 1. Encontrar todas as marcações de referência no texto, na ordem em que aparecem.
-    const refSpansInText = editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]');
-
-    // 2. Criar uma lista de IDs de referência únicos, na ordem de sua primeira aparição.
-    const orderedRefIds = [];
-    const seenIds = new Set();
-    refSpansInText.forEach(span => {
-        const refId = span.dataset.refId;
-        if (refId && !seenIds.has(refId)) {
-            seenIds.add(refId);
-            orderedRefIds.push(refId);
+        async function showLoadDocumentsPopup(){if(!loadDocumentPopup)return;showPopup(loadDocumentPopup);loadDocumentPopup.querySelector('h3').textContent = 'Carregar Documento Existente';createLoadPopupActions(loadDocumentPopup.querySelector('.popup-actions'), false);documentsListContainerUl.innerHTML="";documentsListContainerMsg.textContent="Carregando...";documentsListContainerMsg.style.display='block';try{const snap=await getDocs(query(collection(db,"documentos"),where("ativo","!=",false),orderBy("atualizadoEm","desc")));documentsListContainerMsg.style.display=snap.empty?'block':'none';if(snap.empty){documentsListContainerMsg.textContent="Nenhum documento ativo.";return}snap.forEach(d=>{const data=d.data();const li=document.createElement('li');li.innerHTML=`<span>${escapeHTML(data.titulo)||"Sem Título"}</span><button class="edit-btn" data-doc-id="${d.id}">Editar</button>`;li.querySelector('button').addEventListener('click',e=>{hidePopup(loadDocumentPopup);loadDocument(e.target.dataset.docId)});documentsListContainerUl.appendChild(li)})}catch(e){console.error("Erro ao carregar docs:",e);documentsListContainerMsg.textContent="Erro ao carregar."}}
+        
+        async function handleArchiveDocument() {
+            if (!currentDocId) return;
+            if (!confirm("Tem a certeza que deseja arquivar este documento? Ele será movido para a lista de recuperação.")) return;
+            try {
+                await updateDoc(doc(db, "documentos", currentDocId), { ativo: false, atualizadoEm: serverTimestamp() });
+                alert("Documento arquivado com sucesso.");
+                await showInitialScreen();
+            } catch (e) {
+                console.error("Erro ao arquivar o documento:", e);
+                alert("Ocorreu um erro ao tentar arquivar o documento.");
+            }
         }
-    });
 
-    // 3. Clonar o array de referências para poder ordená-lo.
-    const sortedRefs = [...allRefsOriginal];
-
-    // 4. Ordenar o array de referências com base na lista de IDs ordenados.
-    // Referências não encontradas no texto (não utilizadas) serão movidas para o final.
-    sortedRefs.sort((a, b) => {
-        const indexA = orderedRefIds.indexOf(a.id);
-        const indexB = orderedRefIds.indexOf(b.id);
-
-        // Se 'a' não está no texto, mas 'b' está, 'a' vem depois.
-        if (indexA === -1 && indexB !== -1) return 1;
-        // Se 'b' não está no texto, mas 'a' está, 'b' vem depois.
-        if (indexB === -1 && indexA !== -1) return -1;
-        // Se ambos não estão no texto, mantém a ordem original entre eles.
-        if (indexA === -1 && indexB === -1) return 0;
-
-        // Se ambos estão no texto, ordena por sua posição de aparição.
-        return indexA - indexB;
-    });
-
-    // --- FIM DA NOVA LÓGICA DE ORDENAÇÃO ---
-
-    // 5. Renderizar a lista usando o array agora ordenado (sortedRefs).
-    const refIdsInTextNow = new Set(Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]')).map(span => span.dataset.refId));
-
-    sortedRefs.forEach(ref => {
-        const li = document.createElement('li');
-        li.className = 'reference-item';
-        // A classe 'unlinked' ainda é útil para destacar visualmente as que não estão no texto.
-        if (!refIdsInTextNow.has(ref.id)) {
-            li.classList.add('reference-item-unlinked');
+        async function showArchivedDocumentsList() {
+            if (!loadDocumentPopup) return;
+            loadDocumentPopup.querySelector('h3').textContent = 'Recuperar Documento Arquivado';
+            createLoadPopupActions(loadDocumentPopup.querySelector('.popup-actions'), true);
+            documentsListContainerUl.innerHTML = "";
+            documentsListContainerMsg.textContent = "Carregando...";
+            documentsListContainerMsg.style.display = 'block';
+            try {
+                const snap = await getDocs(query(collection(db, "documentos"), where("ativo", "==", false), orderBy("atualizadoEm", "desc")));
+                documentsListContainerMsg.style.display = snap.empty ? 'block' : 'none';
+                if (snap.empty) {
+                    documentsListContainerMsg.textContent = "Nenhum documento arquivado.";
+                    return;
+                }
+                snap.forEach(d => {
+                    const data = d.data();
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${escapeHTML(data.titulo) || "Sem Título"}</span><button class="restore-btn" data-doc-id="${d.id}">Restaurar</button>`;
+                    li.querySelector('button').addEventListener('click', e => handleRestoreDocument(e.target.dataset.docId));
+                    documentsListContainerUl.appendChild(li);
+                });
+            } catch (e) {
+                console.error("Erro ao carregar documentos arquivados:", e);
+                documentsListContainerMsg.textContent = "Erro ao carregar.";
+            }
         }
-        li.dataset.refId = ref.id;
-        const urlsHTML = (ref.urls || []).map(url => `<a>${escapeHTML(url)}</a>`).join('<br>');
-        li.innerHTML = `<div class="ref-content"><span class="ref-title" data-ref-id="${ref.id}">${escapeHTML(ref.tituloReferencia)}: </span><div style="margin-top: 3px; font-size: 0.9em;">${urlsHTML}</div></div><button class="edit-ref-btn" data-ref-id="${ref.id}">✎</button>`;
-        referencesListUl.appendChild(li);
-    });
-}
-function openEditReferencePopup(refId) {
-    const ref = currentDocumentData?.referencias.find(r => r.id === refId);
-    if (!ref || !editReferencePopup) return;
-    editingRefIdInput.value = refId;
-    editRefTitleInput.value = ref.tituloReferencia;
-    const urlsContainer = document.getElementById('editRefUrlsContainer');
-    urlsContainer.innerHTML = '';
-    (ref.urls || []).forEach(url => createUrlInputEntry('editRefUrlsContainer', url, true));
-    if ((ref.urls || []).length === 0) createUrlInputEntry('editRefUrlsContainer', '', false);
-    showPopup(editReferencePopup);
-}
-async function saveEditedReference() {
-    const id = editingRefIdInput.value;
-    const title = editRefTitleInput.value.trim();
-    if (!id || !title) return alert("Título é obrigatório.");
-    saveStateForUndo();
-    const urls = Array.from(document.querySelectorAll('#editRefUrlsContainer .ref-url-input')).map(input => input.value.trim()).filter(Boolean);
-    if (urls.length === 0) return alert("Pelo menos uma URL é obrigatória.");
-    const refIndex = currentDocumentData.referencias.findIndex(r => r.id === id);
-    if (refIndex !== -1) {
-        currentDocumentData.referencias[refIndex].tituloReferencia = title;
-        currentDocumentData.referencias[refIndex].urls = urls;
-        await updateDoc(doc(db, "documentos", currentDocId), { referencias: currentDocumentData.referencias });
-        renderReferences();
-        hidePopup(editReferencePopup);
-    }
-}
-async function deleteReference() { 
-    const refId = editingRefIdInput.value;
-    if (!refId || !window.confirm("Excluir esta referência e remover todas as suas marcações no texto?")) return;
-    saveStateForUndo();
-    
-    // Remove all span tags associated with this reference
-    editorsContainer.querySelectorAll(`span.referenced-text[data-ref-id="${refId}"]`).forEach(span => {
-        const textNode = document.createTextNode(span.textContent);
-        span.parentNode.replaceChild(textNode, span);
-        textNode.parentNode.normalize();
-    });
-
-    currentDocumentData.referencias = currentDocumentData.referencias.filter(r => r.id !== refId);
-    await saveDocumentBody(true, true); // Save body changes first
-    await updateDoc(doc(db, "documentos", currentDocId), { referencias: currentDocumentData.referencias });
-    
-    renderReferences();
-    hidePopup(editReferencePopup);
-}
-function clearEditorHighlights() { 
-    document.querySelectorAll('.highlight-scroll').forEach(el => el.classList.remove('highlight-scroll')); 
-}
-function navigateToReferencedTextInEditor(event) {
-    const refId = event.target.dataset.refId;
-    if (!refId) return;
-    const refSpanInEditor = editorsContainer.querySelector(`.text-editor-chapter span.referenced-text[data-ref-id="${refId}"]`);
-    const refListItem = referencesListUl.querySelector(`li.reference-item[data-ref-id="${refId}"]`);
-    clearEditorHighlights();
-    if (refSpanInEditor) {
-        refSpanInEditor.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        refSpanInEditor.classList.add('highlight-scroll');
-        if (refListItem) refListItem.classList.add('highlight-scroll');
-        setTimeout(clearEditorHighlights, 2500);
-    } else {
-        alert("Marcação da referência não encontrada no texto.");
-    }
-}
-function showAddReferencePopup() {
-    if (!activeEditorElement || !currentSelectionRange || currentSelectionRange.collapsed) return alert("Selecione texto para adicionar uma referência.");
-    rangeForPendingReference = currentSelectionRange.cloneRange();
-    refTitleInput.value = "";
-    const urlsContainer = document.getElementById('addRefUrlsContainer');
-    urlsContainer.innerHTML = '';
-    createUrlInputEntry('addRefUrlsContainer', '', false);
-    showPopup(addReferencePopup);
-    refTitleInput.focus();
-}
-async function showLoadDocumentsPopup() {
-    if (!loadDocumentPopup || !documentsListContainerUl || !documentsListContainerMsg) return;
-    showPopup(loadDocumentPopup);
-    documentsListContainerUl.innerHTML = "";
-    documentsListContainerMsg.textContent = "Carregando...";
-    documentsListContainerMsg.style.display = 'block';
-    try {
-        const q = query(collection(db, "documentos"), orderBy("atualizadoEm", "desc"));
-        const snap = await getDocs(q);
-        documentsListContainerMsg.style.display = snap.empty ? 'block' : 'none';
-        if (snap.empty) {
-            documentsListContainerMsg.textContent = "Nenhum documento encontrado.";
-            return;
-        }
-        snap.forEach(dS => {
-            const data = dS.data();
-            const li = document.createElement('li');
-            li.innerHTML = `<span>${escapeHTML(data.titulo) || "Sem Título"}</span><button data-doc-id="${dS.id}">Editar</button>`;
-            li.querySelector('button').addEventListener('click', e => {
+        
+        async function handleRestoreDocument(docId) {
+            try {
+                await updateDoc(doc(db, "documentos", docId), { ativo: true, atualizadoEm: serverTimestamp() });
+                alert("Documento restaurado com sucesso. A carregar para edição...");
                 hidePopup(loadDocumentPopup);
-                loadDocument(e.target.dataset.docId);
-            });
-            documentsListContainerUl.appendChild(li);
-        });
-    } catch (e) {
-        console.error("Erro ao buscar documentos para carregar:", e);
-        documentsListContainerMsg.textContent = "Erro ao carregar.";
-    }
-}
-async function handleUnlinkSelection() {
-    if (!currentSelectionRange) return;
-    let element = currentSelectionRange.commonAncestorContainer;
-    if (element.nodeType !== Node.ELEMENT_NODE) element = element.parentElement;
-    const refSpan = element.closest('span.referenced-text[data-ref-id]');
-
-    if (refSpan) {
-        saveStateForUndo();
-        const textNode = document.createTextNode(refSpan.textContent);
-        refSpan.parentNode.replaceChild(textNode, refSpan);
-        textNode.parentNode.normalize();
-        hideFloatingToolbar();
-        renderReferences();
-        await saveDocumentBody(true, true);
-    } else {
-        alert("A seleção não está dentro de um trecho com referência.");
-    }
-}
-function populateExistingRefsList() {
-    if (!existingRefListContainer || !currentDocumentData?.referencias) return;
-    existingRefListContainer.innerHTML = '';
-    if (currentDocumentData.referencias.length === 0) {
-        existingRefListContainer.innerHTML = `<div class="no-refs-message">Nenhuma referência existente</div>`;
-        confirmAppendRefBtn.disabled = true;
-        return;
-    }
-    currentDocumentData.referencias.forEach(ref => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'ref-list-item';
-        itemDiv.textContent = escapeHTML(ref.tituloReferencia);
-        itemDiv.dataset.refId = ref.id;
-        itemDiv.addEventListener('click', () => {
-            existingRefListContainer.querySelector('.selected')?.classList.remove('selected');
-            itemDiv.classList.add('selected');
-            confirmAppendRefBtn.disabled = false;
-        });
-        existingRefListContainer.appendChild(itemDiv);
-    });
-    confirmAppendRefBtn.disabled = true;
-}
-function showSelectExistingRefPopup() {
-    if (!activeEditorElement || !currentSelectionRange || currentSelectionRange.collapsed) {
-        return alert("Selecione o texto que deseja anexar a uma referência existente.");
-    }
-    rangeForPendingReference = currentSelectionRange.cloneRange();
-    populateExistingRefsList();
-    showPopup(selectExistingRefPopup);
-}
-async function appendSelectionToExistingRef() {
-    const selectedRefDiv = existingRefListContainer.querySelector('.ref-list-item.selected');
-    if (!selectedRefDiv || !rangeForPendingReference) return;
-
-    saveStateForUndo();
-    const refId = selectedRefDiv.dataset.refId;
-    const span = document.createElement('span');
-    span.className = 'referenced-text';
-    span.dataset.refId = refId;
-
-    try {
-        rangeForPendingReference.surroundContents(span);
-    } catch (e) {
-        span.textContent = rangeForPendingReference.toString();
-        rangeForPendingReference.deleteContents();
-        rangeForPendingReference.insertNode(span);
-    }
-
-    renderReferences();
-    updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));
-    hidePopup(selectExistingRefPopup);
-    await saveDocumentBody(true, true);
-    rangeForPendingReference = null;
-}
-// SUBSTITUA A FUNÇÃO ANTIGA POR ESTA:
-async function handleSplitSpanAndInsert(event) {
-    event.preventDefault(); 
-
-    if (!rangeForSplitting || !activeEditorElement) {
-        alert("Não foi possível determinar a posição do cursor para dividir o texto. Por favor, clique no texto novamente.");
-        hideReferenceEyeToolbar();
-        return;
-    }
-    
-    saveStateForUndo();
-    const parentBlock = rangeForSplitting.startContainer.parentElement.closest('p, div');
-
-    if (!parentBlock || !parentBlock.parentNode) {
-        alert("Erro ao encontrar o parágrafo para dividir.");
-        hideReferenceEyeToolbar();
-        return;
-    }
-
-    const rangeToEnd = document.createRange();
-    rangeToEnd.setStart(rangeForSplitting.startContainer, rangeForSplitting.startOffset);
-    rangeToEnd.setEnd(parentBlock, parentBlock.childNodes.length);
-
-    const contentToMove = rangeToEnd.extractContents();
-    const newParagraph = document.createElement('p');
-    newParagraph.style.fontFamily = DEFAULT_FONT_FAMILY;
-    newParagraph.style.fontSize = DEFAULT_FONT_SIZE;
-    newParagraph.style.lineHeight = DEFAULT_LINE_HEIGHT;
-    newParagraph.appendChild(contentToMove);
-
-    if (newParagraph.innerHTML.trim() === '') {
-        newParagraph.innerHTML = '<br>';
-    }
-
-    parentBlock.parentNode.insertBefore(newParagraph, parentBlock.nextSibling);
-
-    hideReferenceEyeToolbar();
-
-    // --- INÍCIO DA MUDANÇA ---
-    // Em vez de mover para o novo parágrafo, restauramos o cursor para sua posição original.
-    const selection = window.getSelection();
-    selection.removeAllRanges();         // Limpa a seleção atual
-    selection.addRange(rangeForSplitting); // Restaura a posição original do cursor
-    // --- FIM DA MUDANÇA ---
-    
-    activeEditorElement.focus();
-    
-    await saveDocumentBody(true, true);
-    rangeForSplitting = null; 
-}
-
-// GARANTA QUE O LISTENER ESTÁ USANDO 'mousedown':
-safelyAddEventListener(splitAndInsertBtn, 'mousedown', handleSplitSpanAndInsert);
-
-
-// Inicialização da Aplicação
-window.addEventListener('DOMContentLoaded', async () => {
-
-// --- Elementos para a nova funcionalidade de Ocultar ---
-const showHiddenBtn = document.getElementById('showHiddenBtn');
-const hiddenChaptersPopup = document.getElementById('hiddenChaptersPopup');
-
-// Função auxiliar para adicionar listeners de forma segura
-function safelyAddEventListener(element, eventType, listener) { 
-    if (element) element.addEventListener(eventType, listener); 
-}
-
-// Listeners originais
-safelyAddEventListener(viewReferenceFromToolbarBtn, 'click', handleViewReference);
-safelyAddEventListener(initNewDocBtn, 'click', createNewDocument);
-safelyAddEventListener(initLoadDocBtn, 'click', showLoadDocumentsPopup);
-safelyAddEventListener(backToInitialScreenBtn, 'click', showInitialScreen);
-safelyAddEventListener(docTitleInput, 'blur', saveDocumentTitle);
-safelyAddEventListener(addChapterBtn, 'click', () => {
-    saveStateForUndo();
-    createNewChapterElement('', null, true); 
-    saveDocumentBody(true, true); 
-});
-safelyAddEventListener(attachLinkBtn, 'click', showAddReferencePopup);
-safelyAddEventListener(removeLinkBtn, 'click', handleUnlinkSelection); 
-safelyAddEventListener(appendToRefBtn, 'click', showSelectExistingRefPopup);
-safelyAddEventListener(saveNewRefBtnElement, 'click', () => { if(refTitleInput.value.trim()) addReferenceToDocument(refTitleInput.value.trim()); });
-safelyAddEventListener(saveEditedRefBtn, 'click', saveEditedReference);
-safelyAddEventListener(deleteRefBtn, 'click', deleteReference);
-safelyAddEventListener(confirmAppendRefBtn, 'click', appendSelectionToExistingRef);
-safelyAddEventListener(splitAndInsertBtn, 'mousedown', handleSplitSpanAndInsert);
-safelyAddEventListener(addMoreUrlsToAddPopupBtn, 'click', () => createUrlInputEntry('addRefUrlsContainer', '', true));
-safelyAddEventListener(addMoreUrlsToEditPopupBtn, 'click', () => createUrlInputEntry('editRefUrlsContainer', '', true));
-
-// NOVO: Adiciona o listener para o botão "Ocultos"
-safelyAddEventListener(showHiddenBtn, 'click', showHiddenChaptersPopup);
-
-// Este seletor genérico já cobre todos os botões de fechar, incluindo o novo
-document.querySelectorAll('.close-popup-btn').forEach(btn => {
-    safelyAddEventListener(btn, 'click', () => {
-        hidePopup(btn.closest('.popup'));
-    });
-});
-
-// Listener para a lista de referências
-safelyAddEventListener(referencesListUl, 'click', e => {
-    if (e.target.classList.contains('ref-title')) navigateToReferencedTextInEditor(e);
-    if (e.target.classList.contains('edit-ref-btn')) openEditReferencePopup(e.target.dataset.refId);
-});
-
-// Listener para atalhos de teclado (Undo/Redo)
-document.addEventListener('keydown', (event) => {
-    if (editorInterfaceDiv.style.display === 'none' || document.querySelector('.popup.active')) return;
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); handleUndo(); }
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); handleRedo(); }
-});
-
-// Listener para a seleção de texto (gerencia as barras de ferramentas flutuantes)
-document.addEventListener('selectionchange', () => {
-    const sel = window.getSelection();
-    
-    if (!activeEditorElement || !sel || !sel.rangeCount) {
-        hideFloatingToolbar();
-        hideReferenceEyeToolbar();
-        return;
-    }
-
-    currentSelectionRange = sel.getRangeAt(0);
-
-    if (activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) {
-        if (sel.isCollapsed) {
-            hideFloatingToolbar();
-            const parentSpan = sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');
-            
-            if (parentSpan) {
-                rangeForSplitting = currentSelectionRange.cloneRange();
-                showReferenceEyeToolbar(parentSpan);
-            } else {
-                hideReferenceEyeToolbar();
+                await loadDocument(docId);
+            } catch (e) {
+                console.error("Erro ao restaurar o documento:", e);
+                alert("Ocorreu um erro ao tentar restaurar o documento.");
             }
-        } 
-        else if (sel.toString().trim() !== "") {
-            hideReferenceEyeToolbar();
-            showFloatingToolbar();
-        } 
-        else {
-            hideFloatingToolbar();
-            hideReferenceEyeToolbar();
         }
-    } 
-});
 
-// Inicia a aplicação na tela inicial
-await showInitialScreen(); 
-});
-    
-        function safelyAddEventListener(element, eventType, listener) { 
-            if (element) element.addEventListener(eventType, listener); 
-        }
+        function showHiddenChaptersPopup(){const h=(currentDocumentData?.corpo||[]).filter(c=>c.isHidden);const l=document.querySelector('#hiddenChaptersListContainer ul');l.innerHTML='';const m=document.querySelector('#hiddenChaptersListContainer p');if(h.length===0){m.style.display='block';m.textContent="Nenhum capítulo oculto."}else{m.style.display='none';h.forEach(c=>{const t=document.createElement('div');t.innerHTML=c.html;const p=t.textContent.trim().substring(0,80)+'...';const li=document.createElement('li');li.innerHTML=`<span class="chapter-preview" title="${escapeHTML(t.textContent.trim())}">${escapeHTML(p)}</span><button data-chapter-id="${c.id}">Re-exibir</button>`;li.querySelector('button').addEventListener('click',e=>handleUnhideChapter(e.target.dataset.chapterId));l.appendChild(li)})}showPopup(document.getElementById('hiddenChaptersPopup'))}
+        async function handleUnhideChapter(id){saveStateForUndo();const i=currentDocumentData.corpo.findIndex(c=>c.id===id);if(i>-1){delete currentDocumentData.corpo[i].isHidden;await saveDocumentBody(true);displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias);showHiddenChaptersPopup();if(!(currentDocumentData?.corpo||[]).some(c=>c.isHidden))hidePopup(document.getElementById('hiddenChaptersPopup'))}}
+        
+        function showSplitChapterPopup(wrapper,range){if(!range.collapsed)return alert("Posicione o cursor para dividir.");rangeForSplittingChapter=range.cloneRange();splitChapterPopup.dataset.sourceChapterId=wrapper.dataset.chapterId;showPopup(splitChapterPopup)}
+        async function executeChapterSplit(){const id=splitChapterPopup.dataset.sourceChapterId;if(!id||!rangeForSplittingChapter)return hidePopup(splitChapterPopup);saveStateForUndo();const w=editorsContainer.querySelector(`.chapter-wrapper[data-chapter-id="${id}"]`);const e=w.querySelector('.text-editor-chapter');if(!w||!e)return hidePopup(splitChapterPopup);const r=document.createRange();r.setStart(rangeForSplittingChapter.startContainer,rangeForSplittingChapter.startOffset);r.setEnd(e,e.childNodes.length);const c=r.extractContents();const t=document.createElement('div');t.appendChild(c);let h=t.innerHTML;if(h.trim()==='')h=`<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;if(e.innerHTML.trim()==='')e.innerHTML=`<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;const nw=createNewChapterElement(h,null,false);w.after(nw);rangeForSplittingChapter=null;hidePopup(splitChapterPopup);updateChapterActionButtonsState();saveDocumentBody(true)}
+
+        async function showBackupPopup(){if(!currentDocId)return;const listUl=backupListContainer.querySelector('ul'),msgP=backupListContainer.querySelector('p');listUl.innerHTML='';msgP.textContent='Carregando...';msgP.style.display='block';showPopup(backupPopup);try{const q=query(collection(db,"backups"),where("originalDocId","==",currentDocId),orderBy("backupTimestamp","desc"));const snap=await getDocs(q);if(snap.empty){msgP.textContent='Nenhum backup.'}else{msgP.style.display='none';snap.forEach(docSnap=>{const b=docSnap.data();const li=document.createElement('li');li.dataset.backupId=docSnap.id;li.innerHTML=`<span class="backup-date">${formatDate(b.backupTimestamp)}</span>`;li.addEventListener('click',()=>handleRestoreBackup(docSnap.id));listUl.appendChild(li)})}}catch(e){console.error("Erro ao carregar backups:",e);msgP.textContent='Erro ao carregar.'}}
+        async function handleCreateBackup(){if(!currentDocId||!currentDocumentData)return;syncDocumentStateFromDOM();createBackupBtn.disabled=true;createBackupBtn.textContent='A criar...';try{await addDoc(collection(db,"backups"),{originalDocId:currentDocId,backupTimestamp:serverTimestamp(),data:JSON.parse(JSON.stringify(currentDocumentData))});alert('Backup criado!');await showBackupPopup()}catch(e){console.error("Erro ao criar backup:",e);alert('Erro ao criar.')}finally{createBackupBtn.disabled=false;createBackupBtn.textContent='Criar Novo Backup'}}
+        async function handleRestoreBackup(id){try{const docSnap=await getDoc(doc(db,"backups",id));if(!docSnap.exists())return alert('Backup não encontrado.');const b=docSnap.data();localStorage.setItem('pendingRestore',JSON.stringify({titulo:`${b.data.titulo} (Backup ${formatDate(b.backupTimestamp)})`,corpo:b.data.corpo,referencias:b.data.referencias}));window.open(window.location.href,'_blank')}catch(e){console.error("Erro ao restaurar backup:",e);alert("Erro ao restaurar.")}}
+        async function createNewDocumentFromBackup(data){undoStack=[];redoStack=[];showEditorInterfaceScreen();currentDocId=generateId('doc-');currentDocumentData={...data,criadoEm:serverTimestamp(),atualizadoEm:serverTimestamp()};try{await setDoc(doc(db,"documentos",currentDocId),currentDocumentData);displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias)}catch(e){console.error("Erro ao criar doc do backup:",e);await showInitialScreen()}}
+        
+        function populateExistingRefsList(){if(!existingRefListContainer)return;const ul=existingRefListContainer.querySelector('ul')||document.createElement('ul');ul.innerHTML='';if(!(currentDocumentData?.referencias?.length>0)){ul.innerHTML=`<div class="no-refs-message">Nenhuma referência.</div>`;confirmAppendRefBtn.disabled=true;return}currentDocumentData.referencias.forEach(ref=>{const item=document.createElement('li');item.className='ref-list-item';item.textContent=escapeHTML(ref.tituloReferencia);item.dataset.refId=ref.id;item.addEventListener('click',()=>{ul.querySelector('.selected')?.classList.remove('selected');item.classList.add('selected');confirmAppendRefBtn.disabled=false});ul.appendChild(item)});if(!existingRefListContainer.querySelector('ul'))existingRefListContainer.appendChild(ul);confirmAppendRefBtn.disabled=true}
+        
+        window.addEventListener('DOMContentLoaded',async()=>{const pendingRestore=localStorage.getItem('pendingRestore');if(pendingRestore){localStorage.removeItem('pendingRestore');try{await createNewDocumentFromBackup(JSON.parse(pendingRestore))}catch(e){console.error("Falha ao processar backup:",e);await showInitialScreen()}}else{await showInitialScreen()}
+        function safely(el,ev,fn){if(el)el.addEventListener(ev,fn)}
+        safely(initNewDocBtn,'click',createNewDocument);
+        safely(initLoadDocBtn,'click',showLoadDocumentsPopup);
+        safely(backToInitialScreenBtn,'click',showInitialScreen);
+        safely(docTitleInput,'blur',saveDocumentTitle);
+        safely(addChapterBtn,'click',()=>{saveStateForUndo();createNewChapterElement('',null,true);saveDocumentBody(true)});
+        safely(attachLinkBtn,'click',showAddReferencePopup);
+        safely(removeLinkBtn,'click',handleUnlinkSelection);
+        safely(appendToRefBtn,'click',()=>{if(!activeEditorElement||!currentSelectionRange||currentSelectionRange.collapsed)return alert("Selecione texto para anexar.");rangeForPendingReference=currentSelectionRange.cloneRange();populateExistingRefsList();showPopup(selectExistingRefPopup)});
+        safely(viewReferenceFromToolbarBtn,'click',()=>{const id=referenceEyeToolbar.dataset.refId;if(!id)return;const i=referencesListUl.querySelector(`li.reference-item[data-ref-id="${id}"]`);document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));if(i){i.scrollIntoView({behavior:'smooth',block:'center'});i.classList.add('highlight-scroll');setTimeout(()=>document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')),2500)}else{alert("Referência não encontrada.")}hideReferenceEyeToolbar()});
+        safely(splitAndInsertBtn,'mousedown',e=>{e.preventDefault();if(!rangeForSplitting||!activeEditorElement)return alert("Posição inválida.");saveStateForUndo();const b=rangeForSplitting.startContainer.parentElement.closest('p, div');if(!b)return;const r=document.createRange();r.setStart(rangeForSplitting.startContainer,rangeForSplitting.startOffset);r.setEnd(b,b.childNodes.length);const c=r.extractContents();const p=document.createElement('p');Object.assign(p.style,{fontFamily:DEFAULT_FONT_FAMILY,fontSize:DEFAULT_FONT_SIZE,lineHeight:DEFAULT_LINE_HEIGHT});p.appendChild(c);if(p.innerHTML.trim()==='')p.innerHTML='<br>';b.parentNode.insertBefore(p,b.nextSibling);hideReferenceEyeToolbar();const s=window.getSelection();s.removeAllRanges();s.addRange(rangeForSplitting);activeEditorElement.focus();saveDocumentBody(true);rangeForSplitting=null});
+        safely(saveNewRefBtnElement,'click',()=>{if(refTitleInput.value.trim())addReferenceToDocument(refTitleInput.value.trim())});
+        safely(saveEditedRefBtn,'click',saveEditedReference);
+        safely(deleteRefBtn,'click',deleteReference);
+        safely(confirmAppendRefBtn,'click',()=>{const s=existingRefListContainer.querySelector('.selected');if(!s||!rangeForPendingReference)return;saveStateForUndo();const span=document.createElement('span');span.className='referenced-text';span.dataset.refId=s.dataset.refId;try{rangeForPendingReference.surroundContents(span)}catch(e){span.textContent=rangeForPendingReference.toString();rangeForPendingReference.deleteContents();rangeForPendingReference.insertNode(span)}renderReferences();updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));hidePopup(selectExistingRefPopup);saveDocumentBody(true);rangeForPendingReference=null});
+        safely(addMoreUrlsToAddPopupBtn,'click',()=>createUrlInputEntry('addRefUrlsContainer','',true));
+        safely(addMoreUrlsToEditPopupBtn,'click',()=>createUrlInputEntry('editRefUrlsContainer','',true));
+        safely(showHiddenBtn,'click',showHiddenChaptersPopup);
+        safely(showBackupBtn,'click',showBackupPopup);
+        safely(createBackupBtn,'click',handleCreateBackup);
+        safely(confirmSplitBtn,'click',executeChapterSplit);
+        safely(archiveDocBtn, 'click', handleArchiveDocument);
+        document.querySelectorAll('.close-popup-btn').forEach(btn=>safely(btn,'click',()=>hidePopup(btn.closest('.popup'))));
+        safely(referencesListUl,'click',e=>{if(e.target.classList.contains('ref-title')){const id=e.target.dataset.refId;if(!id)return;const span=editorsContainer.querySelector(`.text-editor-chapter span.referenced-text[data-ref-id="${id}"]`);const item=referencesListUl.querySelector(`li.reference-item[data-ref-id="${id}"]`);document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));if(span){span.scrollIntoView({behavior:'smooth',block:'center'});span.classList.add('highlight-scroll');if(item)item.classList.add('highlight-scroll');setTimeout(()=>document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')),2500)}else{alert("Marcação não encontrada.")}}if(e.target.classList.contains('edit-ref-btn'))openEditReferencePopup(e.target.dataset.refId)});
+        document.addEventListener('keydown',e=>{if(editorInterfaceDiv.style.display==='none'||document.querySelector('.popup.active'))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handleUndo()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();handleRedo()}});
+        document.addEventListener('selectionchange',()=>{const sel=window.getSelection();if(!activeEditorElement||!sel||!sel.rangeCount){hideFloatingToolbar();hideReferenceEyeToolbar();return}currentSelectionRange=sel.getRangeAt(0);if(activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){if(sel.isCollapsed){hideFloatingToolbar();const span=sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');if(span){rangeForSplitting=currentSelectionRange.cloneRange();showReferenceEyeToolbar(span)}else{hideReferenceEyeToolbar()}}else if(sel.toString().trim()!==''){hideReferenceEyeToolbar();showFloatingToolbar()}else{hideFloatingToolbar();hideReferenceEyeToolbar()}}});
+    });
     </script>
 </body>
 </html>
-
-</details>

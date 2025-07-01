@@ -361,21 +361,25 @@
         .edit-ref-btn:hover {
             color: #fff;
         }
-        #archiveDocBtn {
-            display: block;
-            width: 100%;
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        #archiveDocBtn:hover {
-            background-color: #c9302c;
-        }
+  
+        #docFooter {
+    text-align: center; /* Centraliza o link */
+    margin-top: 40px;   /* Aumenta a distância do conteúdo acima */
+    padding-top: 20px;  /* Espaçamento interno */
+    border-top: 1px solid var(--border-color); /* Linha sutil para separar */
+}
+
+#archiveDocLink {
+    color: #888; /* Cor cinza, bem discreta */
+    text-decoration: none; /* Remove o sublinhado padrão */
+    font-size: 0.9em; /* Fonte um pouco menor */
+    transition: color 0.2s ease; /* Transição suave para o hover */
+}
+
+#archiveDocLink:hover {
+    color: #d9534f; /* No hover, a cor fica vermelha para indicar a ação de perigo */
+    text-decoration: underline; /* Adiciona sublinhado no hover */
+}
     
         #editorsContainer .text-editor-chapter .referenced-text.highlight-scroll, .reference-item.highlight-scroll {
             background-color: rgba(255, 223, 100, 0.25) !important;
@@ -397,7 +401,11 @@
             <a href="notes.html" class="card">Studio: Notas</a>
         </div>
     </div>
-    <div id="editorInterface" style="display: none;"><div class="container"><div class="doc-actions" style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;"><button id="backToInitialScreenBtn">Voltar</button><button id="showHiddenBtn">Ocultos</button><button id="showBackupBtn">Backup</button></div><input type="text" id="docTitle" placeholder="Título"><div id="editorsContainer"></div><button id="addChapterBtn">+ Capítulo</button><div id="floatingToolbar" class="toolbar" style="display: none;"><button id="attachLinkBtn">🔗</button><button id="appendToRefBtn">➕🔗</button><button id="removeLinkBtn">🚫</button></div><div id="referencesSection"><h2>Referências</h2><ul id="referencesList"></ul></div><button id="archiveDocBtn">Arquivar Documento</button></div></div>
+    <div id="editorInterface" style="display: none;"><div class="container"><div class="doc-actions" style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;"><button id="backToInitialScreenBtn">Voltar</button><button id="showHiddenBtn">Ocultos</button><button id="showBackupBtn">Backup</button></div><input type="text" id="docTitle" placeholder="Título"><div id="editorsContainer"></div><button id="addChapterBtn">+ Capítulo</button><div id="floatingToolbar" class="toolbar" style="display: none;"><button id="attachLinkBtn">🔗</button><button id="appendToRefBtn">➕🔗</button><button id="removeLinkBtn">🚫</button></div><div id="referencesSection"><h2>Referências</h2><ul id="referencesList"></ul></div>
+    <div id="docFooter">
+        <a href="#" id="archiveDocLink">Arquivar este documento</a>
+    </div>
+</div></div>
     <div id="referenceEyeToolbar" class="toolbar" style="display: none;"><button id="viewReferenceFromToolbarBtn">👁️</button><button id="splitAndInsertBtn">✂️+📝</button></div>
     <div id="hiddenChaptersPopup" class="popup"><div class="popup-content"><h3>Ocultos</h3><div id="hiddenChaptersListContainer"><ul></ul><p>Nenhum.</p></div><div class="popup-actions"><button class="close-popup-btn">Fechar</button></div></div></div>
     <div id="backupPopup" class="popup"><div class="popup-content"><h3>Backups</h3><button id="createBackupBtn" style="width:100%; margin-bottom: 20px;">Criar Backup</button><div id="backupListContainer"><ul></ul><p>Nenhum.</p></div><div class="popup-actions"><button class="close-popup-btn">Fechar</button></div></div></div>
@@ -460,8 +468,65 @@
         
         function showAddReferencePopup(){if(!activeEditorElement||!currentSelectionRange||currentSelectionRange.collapsed)return alert("Selecione texto para criar o link.");rangeForPendingReference=currentSelectionRange.cloneRange();refTitleInput.value="";document.getElementById('addRefUrlsContainer').innerHTML='';createUrlInputEntry('addRefUrlsContainer','',false);showPopup(addReferencePopup);refTitleInput.focus()}
         async function addReferenceToDocument(title){saveStateForUndo();if(!rangeForPendingReference){alert("Nenhuma seleção.");hidePopup(addReferencePopup);return}const urls=Array.from(document.querySelectorAll('#addRefUrlsContainer .ref-url-input')).map(i=>i.value.trim()).filter(Boolean);if(urls.length===0)return alert("Pelo menos uma URL.");const newRef={id:generateId('ref-'),tituloReferencia:title,urls:urls};const span=document.createElement('span');span.className='referenced-text';span.dataset.refId=newRef.id;try{rangeForPendingReference.surroundContents(span);if(!currentDocumentData.referencias)currentDocumentData.referencias=[];currentDocumentData.referencias.push(newRef);await saveDocumentBody(true);await updateDoc(doc(db,"documentos",currentDocId),{referencias:currentDocumentData.referencias});renderReferences();updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));hidePopup(addReferencePopup);rangeForPendingReference=null}catch(e){console.error("Falha ao salvar referência:",e);alert("Erro ao salvar.")}}
-        function renderReferences(){if(!referencesListUl||!editorsContainer)return;referencesListUl.innerHTML="";const refs=currentDocumentData?.referencias||[];if(refs.length===0){referencesListUl.innerHTML="<li>Nenhuma referência.</li>";return}const idsInText=new Set(Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]')).map(s=>s.dataset.refId));refs.forEach(r=>{const li=document.createElement('li');li.className='reference-item';li.classList.toggle('reference-item-unlinked',!idsInText.has(r.id));li.dataset.refId=r.id;const urlsHTML=(r.urls||[]).map(u=>`<a>${escapeHTML(u)}</a>`).join('<br>');li.innerHTML=`<div class="ref-content"><span class="ref-title" data-ref-id="${r.id}">${escapeHTML(r.tituloReferencia)}:</span><div style="margin-top:3px;font-size:0.9em;">${urlsHTML}</div></div><button class="edit-ref-btn" data-ref-id="${r.id}">✎</button>`;referencesListUl.appendChild(li)})}
-        function openEditReferencePopup(id){const r=currentDocumentData?.referencias.find(ref=>ref.id===id);if(!r)return;editingRefIdInput.value=id;editRefTitleInput.value=r.tituloReferencia;const c=document.getElementById('editRefUrlsContainer');c.innerHTML='';(r.urls||[]).forEach(u=>createUrlInputEntry('editRefUrlsContainer',u,true));if((r.urls||[]).length===0)createUrlInputEntry('editRefUrlsContainer','',false);showPopup(editReferencePopup)}
+        function renderReferences(){
+    if(!referencesListUl||!editorsContainer)return;
+    referencesListUl.innerHTML="";
+    const allRefs = currentDocumentData?.referencias || [];
+
+    if (allRefs.length === 0) {
+        referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
+        return;
+    }
+
+    // --- NOVA LÓGICA DE ORDENAÇÃO ---
+    // 1. Obter todos os spans de referência na ordem em que aparecem no documento.
+    const spansInOrder = Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]'));
+
+    // 2. Criar uma lista de IDs únicos, preservando a ordem da primeira aparição.
+    const orderedUniqueRefIds = [...new Set(spansInOrder.map(span => span.dataset.refId))];
+    
+    // 3. Separar as referências que estão no texto das que não estão (órfãs).
+    const linkedRefs = [];
+    const unlinkedRefs = [];
+    allRefs.forEach(ref => {
+        if (orderedUniqueRefIds.includes(ref.id)) {
+            linkedRefs.push(ref);
+        } else {
+            unlinkedRefs.push(ref);
+        }
+    });
+
+    // 4. Ordenar a lista de referências ativas com base na sua posição no texto.
+    linkedRefs.sort((a, b) => orderedUniqueRefIds.indexOf(a.id) - orderedUniqueRefIds.indexOf(b.id));
+
+    // 5. Juntar as referências ordenadas com as órfãs (que ficarão no final).
+    const finalSortedRefs = [...linkedRefs, ...unlinkedRefs];
+    const idsInText = new Set(orderedUniqueRefIds);
+    // --- FIM DA LÓGICA DE ORDENAÇÃO ---
+
+    finalSortedRefs.forEach(r => {
+        const li = document.createElement('li');
+        li.className = 'reference-item';
+        // A classe 'reference-item-unlinked' é aplicada se o ID da referência não foi encontrado no texto.
+        li.classList.toggle('reference-item-unlinked', !idsInText.has(r.id));
+        li.dataset.refId = r.id;
+
+        // --- MUDANÇA PARA LINKS EM NOVA ABA ---
+        // Adicionado href, target="_blank", e rel="noopener noreferrer"
+        const urlsHTML = (r.urls || []).map(u => 
+            `<a href="${escapeHTML(u)}" target="_blank" rel="noopener noreferrer">${escapeHTML(u)}</a>`
+        ).join('<br>');
+        // --- FIM DA MUDANÇA PARA LINKS ---
+
+        li.innerHTML = `
+            <div class="ref-content">
+                <span class="ref-title" data-ref-id="${r.id}">${escapeHTML(r.tituloReferencia)}:</span>
+                <div style="margin-top:3px;font-size:0.9em;">${urlsHTML}</div>
+            </div>
+            <button class="edit-ref-btn" data-ref-id="${r.id}">✎</button>`;
+        referencesListUl.appendChild(li);
+    });
+}        function openEditReferencePopup(id){const r=currentDocumentData?.referencias.find(ref=>ref.id===id);if(!r)return;editingRefIdInput.value=id;editRefTitleInput.value=r.tituloReferencia;const c=document.getElementById('editRefUrlsContainer');c.innerHTML='';(r.urls||[]).forEach(u=>createUrlInputEntry('editRefUrlsContainer',u,true));if((r.urls||[]).length===0)createUrlInputEntry('editRefUrlsContainer','',false);showPopup(editReferencePopup)}
         async function saveEditedReference(){const id=editingRefIdInput.value,title=editRefTitleInput.value.trim();if(!id||!title)return alert("Título obrigatório.");saveStateForUndo();const urls=Array.from(document.querySelectorAll('#editRefUrlsContainer .ref-url-input')).map(i=>i.value.trim()).filter(Boolean);if(urls.length===0)return alert("Pelo menos uma URL.");const i=currentDocumentData.referencias.findIndex(r=>r.id===id);if(i>-1){currentDocumentData.referencias[i].tituloReferencia=title;currentDocumentData.referencias[i].urls=urls;await updateDoc(doc(db,"documentos",currentDocId),{referencias:currentDocumentData.referencias});renderReferences();hidePopup(editReferencePopup)}}
         async function deleteReference(){const id=editingRefIdInput.value;if(!id||!window.confirm("Excluir referência e marcações?"))return;saveStateForUndo();editorsContainer.querySelectorAll(`span.referenced-text[data-ref-id="${id}"]`).forEach(s=>s.replaceWith(s.textContent));currentDocumentData.referencias=currentDocumentData.referencias.filter(r=>r.id!==id);await saveDocumentBody(true);await updateDoc(doc(db,"documentos",currentDocId),{referencias:currentDocumentData.referencias});renderReferences();hidePopup(editReferencePopup)}
         async function handleUnlinkSelection(){const el=currentSelectionRange.commonAncestorContainer.nodeType!==Node.ELEMENT_NODE?currentSelectionRange.commonAncestorContainer.parentElement:currentSelectionRange.commonAncestorContainer;const s=el.closest('span.referenced-text[data-ref-id]');if(s){saveStateForUndo();s.replaceWith(s.textContent);hideFloatingToolbar();renderReferences();await saveDocumentBody(true)}else{alert("Seleção não está em um link.")}}
@@ -574,7 +639,11 @@
         safely(showBackupBtn,'click',showBackupPopup);
         safely(createBackupBtn,'click',handleCreateBackup);
         safely(confirmSplitBtn,'click',executeChapterSplit);
-        safely(archiveDocBtn, 'click', handleArchiveDocument);
+        const archiveDocLink = document.getElementById('archiveDocLink');
+safely(archiveDocLink, 'click', e => {
+    e.preventDefault(); // Impede o comportamento padrão do link
+    handleArchiveDocument();
+});
         document.querySelectorAll('.close-popup-btn').forEach(btn=>safely(btn,'click',()=>hidePopup(btn.closest('.popup'))));
         safely(referencesListUl,'click',e=>{if(e.target.classList.contains('ref-title')){const id=e.target.dataset.refId;if(!id)return;const span=editorsContainer.querySelector(`.text-editor-chapter span.referenced-text[data-ref-id="${id}"]`);const item=referencesListUl.querySelector(`li.reference-item[data-ref-id="${id}"]`);document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));if(span){span.scrollIntoView({behavior:'smooth',block:'center'});span.classList.add('highlight-scroll');if(item)item.classList.add('highlight-scroll');setTimeout(()=>document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')),2500)}else{alert("Marcação não encontrada.")}}if(e.target.classList.contains('edit-ref-btn'))openEditReferencePopup(e.target.dataset.refId)});
         document.addEventListener('keydown',e=>{if(editorInterfaceDiv.style.display==='none'||document.querySelector('.popup.active'))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handleUndo()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();handleRedo()}});

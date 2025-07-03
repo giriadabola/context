@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes App - Estilo OneNote Avançado</title>
+    <style>
+        :root {
+            color-scheme: dark light;
+            --primary-bg: #1e1e1e;
+            --secondary-bg: #252525;
+            --tertiary-bg: #2d2d2d;
+            --border-color: #3a3a3a;
+            --text-color: #d4d4d4;
+            --accent-color: #3a7ca5;
+            --accent-color-hover: #4a90c2;
+            --selected-bg: #3a7ca5;
+        }
+        html, body {
+            margin: 0; padding: 0; height: 100%; font-family: sans-serif;
+            background-color: var(--primary-bg); color: var(--text-color); overflow: hidden;
+        }
+        .notes-container { display: flex; height: 100vh; }
+        .panel { display: flex; flex-direction: column; border-right: 1px solid var(--border-color); overflow-y: auto; transition: min-width 0.3s ease, flex 0.3s ease; }
+        .panel.hidden { flex: 0 0 0px; min-width: 0px; border-right: none; overflow: hidden; }
+        #notebooks-panel { flex: 0 0 250px; background-color: var(--secondary-bg); }
+        #pages-panel { flex: 0 0 300px; background-color: var(--tertiary-bg); }
+        #editor-panel { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
+        .panel-header { padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .panel-header h2 { margin: 0; font-size: 1.2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .panel-header button { background: none; border: 1px solid var(--accent-color); color: var(--accent-color); font-size: 1.5em; cursor: pointer; border-radius: 50%; width: 30px; height: 30px; line-height: 25px; padding: 0; flex-shrink: 0; }
+        .panel-header button:hover { background-color: var(--accent-color); color: white; }
+        .panel-header button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .items-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        .items-list li { padding: 15px; cursor: pointer; border-bottom: 1px solid var(--border-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; }
+        .items-list li:before { content: '📄'; margin-right: 10px; font-size: 0.9em; }
+        .items-list li[data-page-type="verificacoes"]:before { content: '✅'; }
+        .items-list li[data-page-type="pasta"]:before { content: '📁'; }
+        .items-list li[data-page-type="instrumental"]:before { content: '🎵'; }
+        .items-list li[data-page-type="capitulos"]:before { content: '📖'; }
+        .items-list li[data-page-type="correcao_gravacao"]:before { content: '🎤'; }
+        .items-list li[data-page-type="spotify"]:before { content: '🎧'; }
+        .items-list li[data-page-type="guiao"]:before { content: '📝'; }
+        .items-list li[data-page-type="correcoes"]:before { content: '🎯'; }
+        .items-list li[data-page-type="referencias"]:before { content: '📚'; }
+        .items-list li:hover { background-color: var(--tertiary-bg); }
+        .items-list li.selected { background-color: var(--selected-bg); color: white; font-weight: bold; }
+        .placeholder { text-align: center; padding: 40px; color: #888; }
+        .notebook-icon { margin-right: 10px; font-size: 0.9em; display: inline-block; width: 20px; text-align: center; }
+
+        #editor-content-wrapper { display: none; flex-direction: column; flex-grow: 1; min-height: 0; }
+        #page-title-input { background: none; border: none; color: var(--text-color); font-size: 2.5em; font-weight: bold; padding: 20px 20px 15px 20px; width: 100%; box-sizing: border-box; outline: none; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        #page-content-area { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0 20px; }
+        #page-content-editor { flex-grow: 1; outline: none; font-size: 1.1em; line-height: 1.6; padding-bottom: 50px; }
+        .page-type-container { display: none; flex-direction: column; flex-grow: 1; overflow-y: auto; padding-bottom: 50px; }
+        .add-item-btn { background-color: var(--accent-color); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 15px; align-self: flex-start; }
+        .add-item-btn:hover { background-color: var(--accent-color-hover); }
+
+        .verificacoes-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--tertiary-bg); }
+        .verificacoes-item input[type="checkbox"] { width: 20px; height: 20px; margin-right: 15px; }
+        .verificacoes-item label { font-size: 1.1em; }
+
+        .card-list { display: flex; flex-direction: column; gap: 15px; padding-top: 10px;}
+        .card { background-color: var(--tertiary-bg); border-left: 3px solid var(--accent-color); padding: 15px; border-radius: 4px; }
+        .card h4 { margin: 0 0 10px 0; }
+        .card p { margin: 0 0 5px 0; }
+        .card a { color: var(--accent-color-hover); text-decoration: none; }
+        .card a:hover { text-decoration: underline; }
+
+        .capitulos-list {
+    /* 1. Inicia o nosso contador e remove qualquer estilo de lista padrão */
+    counter-reset: chapter-counter;
+    list-style: none;
+    padding-left: 0; /* Remove o padding padrão para termos controlo total */
+}
+
+.capitulos-list li {
+    /* 2. Incrementa o contador para cada item da lista */
+    counter-increment: chapter-counter;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5px;
+    font-size: 1.2em; /* Mantém o texto do capítulo um pouco maior */
+}
+.capitulos-list li::before {
+    /* 3. Exibe o valor do contador antes do conteúdo de cada item */
+    content: counter(chapter-counter) ". "; /* Gera "1. ", "2. ", etc. */
+    font-weight: bold;
+    color: var(--text-color);
+    min-width: 30px; /* Garante alinhamento consistente para números com 1 ou 2 dígitos */
+    text-align: right;
+    margin-right: 15px;
+    opacity: 0.8;
+}
+
+
+        .table-container { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .styled-table { width: 100%; border-collapse: collapse; }
+        .styled-table thead tr { background-color: var(--tertiary-bg); text-align: left; }
+        .styled-table th, .styled-table td { padding: 12px 15px; }
+        .styled-table tbody tr { border-bottom: 1px solid var(--border-color); }
+        .styled-table tbody tr:last-of-type { border-bottom: none; }
+        .styled-table td input[type="text"] { background: var(--primary-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 3px; width: 95%; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .modal-content { background-color: var(--secondary-bg); padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); min-width: 350px; max-width: 90%; position: relative; }
+        .modal-content h3 { margin-top: 0; margin-bottom: 20px; color: var(--text-color); font-size: 1.4em; }
+        .modal-close-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2em; color: var(--text-color); cursor: pointer; opacity: 0.7; }
+        .modal-close-btn:hover { opacity: 1; }
+
+        #popup-options-list { list-style: none; padding: 0; margin: 0; }
+        #popup-options-list li { padding: 15px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; align-items: center; text-align: left; }
+        #popup-options-list li:hover { background-color: var(--accent-color); border-color: var(--accent-color-hover); }
+        .popup-option-icon { margin-right: 12px; font-size: 1.1em; display: inline-block; width: 20px; text-align: center; }
+
+        #popup-body form { display: flex; flex-direction: column; gap: 15px; }
+        .popup-form-field label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #b0b0b0; }
+        .popup-form-field input { width: 100%; padding: 10px; background: var(--primary-bg); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; box-sizing: border-box; }
+        .popup-submit-btn { background-color: var(--accent-color); color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; margin-top: 10px; align-self: flex-end; font-size: 1em; }
+        .popup-submit-btn:hover { background-color: var(--accent-color-hover); }
+
+        #report-correction-btn { background-color: var(--accent-color); color: white; border: 1px solid var(--accent-color-hover); padding: 8px 12px; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); font-size: 0.9em; }
+        #report-correction-btn:hover { background-color: var(--accent-color-hover); }
+
+        #editor-footer { padding: 10px 20px; text-align: right; background-color: var(--primary-bg); border-top: 1px solid var(--border-color); flex-shrink: 0; }
+        #hide-page-btn { font-size: 0.85em; color: #888; cursor: pointer; transition: color 0.2s; }
+        #hide-page-btn:hover { color: var(--accent-color); text-decoration: underline; }
+
+        .capitulos-list li {
+    display: flex;
+    justify-content: space-between; /* Coloca o título à esquerda e os controlos à direita */
+    align-items: center;
+    padding: 10px 5px; /* Ajusta o padding para um visual mais limpo */
+}
+
+.chapter-controls {
+    display: flex;
+    gap: 10px;
+    opacity: 0; /* Os controlos estão invisíveis por padrão */
+    transition: opacity 0.2s ease-in-out;
+}
+
+.capitulos-list li:hover .chapter-controls {
+    opacity: 1; /* Mostra os controlos ao passar o rato por cima do <li> */
+}
+
+.chapter-control-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    opacity: 0.7;
+}
+
+.chapter-control-btn:hover {
+    background-color: var(--tertiary-bg);
+    opacity: 1;
+}
+
+/* Desativa botões quando a ação não é possível (ex: subir o primeiro item) */
+.chapter-control-btn:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+#notebooks-list li:before {
+    content: none; /* Remove o ícone de papel padrão APENAS da lista de cadernos */
+}
+
+#save-indicator {
+    color: #4caf50; /* Um verde vivo e agradável */
+    margin-right: 15px; /* Espaço entre o ícone e o texto */
+    font-size: 0.9em;
+    
+    /* Lógica de transição para aparecer e desaparecer suavemente */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#save-indicator.visible {
+    opacity: 1; /* Classe que torna o ícone visível */
+}
+
+    </style>
+</head>
+<body>
+
+    <div class="notes-container">
+        <div id="notebooks-panel" class="panel">
+            <div class="panel-header">
+                <h2>Cadernos</h2>
+                <button id="add-notebook-btn" title="Novo Caderno/Projeto">+</button>
+            </div>
+            <ul id="notebooks-list" class="items-list">
+                <p class="placeholder">A carregar...</p>
+            </ul>
+        </div>
+        <div id="pages-panel" class="panel">
+            <div class="panel-header">
+                <button id="navigate-back-btn" title="Voltar" style="display: none;">←</button>
+                <h2 id="pages-panel-title">Páginas</h2>
+                <button id="add-page-btn" title="Nova Página" disabled>+</button>
+            </div>
+            <ul id="pages-list" class="items-list">
+                <p class="placeholder">Selecione um caderno</p>
+            </ul>
+        </div>
+        
+        <div id="editor-panel" class="panel">
+            <div id="editor-content-wrapper" style="display: none;">
+                <input type="text" id="page-title-input" placeholder="Título da Página">
+                <div id="page-content-area">
+                    <div id="page-content-editor" class="page-type-container" contenteditable="true"></div>
+                    <div id="verificacoes-container" class="page-type-container"></div>
+                    <div id="instrumental-container" class="page-type-container"></div>
+                    <div id="capitulos-container" class="page-type-container"></div>
+                    <div id="correcao_gravacao-container" class="page-type-container"></div>
+                    <div id="spotify-container" class="page-type-container"></div>
+                    <div id="correcoes-container" class="page-type-container">
+                        <p class="placeholder">Esta área é preenchida automaticamente por reports da página "Guião".</p>
+                    </div>
+                </div>
+            </div>
+            <p id="editor-placeholder" class="placeholder">Selecione uma página para editar</p>
+            <div id="editor-footer" style="display: none;">
+                <span id="save-indicator">✅</span>
+    <span id="hide-page-btn" title="Ocultar esta página da lista">Ocultar Página</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="creation-popup" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn">×</button>
+            <h3 id="popup-title"></h3>
+            <div id="popup-body"></div>
+        </div>
+    </div>
+
+    <button id="report-correction-btn" style="display: none; position: absolute; z-index: 1001;">Reportar Correção</button>
+
+    <script type="module">
+              const firebaseConfig = {
+            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", authDomain: "bibliacontexto.firebaseapp.com", projectId: "bibliacontexto", storageBucket: "bibliacontexto.firebasestorage.app", messagingSenderId: "266293600679", appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
+        };
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, getDocs, updateDoc, query, orderBy, serverTimestamp, writeBatch, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- Variáveis Globais de Estado e Controlo ---
+        let app, db;
+        let currentNotebookId = null;
+        let currentPageId = null;
+        let navigationStack = []; // [{id: 'parentId', name: 'Parent Name'}, ...]
+        let contentDebounceTimer;
+        let popupCallback = null;
+        let selectedText = '';
+        let saveIndicatorTimer;
+
+        // --- Elementos do DOM ---
+        const notebooksPanel = document.getElementById('notebooks-panel');
+        const notebooksList = document.getElementById('notebooks-list');
+        const pagesList = document.getElementById('pages-list');
+        const addNotebookBtn = document.getElementById('add-notebook-btn');
+        const addPageBtn = document.getElementById('add-page-btn');
+        const pagesPanelTitle = document.getElementById('pages-panel-title');
+        const pageTitleInput = document.getElementById('page-title-input');
+        const editorContentWrapper = document.getElementById('editor-content-wrapper');
+        const editorPlaceholder = document.getElementById('editor-placeholder');
+        const creationPopup = document.getElementById('creation-popup');
+        const popupTitle = document.getElementById('popup-title');
+        const popupBody = document.getElementById('popup-body');
+        const popupCloseBtn = creationPopup.querySelector('.modal-close-btn');
+        const pageContentArea = document.getElementById('page-content-area');
+        const pageContentEditor = document.getElementById('page-content-editor');
+        const allPageContainers = pageContentArea.querySelectorAll('.page-type-container');
+        const editorFooter = document.getElementById('editor-footer');
+        const hidePageBtn = document.getElementById('hide-page-btn');
+        const reportCorrectionBtn = document.getElementById('report-correction-btn');
+        const navigateBackBtn = document.getElementById('navigate-back-btn');
+
+        // --- Inicialização do Firebase ---
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            console.log("Firebase inicializado!");
+        } catch (e) {
+            console.error("ERRO AO INICIALIZAR O FIREBASE:", e);
+            alert("Falha na conexão com o Firebase.");
+            throw e;
+        }
+
+        // --- Funções de UI e Feedback ---
+
+        function showSaveFeedback() {
+            const indicator = document.getElementById('save-indicator');
+            if (!indicator) return;
+            indicator.classList.add('visible');
+            clearTimeout(saveIndicatorTimer);
+            saveIndicatorTimer = setTimeout(() => {
+                indicator.classList.remove('visible');
+            }, 2000);
+        }
+
+        function showCreationPopup(title, options, callback) {
+            popupTitle.textContent = title;
+            popupBody.innerHTML = '';
+            const list = document.createElement('ul');
+            list.id = 'popup-options-list';
+            options.forEach(option => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="popup-option-icon">${option.icon}</span> <span>${option.text}</span>`;
+                li.dataset.id = option.id;
+                list.appendChild(li);
+            });
+            popupBody.appendChild(list);
+            popupCallback = callback;
+            creationPopup.style.display = 'flex';
+        }
+
+        function showFormPopup(title, fields, callback) {
+            popupTitle.textContent = title;
+            popupBody.innerHTML = '';
+            const form = document.createElement('form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = {};
+                let allValid = true;
+                fields.forEach(field => {
+                    const input = form.querySelector(`#popup-field-${field.id}`);
+                    if (field.required && !input.value.trim()) { allValid = false; }
+                    formData[field.id] = input.value.trim();
+                });
+                if (allValid) {
+                    hideCreationPopup();
+                    callback(formData);
+                } else {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                }
+            });
+            fields.forEach(field => {
+                const fieldContainer = document.createElement('div');
+                fieldContainer.className = 'popup-form-field';
+                const label = document.createElement('label');
+                label.htmlFor = `popup-field-${field.id}`;
+                label.textContent = field.label;
+                const input = document.createElement('input');
+                input.type = field.type || 'text';
+                input.id = `popup-field-${field.id}`;
+                input.required = field.required || false;
+                fieldContainer.appendChild(label);
+                fieldContainer.appendChild(input);
+                form.appendChild(fieldContainer);
+            });
+            const submitBtn = document.createElement('button');
+            submitBtn.type = 'submit';
+            submitBtn.className = 'popup-submit-btn';
+            submitBtn.textContent = 'Adicionar';
+            form.appendChild(submitBtn);
+            popupBody.appendChild(form);
+            creationPopup.style.display = 'flex';
+        }
+
+        function showFormPopupWithValues(title, fields, callback) {
+            popupTitle.textContent = title;
+            popupBody.innerHTML = '';
+            const form = document.createElement('form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = {};
+                let allValid = true;
+                fields.forEach(field => {
+                    const input = form.querySelector(`#popup-field-${field.id}`);
+                    if (field.required && !input.value.trim()) { allValid = false; }
+                    formData[field.id] = input.value.trim();
+                });
+                if (allValid) {
+                    hideCreationPopup();
+                    callback(formData);
+                } else {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                }
+            });
+            fields.forEach(field => {
+                const fieldContainer = document.createElement('div');
+                fieldContainer.className = 'popup-form-field';
+                const label = document.createElement('label');
+                label.htmlFor = `popup-field-${field.id}`;
+                label.textContent = field.label;
+                const input = document.createElement('input');
+                input.type = field.type || 'text';
+                input.id = `popup-field-${field.id}`;
+                input.value = field.value || '';
+                input.readOnly = field.readonly || false;
+                if (input.readOnly) { input.style.backgroundColor = 'var(--tertiary-bg)'; }
+                input.required = field.required || false;
+                fieldContainer.appendChild(label);
+                fieldContainer.appendChild(input);
+                form.appendChild(fieldContainer);
+            });
+            const submitBtn = document.createElement('button');
+            submitBtn.type = 'submit';
+            submitBtn.className = 'popup-submit-btn';
+            submitBtn.textContent = 'Submeter';
+            form.appendChild(submitBtn);
+            popupBody.appendChild(form);
+            creationPopup.style.display = 'flex';
+        }
+        
+        function hideCreationPopup() {
+            creationPopup.style.display = 'none';
+        }
+
+        // --- Funções de Dados e Lógica Principal ---
+
+        async function loadNotebooks() {
+            notebooksList.innerHTML = '<p class="placeholder">A carregar...</p>';
+            try {
+                const q = query(collection(db, "notebooks"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                notebooksList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    notebooksList.innerHTML = '<p class="placeholder">Crie o seu primeiro caderno</p>';
+                    return;
+                }
+                querySnapshot.forEach((doc) => {
+                    const notebook = doc.data();
+                    const li = document.createElement('li');
+                    const type = notebook.type || 'simple';
+                    const icon = type === 'chapter' ? '🗂️' : '📓';
+                    li.innerHTML = `<span class="notebook-icon">${icon}</span> <span>${notebook.name}</span>`;
+                    li.dataset.notebookId = doc.id;
+                    li.addEventListener('click', () => selectNotebook(doc.id, notebook.name));
+                    notebooksList.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar cadernos: ", error);
+                notebooksList.innerHTML = '<p class="placeholder" style="color:red;">Erro ao carregar</p>';
+            }
+        }
+
+        function selectNotebook(notebookId, notebookName) {
+            if (currentNotebookId === notebookId) return;
+            currentNotebookId = notebookId;
+            currentPageId = null;
+            navigationStack = [];
+            document.querySelectorAll('#notebooks-list li').forEach(li => {
+                li.classList.toggle('selected', li.dataset.notebookId === notebookId);
+            });
+            notebooksPanel.classList.remove('hidden');
+            pagesPanelTitle.textContent = notebookName;
+            addPageBtn.disabled = false;
+            navigateBackBtn.style.display = 'none';
+            editorContentWrapper.style.display = 'none';
+            editorPlaceholder.style.display = 'block';
+            editorFooter.style.display = 'none';
+            loadPages(notebookId, null);
+        }
+
+        function handleAddNotebook() {
+            const options = [
+                { id: 'simple', text: 'Caderno Simples', icon: '📓' },
+                { id: 'chapter', text: 'Caderno de Capítulo', icon: '🗂️' }
+            ];
+            showCreationPopup('Criar Novo Caderno', options, (choice) => {
+                const fields = [{ id: 'name', label: 'Nome do Novo Caderno:', required: true }];
+                showFormPopup('Definir Nome do Caderno', fields, async (formData) => {
+                    const name = formData.name;
+                    if (!name) return;
+                    if (choice === 'simple') {
+                        await addNotebook(name, 'simple');
+                    } else if (choice === 'chapter') {
+                        await addChapterNotebook(name);
+                    }
+                });
+            });
+        }
+
+        async function addNotebook(name, type = 'simple') {
+            try {
+                const docRef = await addDoc(collection(db, "notebooks"), {
+                    name: name, type: type, createdAt: serverTimestamp()
+                });
+                await loadNotebooks();
+                showSaveFeedback();
+                return docRef.id;
+            } catch (error) {
+                console.error("Erro ao adicionar caderno: ", error);
+                alert("Falha ao criar caderno.");
+                return null;
+            }
+        }
+
+        async function addChapterNotebook(name) {
+            const newNotebookId = await addNotebook(name, 'chapter');
+            if (newNotebookId) {
+                const pagesToCreate = [
+                    { name: "Guião", type: "guiao", content: "" }, { name: "Correções", type: "correcoes", content: "[]" },
+                    { name: "Referências", type: "referencias", content: "" }, { name: "Verificações", type: "verificacoes", content: JSON.stringify([ "Música / Instrumentos", "Cultura / Dança / Roupa", "Comida / Alimento", "Arquitetura / Casas / Tendas", "Arte / Painéis / Jarras / Artefacto", "Sociedade / Cultura", "Educação / Ensino", "Profissões / Ofício", "Moda / Vestimenta / Vestido / Roupa / Penteado / Cabelo / Maquilhagem", "Acessórios / Brincos / Colares / Joias / Pérolas", "Objetos / Vasos / Mesas / Cadeiras / Candeeiros / Poço", "Comércio / Dinheiro / Moedas / Compras", "Transportes / Carro / Carroça", "Produtos", "Natureza / Árvores / Flores / Plantas / Montanhas / Rios", "Animais", "Desastres Naturais / Incêndio / Terremoto", "Arqueologia / Ruínas / Pedras / Rochas", "Guerra / Batalha / Luta", "Religião / Templos / Ritual / Ritos / Culto", "Personalidade da Personagem", "Datas Nascimento / Falecimento / Eventos", "Idades" ].map(t => ({text: t, checked: false}))) },
+                    { name: "Instrumental", type: "instrumental", content: "[]" }, { name: "Capítulos", type: "capitulos", content: "[]" },
+                    { name: "Correção Gravação", type: "correcao_gravacao", content: "[]" }, { name: "Spotify", type: "spotify", content: "[]" }
+                ];
+                const batch = writeBatch(db);
+                pagesToCreate.forEach(page => {
+                    const newPageRef = doc(collection(db, 'notebooks', newNotebookId, 'pages'));
+                    batch.set(newPageRef, { ...page, hidden: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+                });
+                await batch.commit();
+                showSaveFeedback();
+            }
+        }
+
+        async function loadPages(notebookId, parentId = null) {
+            pagesList.innerHTML = '<p class="placeholder">A carregar...</p>';
+            try {
+                const collectionPath = parentId ? `notebooks/${notebookId}/pages/${parentId}/children` : `notebooks/${notebookId}/pages`;
+                const pagesRef = collection(db, collectionPath);
+                const q = query(pagesRef, where("hidden", "!=", true), orderBy("updatedAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                pagesList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    pagesList.innerHTML = '<p class="placeholder">Crie a sua primeira página</p>';
+                }
+                querySnapshot.forEach((doc) => {
+                    const page = doc.data();
+                    const li = document.createElement('li');
+                    li.textContent = page.name || "Página sem título";
+                    li.dataset.pageId = doc.id;
+                    li.dataset.pageType = page.type;
+                    li.addEventListener('click', () => selectPage(notebookId, doc.id, page.type));
+                    pagesList.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar páginas: ", error);
+                pagesList.innerHTML = '<p class="placeholder" style="color:red;">Erro ao carregar</p>';
+            }
+        }
+        
+        function handleAddPage() {
+            if (!currentNotebookId) return;
+            const options = [
+                { id: 'simples', text: 'Página Simples', icon: '📄' }, { id: 'verificacoes', text: 'Verificações', icon: '✅' },
+                { id: 'pasta', text: 'Pasta', icon: '📁' }, { id: 'instrumental', text: 'Instrumental', icon: '🎵' },
+                { id: 'capitulos', text: 'Capítulos', icon: '📖' }, { id: 'correcao_gravacao', text: 'Correção Gravação', icon: '🎤' },
+                { id: 'spotify', text: 'Spotify', icon: '🎧' },
+            ];
+            showCreationPopup('Criar Novo Item', options, (choice) => {
+                const selectedOption = options.find(opt => opt.id === choice);
+                if (!selectedOption) return;
+                if (choice === 'pasta') {
+                    const fields = [{ id: 'name', label: 'Nome da Nova Pasta:', required: true }];
+                    showFormPopup('Criar Pasta', fields, (formData) => {
+                        if (formData.name) { addPage(formData.name, 'pasta', ''); }
+                    });
+                } else {
+                    const defaultName = selectedOption.text;
+                    let content = "";
+                    if (['verificacoes', 'instrumental', 'capitulos', 'correcao_gravacao', 'spotify'].includes(choice)) { content = "[]"; }
+                    if (choice === 'verificacoes') {
+                        const checklistItems = [ "Música / Instrumentos", "Cultura / Dança / Roupa", "Comida / Alimento", "Arquitetura / Casas / Tendas", "Arte / Painéis / Jarras / Artefacto", "Sociedade / Cultura", "Educação / Ensino", "Profissões / Ofício", "Moda / Vestimenta / Vestido / Roupa / Penteado / Cabelo / Maquilhagem", "Acessórios / Brincos / Colares / Joias / Pérolas", "Objetos / Vasos / Mesas / Cadeiras / Candeeiros / Poço", "Comércio / Dinheiro / Moedas / Compras", "Transportes / Carro / Carroça", "Produtos", "Natureza / Árvores / Flores / Plantas / Montanhas / Rios", "Animais", "Desastres Naturais / Incêndio / Terremoto", "Arqueologia / Ruínas / Pedras / Rochas", "Guerra / Batalha / Luta", "Religião / Templos / Ritual / Ritos / Culto", "Personalidade da Personagem", "Datas Nascimento / Falecimento / Eventos", "Idades" ];
+                        content = JSON.stringify(checklistItems.map(item => ({ text: item, checked: false })));
+                    }
+                    addPage(defaultName, choice, content);
+                }
+            });
+        }
+        
+        async function addPage(name, type, content = '') {
+            const parentId = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1].id : null;
+            try {
+                const collectionPath = parentId ? `notebooks/${currentNotebookId}/pages/${parentId}/children` : `notebooks/${currentNotebookId}/pages`;
+                const pagesRef = collection(db, collectionPath);
+                await addDoc(pagesRef, { name: name, type: type, content: content, hidden: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+                showSaveFeedback();
+                await loadPages(currentNotebookId, parentId);
+            } catch (error) {
+                console.error("Erro ao adicionar página: ", error);
+                alert("Falha ao criar página.");
+            }
+        }
+
+        function safeJSONParse(jsonString, defaultValue = []) {
+            try {
+                const parsed = JSON.parse(jsonString);
+                return Array.isArray(parsed) ? parsed : defaultValue;
+            } catch(e) { return defaultValue; }
+        }
+
+        async function selectPage(notebookId, pageId, pageType) {
+            if (pageType === 'pasta') {
+                const pageRef = doc(db, 'notebooks', currentNotebookId, 'pages', pageId);
+                try {
+                    const docSnap = await getDoc(pageRef);
+                    const pageName = docSnap.exists() ? docSnap.data().name : 'Pasta';
+                    notebooksPanel.classList.add('hidden');
+                    navigationStack.push({ id: pageId, name: pageName });
+                    pagesPanelTitle.textContent = pageName;
+                    navigateBackBtn.style.display = 'block';
+                    loadPages(notebookId, pageId);
+                    editorContentWrapper.style.display = 'none';
+                    editorPlaceholder.style.display = 'block';
+                    editorFooter.style.display = 'none';
+                    currentPageId = null;
+                } catch (error) { console.error("Erro ao abrir a pasta:", error); alert("Não foi possível abrir a pasta."); }
+                return;
+            }
+            currentPageId = pageId;
+            document.querySelectorAll('#pages-list li').forEach(li => { li.classList.toggle('selected', li.dataset.pageId === pageId); });
+            const parentId = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1].id : null;
+            const collectionPath = parentId ? `notebooks/${notebookId}/pages/${parentId}/children` : `notebooks/${notebookId}/pages`;
+            const pageRef = doc(db, collectionPath, pageId);
+            const docSnap = await getDoc(pageRef);
+            if (!docSnap.exists()) { alert("Erro: Página não encontrada."); return; }
+            const page = docSnap.data();
+            pageTitleInput.value = page.name || '';
+            allPageContainers.forEach(c => c.style.display = 'none');
+            let container;
+            switch(page.type) {
+                case 'verificacoes': container = document.getElementById('verificacoes-container'); renderVerificacoes(page.content); break;
+                case 'instrumental': container = document.getElementById('instrumental-container'); renderInstrumental(page.content); break;
+                case 'capitulos': container = document.getElementById('capitulos-container'); renderCapitulos(page.content); break;
+                case 'correcao_gravacao': container = document.getElementById('correcao_gravacao-container'); renderCorrecaoGravacao(page.content); break;
+                case 'spotify': container = document.getElementById('spotify-container'); renderSpotify(page.content); break;
+                case 'correcoes': container = document.getElementById('correcoes-container'); renderCorrecoes(page.content); break;
+                case 'guiao': case 'referencias': default: container = document.getElementById('page-content-editor'); container.innerHTML = page.content || ''; break;
+            }
+            if (container) container.style.display = 'flex';
+            editorContentWrapper.style.display = 'flex';
+            editorPlaceholder.style.display = 'none';
+            editorFooter.style.display = 'block';
+        }
+
+        function navigateBack() {
+            if (navigationStack.length === 0) return;
+            navigationStack.pop();
+            const parent = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
+            if (parent) {
+                pagesPanelTitle.textContent = parent.name;
+                loadPages(currentNotebookId, parent.id);
+            } else {
+                notebooksPanel.classList.remove('hidden');
+                navigateBackBtn.style.display = 'none';
+                const currentNotebookLi = notebooksList.querySelector(`li[data-notebook-id="${currentNotebookId}"]`);
+                pagesPanelTitle.textContent = currentNotebookLi ? currentNotebookLi.querySelector('span:last-child').textContent : 'Páginas';
+                loadPages(currentNotebookId, null);
+            }
+        }
+        
+        async function savePageTitle() {
+            if (!currentNotebookId || !currentPageId) return;
+            const newTitle = pageTitleInput.value.trim();
+            try {
+                const parentId = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1].id : null;
+                const collectionPath = parentId ? `notebooks/${currentNotebookId}/pages/${parentId}/children` : `notebooks/${currentNotebookId}/pages`;
+                const pageRef = doc(db, collectionPath, currentPageId);
+                await updateDoc(pageRef, { name: newTitle, updatedAt: serverTimestamp() });
+                showSaveFeedback();
+                const pageListItem = pagesList.querySelector(`li[data-page-id="${currentPageId}"]`);
+                if(pageListItem) { pageListItem.textContent = newTitle || "Página sem título"; }
+            } catch (error) {
+                console.error("Erro ao salvar o título: ", error);
+                alert("Falha ao salvar o título da página.");
+            }
+        }
+
+        function handleContentInput(forceSave = false, forcedContent = null) {
+            clearTimeout(contentDebounceTimer);
+            const saveFn = async () => {
+                if (!currentNotebookId || !currentPageId) return;
+                let newContent = forcedContent;
+                if (newContent === null) {
+                    const pageListItem = pagesList.querySelector(`li[data-page-id="${currentPageId}"]`);
+                    if (!pageListItem) return;
+                    const pageType = pageListItem.dataset.pageType;
+                    switch(pageType) {
+                        case 'verificacoes':
+                            const checkItems = []; document.querySelectorAll('#verificacoes-container .verificacoes-item').forEach(el => { checkItems.push({ text: el.querySelector('label').textContent, checked: el.querySelector('input').checked }); }); newContent = JSON.stringify(checkItems); break;
+                        case 'correcao_gravacao':
+                             const tableItems = []; document.querySelectorAll('#correcao_gravacao-container tbody tr').forEach(row => { tableItems.push({ checked: row.querySelector('input[type="checkbox"]').checked, erro: row.querySelector('input[data-field="erro"]').value, tempo: row.querySelector('input[data-field="tempo"]').value, correto: row.querySelector('input[data-field="correto"]').value, }); }); newContent = JSON.stringify(tableItems); break;
+                        default: newContent = pageContentEditor.innerHTML; break;
+                    }
+                }
+                try {
+                    const parentId = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1].id : null;
+                    const collectionPath = parentId ? `notebooks/${currentNotebookId}/pages/${parentId}/children` : `notebooks/${currentNotebookId}/pages`;
+                    const pageRef = doc(db, collectionPath, currentPageId);
+                    await updateDoc(pageRef, { content: newContent, updatedAt: serverTimestamp() });
+                    showSaveFeedback();
+                    console.log("Conteúdo salvo em:", collectionPath, currentPageId);
+                } catch (error) { console.error("Erro ao salvar o conteúdo: ", error); }
+            };
+            if (forceSave) { saveFn(); } else { contentDebounceTimer = setTimeout(saveFn, 1500); }
+        }
+
+        async function hideCurrentPage() {
+            if (!currentNotebookId || !currentPageId) return;
+            if (!confirm("Tem a certeza que deseja ocultar esta página? Ela não será apagada e pode ser recuperada futuramente.")) return;
+            try {
+                const parentId = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1].id : null;
+                const collectionPath = parentId ? `notebooks/${currentNotebookId}/pages/${parentId}/children` : `notebooks/${currentNotebookId}/pages`;
+                const pageRef = doc(db, collectionPath, currentPageId);
+                await updateDoc(pageRef, { hidden: true, updatedAt: serverTimestamp() });
+                showSaveFeedback();
+                const pageListItem = pagesList.querySelector(`li[data-page-id="${currentPageId}"]`);
+                if (pageListItem) { pageListItem.remove(); }
+                editorContentWrapper.style.display = 'none'; editorPlaceholder.style.display = 'block';
+                editorFooter.style.display = 'none'; currentPageId = null;
+                if (pagesList.children.length === 0) { pagesList.innerHTML = '<p class="placeholder">Nenhuma página visível</p>'; }
+            } catch (error) {
+                console.error("Erro ao ocultar página: ", error); alert("Falha ao ocultar a página.");
+            }
+        }
+
+        async function findPageIdByType(notebookId, pageType) {
+            const pagesRef = collection(db, 'notebooks', notebookId, 'pages');
+            const q = query(pagesRef);
+            const querySnapshot = await getDocs(q);
+            for (const doc of querySnapshot.docs) { if (doc.data().type === pageType) { return doc.id; } }
+            return null;
+        }
+
+        // --- Funções de Renderização de Conteúdo Específico ---
+        
+        function renderVerificacoes(content) {
+            const container = document.getElementById('verificacoes-container');
+            container.innerHTML = '';
+            const items = safeJSONParse(content);
+            items.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'verificacoes-item';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = item.checked;
+                checkbox.id = `check-${index}`;
+                const label = document.createElement('label');
+                label.htmlFor = `check-${index}`;
+                label.textContent = item.text;
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                container.appendChild(div);
+            });
+            const btn = document.createElement('button');
+            btn.className = 'add-item-btn';
+            btn.textContent = '+ Adicionar Verificação';
+            btn.onclick = () => {
+                const fields = [{ id: 'text', label: 'Nova verificação:', required: true }];
+                showFormPopup('Adicionar Verificação', fields, (data) => {
+                    if (data.text) {
+                        items.push({ text: data.text, checked: false });
+                        const newContent = JSON.stringify(items);
+                        renderVerificacoes(newContent);
+                        handleContentInput(true, newContent);
+                    }
+                });
+            };
+            container.appendChild(btn);
+        }
+        function renderInstrumental(content) {
+            const container = document.getElementById('instrumental-container');
+            container.innerHTML = '<div class="card-list"></div>';
+            const cardList = container.querySelector('.card-list');
+            const items = safeJSONParse(content);
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<h4>${item.description || 'Sem descrição'}</h4><p>Link: <a href="${item.link}" target="_blank">${item.link || 'N/A'}</a></p>`;
+                cardList.appendChild(card);
+            });
+            const btn = document.createElement('button');
+            btn.className = 'add-item-btn';
+            btn.textContent = '+ Adicionar Faixa';
+            btn.onclick = () => {
+                const fields = [
+                    { id: 'description', label: 'Descrição do momento:', required: true },
+                    { id: 'link', label: 'Link do vídeo (YouTube, etc.):', required: true }
+                ];
+                showFormPopup('Adicionar Nova Faixa Instrumental', fields, (data) => {
+                    items.push({ description: data.description, link: data.link });
+                    const newContent = JSON.stringify(items);
+                    renderInstrumental(newContent);
+                    handleContentInput(true, newContent);
+                });
+            };
+            container.appendChild(btn);
+        }
+        function renderSpotify(content) {
+            const container = document.getElementById('spotify-container');
+            container.innerHTML = '<div class="card-list"></div>';
+            const cardList = container.querySelector('.card-list');
+            const items = safeJSONParse(content);
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<h4>${item.title || 'Sem Título'}</h4><p>${item.description || 'Sem descrição.'}</p><p>Fonte: <a href="${item.link}" target="_blank">${item.link || 'N/A'}</a></p>`;
+                cardList.appendChild(card);
+            });
+            const btn = document.createElement('button');
+            btn.className = 'add-item-btn';
+            btn.textContent = '+ Adicionar Fonte';
+            btn.onclick = () => {
+                const fields = [
+                    { id: 'title', label: 'Título:', required: true },
+                    { id: 'description', label: 'Descrição:', required: false },
+                    { id: 'link', label: 'Link da fonte:', required: false }
+                ];
+                showFormPopup('Adicionar Nova Fonte', fields, (data) => {
+                    items.push({ title: data.title, description: data.description, link: data.link });
+                    const newContent = JSON.stringify(items);
+                    renderSpotify(newContent);
+                    handleContentInput(true, newContent);
+                });
+            };
+            container.appendChild(btn);
+        }
+
+        function renderCorrecaoGravacao(content) {
+            const container = document.getElementById('correcao_gravacao-container');
+            container.innerHTML = `<div class="table-container"><table class="styled-table"><thead><tr><th>Status</th><th>Qual Erro?</th><th>Tempo (HH:MM:SS)</th><th>Correto</th></tr></thead><tbody></tbody></table></div>`;
+            const tbody = container.querySelector('tbody');
+            const items = safeJSONParse(content);
+            items.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.dataset.index = index;
+                row.innerHTML = `<td><input type="checkbox" ${item.checked ? 'checked' : ''}></td><td><input type="text" value="${item.erro || ''}" data-field="erro"></td><td><input type="text" value="${item.tempo || ''}" data-field="tempo"></td><td><input type="text" value="${item.correto || ''}" data-field="correto"></td>`;
+                tbody.appendChild(row);
+            });
+            const btn = document.createElement('button');
+            btn.className = 'add-item-btn';
+            btn.textContent = '+ Adicionar Correção';
+            btn.onclick = () => {
+                items.push({ checked: false, erro: '', tempo: '', correto: '' });
+                const newContent = JSON.stringify(items);
+                renderCorrecaoGravacao(newContent);
+                handleContentInput(true, newContent);
+            };
+            container.appendChild(btn);
+        }
+
+        function renderCorrecoes(content) {
+            const container = document.getElementById('correcoes-container');
+            container.innerHTML = '<div class="card-list"></div>';
+            const cardList = container.querySelector('.card-list');
+            const items = safeJSONParse(content, []);
+            if (items.length === 0) {
+                container.innerHTML = '<p class="placeholder">Nenhuma correção reportada ainda.</p>';
+                return;
+            }
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<p style="color: #ff9a9a; margin-bottom: 8px;"><strong>Erro:</strong></p><p style="margin-left: 15px; background: #332929; padding: 5px 8px; border-radius: 3px;">${item.erro || 'N/A'}</p><p style="color: #a1e8a1; margin-top: 15px; margin-bottom: 8px;"><strong>Correto:</strong></p><p style="margin-left: 15px; background: #293329; padding: 5px 8px; border-radius: 3px;">${item.correto || 'N/A'}</p>`;
+                cardList.appendChild(card);
+            });
+        }
+
+        function renderCapitulos(content) {
+            const container = document.getElementById('capitulos-container');
+            container.innerHTML = '<ol class="capitulos-list"></ol>';
+            const ol = container.querySelector('.capitulos-list');
+            let items = safeJSONParse(content, []);
+            ol.innerHTML = '';
+            items.forEach((itemText, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${itemText}</span><div class="chapter-controls"><button class="chapter-control-btn" data-action="up" title="Subir" ${index === 0 ? 'disabled' : ''}>▲</button><button class="chapter-control-btn" data-action="down" title="Descer" ${index === items.length - 1 ? 'disabled' : ''}>▼</button><button class="chapter-control-btn" data-action="delete" title="Remover">🗑️</button></div>`;
+                li.dataset.index = index;
+                ol.appendChild(li);
+            });
+            const btn = document.createElement('button');
+            btn.className = 'add-item-btn';
+            btn.textContent = '+ Adicionar Capítulo';
+            btn.onclick = () => {
+                const fields = [{ id: 'title', label: 'Título do capítulo:', required: true }];
+                showFormPopup('Adicionar Novo Capítulo', fields, (data) => {
+                    if (data.title) {
+                        items.push(data.title);
+                        const newContent = JSON.stringify(items);
+                        renderCapitulos(newContent);
+                        handleContentInput(true, newContent);
+                    }
+                });
+            };
+            container.appendChild(btn);
+            ol.addEventListener('click', (e) => {
+                const target = e.target.closest('.chapter-control-btn');
+                if (!target) return;
+                const action = target.dataset.action;
+                const li = target.closest('li');
+                const index = parseInt(li.dataset.index, 10);
+                let changed = false;
+                if (action === 'delete') {
+                    if (confirm(`Tem a certeza que deseja remover o capítulo "${items[index]}"?`)) {
+                        items.splice(index, 1);
+                        changed = true;
+                    }
+                } else if (action === 'up' && index > 0) {
+                    [items[index], items[index - 1]] = [items[index - 1], items[index]];
+                    changed = true;
+                } else if (action === 'down' && index < items.length - 1) {
+                    [items[index], items[index + 1]] = [items[index + 1], items[index]];
+                    changed = true;
+                }
+                if (changed) {
+                    const newContent = JSON.stringify(items);
+                    renderCapitulos(newContent);
+                    handleContentInput(true, newContent);
+                }
+            });
+        }
+
+        // --- Listeners de Eventos Globais ---
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            loadNotebooks();
+            addNotebookBtn.addEventListener('click', handleAddNotebook);
+            addPageBtn.addEventListener('click', handleAddPage);
+            pageTitleInput.addEventListener('blur', savePageTitle);
+            pageContentArea.addEventListener('input', () => handleContentInput());
+            navigateBackBtn.addEventListener('click', navigateBack);
+            popupCloseBtn.addEventListener('click', hideCreationPopup);
+            creationPopup.addEventListener('click', (e) => { if (e.target === creationPopup) { hideCreationPopup(); } });
+            hidePageBtn.addEventListener('click', hideCurrentPage);
+
+            popupBody.addEventListener('click', (e) => {
+                const targetLi = e.target.closest('li');
+                if (targetLi && targetLi.parentElement.id === 'popup-options-list' && popupCallback) {
+                    const choice = targetLi.dataset.id;
+                    hideCreationPopup();
+                    popupCallback(choice);
+                }
+            });
+
+            pageContentEditor.addEventListener('mouseup', () => {
+                const selection = window.getSelection(); selectedText = selection.toString().trim();
+                if (selectedText) {
+                    const range = selection.getRangeAt(0); const rect = range.getBoundingClientRect();
+                    reportCorrectionBtn.style.top = `${window.scrollY + rect.top - reportCorrectionBtn.offsetHeight - 5}px`;
+                    reportCorrectionBtn.style.left = `${window.scrollX + rect.left}px`;
+                    reportCorrectionBtn.style.display = 'block';
+                } else { reportCorrectionBtn.style.display = 'none'; }
+            });
+
+            document.addEventListener('mousedown', (e) => {
+                if (e.target !== reportCorrectionBtn && e.target !== pageContentEditor) { reportCorrectionBtn.style.display = 'none'; }
+            });
+
+            reportCorrectionBtn.addEventListener('click', async () => {
+                if (!currentNotebookId || !selectedText) return;
+                const correcoesPageId = await findPageIdByType(currentNotebookId, 'correcoes');
+                if (!correcoesPageId) { alert('A página "Correções" não foi encontrada neste caderno.'); return; }
+                const fields = [{ id: 'erro', label: 'Erro Encontrado:', value: selectedText, readonly: true }, { id: 'correto', label: 'Texto Correto:', required: true }];
+                showFormPopupWithValues('Reportar Correção', fields, async (data) => {
+                    const pageRef = doc(db, 'notebooks', currentNotebookId, 'pages', correcoesPageId);
+                    try {
+                        const docSnap = await getDoc(pageRef);
+                        if (!docSnap.exists()) throw new Error("Página de correções não existe.");
+                        const pageData = docSnap.data();
+                        const corrections = safeJSONParse(pageData.content, []);
+                        corrections.push({ checked: false, erro: selectedText, tempo: '', correto: data.correto });
+                        await updateDoc(pageRef, { content: JSON.stringify(corrections), updatedAt: serverTimestamp() });
+                        showSaveFeedback();
+                        alert('Correção reportada com sucesso!');
+                        reportCorrectionBtn.style.display = 'none';
+                    } catch (error) { console.error("Erro ao reportar correção: ", error); alert("Falha ao reportar a correção."); }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

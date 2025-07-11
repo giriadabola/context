@@ -21,16 +21,52 @@
             background-color: var(--primary-bg); color: var(--text-color); overflow: hidden;
         }
         .notes-container { display: flex; height: 100vh; }
-        .panel { display: flex; flex-direction: column; border-right: 1px solid var(--border-color); overflow-y: auto; transition: min-width 0.3s ease, flex 0.3s ease; }
-        .panel.hidden { flex: 0 0 0px; min-width: 0px; border-right: none; overflow: hidden; }
+
+        /* --- LÓGICA DE REDIMENSIONAMENTO DOS PAINÉIS --- */
+        .panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            /* Transição suave para flex-basis e min-width */
+            transition: min-width 0.3s ease, flex-basis 0.3s ease;
+        }
+        .panel.hidden {
+            flex-basis: 0 !important; /* Força o painel a ter largura 0 */
+            min-width: 0px !important; /* Permite que o painel desapareça */
+            border-right: none;
+            overflow: hidden;
+        }
+
+        /* Larguras padrão dos painéis */
         #notebooks-panel { flex: 0 0 250px; background-color: var(--secondary-bg); }
         #pages-panel { flex: 0 0 300px; background-color: var(--tertiary-bg); }
-        #editor-panel { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
-        .panel-header { padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .panel-header h2 { margin: 0; font-size: 1.2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #editor-panel { flex-grow: 1; display: flex; flex-direction: column; position: relative; border-right: none; }
+
+        /* [NOVO] Estilos para quando o editor está visível */
+        .notes-container.editor-visible #notebooks-panel {
+            flex-basis: 200px; /* Diminui a largura */
+        }
+        .notes-container.editor-visible #pages-panel {
+            flex-basis: 240px; /* Diminui a largura */
+        }
+        /* --- FIM DA LÓGICA DE REDIMENSIONAMENTO --- */
+
+
+        .panel-header { padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 10px;}
+        .panel-header h2 { margin: 0; font-size: 1.2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
         .panel-header button { background: none; border: 1px solid var(--accent-color); color: var(--accent-color); font-size: 1.5em; cursor: pointer; border-radius: 50%; width: 30px; height: 30px; line-height: 25px; padding: 0; flex-shrink: 0; }
         .panel-header button:hover { background-color: var(--accent-color); color: white; }
         .panel-header button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* [NOVO] Estilo para o botão de toggle */
+        .toggle-panel-btn {
+            background: none; border: none; color: var(--text-color); cursor: pointer;
+            font-size: 1.2em; padding: 5px; border-radius: 4px; line-height: 1;
+            flex-shrink: 0; opacity: 0.7;
+        }
+        .toggle-panel-btn:hover { background-color: var(--tertiary-bg); opacity: 1; }
+
         .items-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
         .items-list li { padding: 15px; cursor: pointer; border-bottom: 1px solid var(--border-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; }
         .items-list li:before { content: '📄'; margin-right: 10px; font-size: 0.9em; }
@@ -67,33 +103,14 @@
         .card a { color: var(--accent-color-hover); text-decoration: none; }
         .card a:hover { text-decoration: underline; }
 
-        .capitulos-list {
-    /* 1. Inicia o nosso contador e remove qualquer estilo de lista padrão */
-    counter-reset: chapter-counter;
-    list-style: none;
-    padding-left: 0; /* Remove o padding padrão para termos controlo total */
-}
-
-.capitulos-list li {
-    /* 2. Incrementa o contador para cada item da lista */
-    counter-increment: chapter-counter;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 5px;
-    font-size: 1.2em; /* Mantém o texto do capítulo um pouco maior */
-}
-.capitulos-list li::before {
-    /* 3. Exibe o valor do contador antes do conteúdo de cada item */
-    content: counter(chapter-counter) ". "; /* Gera "1. ", "2. ", etc. */
-    font-weight: bold;
-    color: var(--text-color);
-    min-width: 30px; /* Garante alinhamento consistente para números com 1 ou 2 dígitos */
-    text-align: right;
-    margin-right: 15px;
-    opacity: 0.8;
-}
-
+        .capitulos-list { counter-reset: chapter-counter; list-style: none; padding-left: 0; }
+        .capitulos-list li { counter-increment: chapter-counter; display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; font-size: 1.2em; }
+        .capitulos-list li::before { content: counter(chapter-counter) ". "; font-weight: bold; color: var(--text-color); min-width: 30px; text-align: right; margin-right: 15px; opacity: 0.8; }
+        .chapter-controls { display: flex; gap: 10px; opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .capitulos-list li:hover .chapter-controls { opacity: 1; }
+        .chapter-control-btn { background: none; border: none; color: var(--text-color); cursor: pointer; font-size: 1.1em; padding: 2px 5px; border-radius: 3px; opacity: 0.7; }
+        .chapter-control-btn:hover { background-color: var(--tertiary-bg); opacity: 1; }
+        .chapter-control-btn:disabled { opacity: 0.2; cursor: not-allowed; }
 
         .table-container { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin-top: 10px; }
         .styled-table { width: 100%; border-collapse: collapse; }
@@ -123,75 +140,22 @@
         #report-correction-btn { background-color: var(--accent-color); color: white; border: 1px solid var(--accent-color-hover); padding: 8px 12px; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); font-size: 0.9em; }
         #report-correction-btn:hover { background-color: var(--accent-color-hover); }
 
-        #editor-footer { padding: 10px 20px; text-align: right; background-color: var(--primary-bg); border-top: 1px solid var(--border-color); flex-shrink: 0; }
+        #editor-footer { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; background-color: var(--primary-bg); border-top: 1px solid var(--border-color); flex-shrink: 0; }
         #hide-page-btn { font-size: 0.85em; color: #888; cursor: pointer; transition: color 0.2s; }
         #hide-page-btn:hover { color: var(--accent-color); text-decoration: underline; }
 
-        .capitulos-list li {
-    display: flex;
-    justify-content: space-between; /* Coloca o título à esquerda e os controlos à direita */
-    align-items: center;
-    padding: 10px 5px; /* Ajusta o padding para um visual mais limpo */
-}
-
-.chapter-controls {
-    display: flex;
-    gap: 10px;
-    opacity: 0; /* Os controlos estão invisíveis por padrão */
-    transition: opacity 0.2s ease-in-out;
-}
-
-.capitulos-list li:hover .chapter-controls {
-    opacity: 1; /* Mostra os controlos ao passar o rato por cima do <li> */
-}
-
-.chapter-control-btn {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    cursor: pointer;
-    font-size: 1.1em;
-    padding: 2px 5px;
-    border-radius: 3px;
-    opacity: 0.7;
-}
-
-.chapter-control-btn:hover {
-    background-color: var(--tertiary-bg);
-    opacity: 1;
-}
-
-/* Desativa botões quando a ação não é possível (ex: subir o primeiro item) */
-.chapter-control-btn:disabled {
-    opacity: 0.2;
-    cursor: not-allowed;
-}
-
-#notebooks-list li:before {
-    content: none; /* Remove o ícone de papel padrão APENAS da lista de cadernos */
-}
-
-#save-indicator {
-    color: #4caf50; /* Um verde vivo e agradável */
-    margin-right: 15px; /* Espaço entre o ícone e o texto */
-    font-size: 0.9em;
-    
-    /* Lógica de transição para aparecer e desaparecer suavemente */
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-}
-
-#save-indicator.visible {
-    opacity: 1; /* Classe que torna o ícone visível */
-}
-
+        #notebooks-list li:before { content: none; }
+        #save-indicator { color: #4caf50; margin-right: 15px; font-size: 0.9em; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        #save-indicator.visible { opacity: 1; }
     </style>
 </head>
 <body>
 
-    <div class="notes-container">
+    <div class="notes-container" id="notes-container"> <!-- ID adicionado -->
         <div id="notebooks-panel" class="panel">
             <div class="panel-header">
+                <!-- [NOVO] Botão para recolher/expandir o painel -->
+                <button id="toggle-notebooks-btn" class="toggle-panel-btn" title="Recolher Painel">«</button>
                 <h2>Cadernos</h2>
                 <button id="add-notebook-btn" title="Novo Caderno/Projeto">+</button>
             </div>
@@ -201,6 +165,7 @@
         </div>
         <div id="pages-panel" class="panel">
             <div class="panel-header">
+                <button id="toggle-pages-btn" class="toggle-panel-btn" title="Recolher Painel">«</button>
                 <button id="navigate-back-btn" title="Voltar" style="display: none;">←</button>
                 <h2 id="pages-panel-title">Páginas</h2>
                 <button id="add-page-btn" title="Nova Página" disabled>+</button>
@@ -209,7 +174,7 @@
                 <p class="placeholder">Selecione um caderno</p>
             </ul>
         </div>
-        
+
         <div id="editor-panel" class="panel">
             <div id="editor-content-wrapper" style="display: none;">
                 <input type="text" id="page-title-input" placeholder="Título da Página">
@@ -227,8 +192,12 @@
             </div>
             <p id="editor-placeholder" class="placeholder">Selecione uma página para editar</p>
             <div id="editor-footer" style="display: none;">
-                <span id="save-indicator">✅</span>
-    <span id="hide-page-btn" title="Ocultar esta página da lista">Ocultar Página</span>
+                <div> <!-- Wrapper para itens à esquerda -->
+                    <span id="save-indicator">✅</span>
+                    <span id="hide-page-btn" title="Ocultar esta página da lista">Ocultar Página</span>
+                </div>
+                <!-- [NOVO] Botão para expandir/recolher o editor -->
+                <button id="toggle-editor-btn" class="toggle-panel-btn" title="Expandir Painel" style="display: none;">»</button>
             </div>
         </div>
     </div>
@@ -244,24 +213,26 @@
     <button id="report-correction-btn" style="display: none; position: absolute; z-index: 1001;">Reportar Correção</button>
 
     <script type="module">
-              const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", authDomain: "bibliacontexto.firebaseapp.com", projectId: "bibliacontexto", storageBucket: "bibliacontexto.firebasestorage.app", messagingSenderId: "266293600679", appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
         };
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, doc, getDoc, addDoc, collection, getDocs, updateDoc, query, orderBy, serverTimestamp, writeBatch, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // --- Variáveis Globais de Estado e Controlo ---
         let app, db;
         let currentNotebookId = null;
         let currentPageId = null;
-        let navigationStack = []; // [{id: 'parentId', name: 'Parent Name'}, ...]
+        let navigationStack = [];
         let contentDebounceTimer;
         let popupCallback = null;
         let selectedText = '';
         let saveIndicatorTimer;
 
         // --- Elementos do DOM ---
+        const notesContainer = document.getElementById('notes-container'); // [NOVO]
         const notebooksPanel = document.getElementById('notebooks-panel');
+        const pagesPanel = document.getElementById('pages-panel'); // [NOVO]
+        const editorPanel = document.getElementById('editor-panel'); // [NOVO]
         const notebooksList = document.getElementById('notebooks-list');
         const pagesList = document.getElementById('pages-list');
         const addNotebookBtn = document.getElementById('add-notebook-btn');
@@ -281,8 +252,11 @@
         const hidePageBtn = document.getElementById('hide-page-btn');
         const reportCorrectionBtn = document.getElementById('report-correction-btn');
         const navigateBackBtn = document.getElementById('navigate-back-btn');
+        const toggleNotebooksBtn = document.getElementById('toggle-notebooks-btn'); // [NOVO]
+        const togglePagesBtn = document.getElementById('toggle-pages-btn');       // [NOVO]
+        const toggleEditorBtn = document.getElementById('toggle-editor-btn');     // [NOVO]
 
-        // --- Inicialização do Firebase ---
+
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -293,7 +267,22 @@
             throw e;
         }
 
-        // --- Funções de UI e Feedback ---
+        // --- [NOVO] Funções de controlo dos painéis ---
+        function togglePanel(panel, button) {
+            const isHidden = panel.classList.toggle('hidden');
+            if (panel.id === 'editor-panel') {
+                button.textContent = isHidden ? '«' : '»';
+                button.title = isHidden ? 'Expandir Painel' : 'Recolher Painel';
+            } else {
+                button.textContent = isHidden ? '»' : '«';
+                button.title = isHidden ? 'Expandir Painel' : 'Recolher Painel';
+            }
+            // Mostra o botão de toggle do editor apenas se os outros 2 paineis estiverem escondidos
+            const notebooksHidden = notebooksPanel.classList.contains('hidden');
+            const pagesHidden = pagesPanel.classList.contains('hidden');
+            toggleEditorBtn.style.display = (notebooksHidden && pagesHidden) ? 'block' : 'none';
+        }
+
 
         function showSaveFeedback() {
             const indicator = document.getElementById('save-indicator');
@@ -409,12 +398,10 @@
             popupBody.appendChild(form);
             creationPopup.style.display = 'flex';
         }
-        
+
         function hideCreationPopup() {
             creationPopup.style.display = 'none';
         }
-
-        // --- Funções de Dados e Lógica Principal ---
 
         async function loadNotebooks() {
             notebooksList.innerHTML = '<p class="placeholder">A carregar...</p>';
@@ -457,6 +444,7 @@
             editorContentWrapper.style.display = 'none';
             editorPlaceholder.style.display = 'block';
             editorFooter.style.display = 'none';
+            notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
             loadPages(notebookId, null);
         }
 
@@ -538,7 +526,7 @@
                 pagesList.innerHTML = '<p class="placeholder" style="color:red;">Erro ao carregar</p>';
             }
         }
-        
+
         function handleAddPage() {
             if (!currentNotebookId) return;
             const options = [
@@ -567,7 +555,7 @@
                 }
             });
         }
-        
+
         async function addPage(name, type, content = '') {
             const parentId = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1].id : null;
             try {
@@ -603,6 +591,7 @@
                     editorContentWrapper.style.display = 'none';
                     editorPlaceholder.style.display = 'block';
                     editorFooter.style.display = 'none';
+                    notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
                     currentPageId = null;
                 } catch (error) { console.error("Erro ao abrir a pasta:", error); alert("Não foi possível abrir a pasta."); }
                 return;
@@ -630,7 +619,8 @@
             if (container) container.style.display = 'flex';
             editorContentWrapper.style.display = 'flex';
             editorPlaceholder.style.display = 'none';
-            editorFooter.style.display = 'block';
+            editorFooter.style.display = 'flex'; // Usar flex para alinhar itens
+            notesContainer.classList.add('editor-visible'); // [NOVO] Adiciona classe para redimensionar
         }
 
         function navigateBack() {
@@ -646,9 +636,10 @@
                 const currentNotebookLi = notebooksList.querySelector(`li[data-notebook-id="${currentNotebookId}"]`);
                 pagesPanelTitle.textContent = currentNotebookLi ? currentNotebookLi.querySelector('span:last-child').textContent : 'Páginas';
                 loadPages(currentNotebookId, null);
+                 notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
             }
         }
-        
+
         async function savePageTitle() {
             if (!currentNotebookId || !currentPageId) return;
             const newTitle = pageTitleInput.value.trim();
@@ -708,6 +699,7 @@
                 if (pageListItem) { pageListItem.remove(); }
                 editorContentWrapper.style.display = 'none'; editorPlaceholder.style.display = 'block';
                 editorFooter.style.display = 'none'; currentPageId = null;
+                notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
                 if (pagesList.children.length === 0) { pagesList.innerHTML = '<p class="placeholder">Nenhuma página visível</p>'; }
             } catch (error) {
                 console.error("Erro ao ocultar página: ", error); alert("Falha ao ocultar a página.");
@@ -722,8 +714,6 @@
             return null;
         }
 
-        // --- Funções de Renderização de Conteúdo Específico ---
-        
         function renderVerificacoes(content) {
             const container = document.getElementById('verificacoes-container');
             container.innerHTML = '';
@@ -910,8 +900,6 @@
             });
         }
 
-        // --- Listeners de Eventos Globais ---
-        
         window.addEventListener('DOMContentLoaded', () => {
             loadNotebooks();
             addNotebookBtn.addEventListener('click', handleAddNotebook);
@@ -922,6 +910,21 @@
             popupCloseBtn.addEventListener('click', hideCreationPopup);
             creationPopup.addEventListener('click', (e) => { if (e.target === creationPopup) { hideCreationPopup(); } });
             hidePageBtn.addEventListener('click', hideCurrentPage);
+
+            // [NOVO] Listeners para os botões de toggle
+            toggleNotebooksBtn.addEventListener('click', () => togglePanel(notebooksPanel, toggleNotebooksBtn));
+            togglePagesBtn.addEventListener('click', () => togglePanel(pagesPanel, togglePagesBtn));
+            toggleEditorBtn.addEventListener('click', () => {
+                // Ao expandir o editor, assumimos que o utilizador quer focar-se nele
+                notebooksPanel.classList.remove('hidden');
+                pagesPanel.classList.remove('hidden');
+                editorPanel.classList.remove('hidden');
+
+                // Atualiza todos os icones para o estado "aberto"
+                toggleNotebooksBtn.textContent = '«';
+                togglePagesBtn.textContent = '«';
+                toggleEditorBtn.style.display = 'none'; // Esconde o botão do editor
+            });
 
             popupBody.addEventListener('click', (e) => {
                 const targetLi = e.target.closest('li');

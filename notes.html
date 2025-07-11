@@ -229,10 +229,10 @@
         let saveIndicatorTimer;
 
         // --- Elementos do DOM ---
-        const notesContainer = document.getElementById('notes-container'); // [NOVO]
+        const notesContainer = document.getElementById('notes-container');
         const notebooksPanel = document.getElementById('notebooks-panel');
-        const pagesPanel = document.getElementById('pages-panel'); // [NOVO]
-        const editorPanel = document.getElementById('editor-panel'); // [NOVO]
+        const pagesPanel = document.getElementById('pages-panel');
+        const editorPanel = document.getElementById('editor-panel');
         const notebooksList = document.getElementById('notebooks-list');
         const pagesList = document.getElementById('pages-list');
         const addNotebookBtn = document.getElementById('add-notebook-btn');
@@ -252,10 +252,9 @@
         const hidePageBtn = document.getElementById('hide-page-btn');
         const reportCorrectionBtn = document.getElementById('report-correction-btn');
         const navigateBackBtn = document.getElementById('navigate-back-btn');
-        const toggleNotebooksBtn = document.getElementById('toggle-notebooks-btn'); // [NOVO]
-        const togglePagesBtn = document.getElementById('toggle-pages-btn');       // [NOVO]
-        const toggleEditorBtn = document.getElementById('toggle-editor-btn');     // [NOVO]
-
+        const toggleNotebooksBtn = document.getElementById('toggle-notebooks-btn');
+        const togglePagesBtn = document.getElementById('toggle-pages-btn');
+        const toggleEditorBtn = document.getElementById('toggle-editor-btn');
 
         try {
             app = initializeApp(firebaseConfig);
@@ -267,7 +266,7 @@
             throw e;
         }
 
-        // --- [NOVO] Funções de controlo dos painéis ---
+        // --- Funções de controlo dos painéis ---
         function togglePanel(panel, button) {
             const isHidden = panel.classList.toggle('hidden');
             if (panel.id === 'editor-panel') {
@@ -277,12 +276,20 @@
                 button.textContent = isHidden ? '»' : '«';
                 button.title = isHidden ? 'Expandir Painel' : 'Recolher Painel';
             }
-            // Mostra o botão de toggle do editor apenas se os outros 2 paineis estiverem escondidos
+
+            // [LÓGICA ATUALIZADA] Mostrar/esconder o botão de voltar contextual
+            if (panel.id === 'notebooks-panel') {
+                if (isHidden && navigationStack.length === 0) {
+                    navigateBackBtn.style.display = 'block';
+                } else if (!isHidden && navigationStack.length === 0) {
+                    navigateBackBtn.style.display = 'none';
+                }
+            }
+            
             const notebooksHidden = notebooksPanel.classList.contains('hidden');
             const pagesHidden = pagesPanel.classList.contains('hidden');
             toggleEditorBtn.style.display = (notebooksHidden && pagesHidden) ? 'block' : 'none';
         }
-
 
         function showSaveFeedback() {
             const indicator = document.getElementById('save-indicator');
@@ -431,20 +438,31 @@
 
         function selectNotebook(notebookId, notebookName) {
             if (currentNotebookId === notebookId) return;
+
+            pagesPanel.classList.remove('hidden');
+            togglePagesBtn.textContent = '«';
+            togglePagesBtn.title = 'Recolher Painel';
+
             currentNotebookId = notebookId;
             currentPageId = null;
-            navigationStack = [];
+            navigationStack = []; // Limpa a pilha de navegação
             document.querySelectorAll('#notebooks-list li').forEach(li => {
                 li.classList.toggle('selected', li.dataset.notebookId === notebookId);
             });
+            
+            // [LÓGICA ATUALIZADA] Garante que o painel de cadernos esteja visível
             notebooksPanel.classList.remove('hidden');
+            toggleNotebooksBtn.textContent = '«'; 
+            
             pagesPanelTitle.textContent = notebookName;
             addPageBtn.disabled = false;
-            navigateBackBtn.style.display = 'none';
+            
+            navigateBackBtn.style.display = 'none'; // [LÓGICA ATUALIZADA] Esconde o botão voltar
+            
             editorContentWrapper.style.display = 'none';
             editorPlaceholder.style.display = 'block';
             editorFooter.style.display = 'none';
-            notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
+            notesContainer.classList.remove('editor-visible');
             loadPages(notebookId, null);
         }
 
@@ -591,7 +609,7 @@
                     editorContentWrapper.style.display = 'none';
                     editorPlaceholder.style.display = 'block';
                     editorFooter.style.display = 'none';
-                    notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
+                    notesContainer.classList.remove('editor-visible');
                     currentPageId = null;
                 } catch (error) { console.error("Erro ao abrir a pasta:", error); alert("Não foi possível abrir a pasta."); }
                 return;
@@ -619,24 +637,35 @@
             if (container) container.style.display = 'flex';
             editorContentWrapper.style.display = 'flex';
             editorPlaceholder.style.display = 'none';
-            editorFooter.style.display = 'flex'; // Usar flex para alinhar itens
-            notesContainer.classList.add('editor-visible'); // [NOVO] Adiciona classe para redimensionar
+            editorFooter.style.display = 'flex';
+            notesContainer.classList.add('editor-visible');
         }
 
         function navigateBack() {
-            if (navigationStack.length === 0) return;
-            navigationStack.pop();
-            const parent = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
-            if (parent) {
-                pagesPanelTitle.textContent = parent.name;
-                loadPages(currentNotebookId, parent.id);
-            } else {
+            // Prioridade 1: Navegar para fora de uma pasta
+            if (navigationStack.length > 0) {
+                navigationStack.pop();
+                const parent = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
+                if (parent) {
+                    pagesPanelTitle.textContent = parent.name;
+                    loadPages(currentNotebookId, parent.id);
+                } else {
+                    // Voltou para a raiz do caderno
+                    const currentNotebookLi = notebooksList.querySelector(`li[data-notebook-id="${currentNotebookId}"]`);
+                    pagesPanelTitle.textContent = currentNotebookLi ? currentNotebookLi.querySelector('span:last-child').textContent : 'Páginas';
+                    loadPages(currentNotebookId, null);
+                    // [LÓGICA ATUALIZADA] Se o painel de cadernos estiver visível, esconda o botão voltar
+                    if (!notebooksPanel.classList.contains('hidden')) {
+                        navigateBackBtn.style.display = 'none';
+                    }
+                }
+            } 
+            // Prioridade 2: Se não está numa pasta, mostrar o painel de cadernos
+            else if (notebooksPanel.classList.contains('hidden')) {
                 notebooksPanel.classList.remove('hidden');
-                navigateBackBtn.style.display = 'none';
-                const currentNotebookLi = notebooksList.querySelector(`li[data-notebook-id="${currentNotebookId}"]`);
-                pagesPanelTitle.textContent = currentNotebookLi ? currentNotebookLi.querySelector('span:last-child').textContent : 'Páginas';
-                loadPages(currentNotebookId, null);
-                 notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
+                toggleNotebooksBtn.textContent = '«';
+                toggleNotebooksBtn.title = 'Recolher Painel';
+                navigateBackBtn.style.display = 'none'; // Esconde o botão após a ação
             }
         }
 
@@ -699,7 +728,7 @@
                 if (pageListItem) { pageListItem.remove(); }
                 editorContentWrapper.style.display = 'none'; editorPlaceholder.style.display = 'block';
                 editorFooter.style.display = 'none'; currentPageId = null;
-                notesContainer.classList.remove('editor-visible'); // [NOVO] Remove a classe
+                notesContainer.classList.remove('editor-visible');
                 if (pagesList.children.length === 0) { pagesList.innerHTML = '<p class="placeholder">Nenhuma página visível</p>'; }
             } catch (error) {
                 console.error("Erro ao ocultar página: ", error); alert("Falha ao ocultar a página.");
@@ -911,19 +940,16 @@
             creationPopup.addEventListener('click', (e) => { if (e.target === creationPopup) { hideCreationPopup(); } });
             hidePageBtn.addEventListener('click', hideCurrentPage);
 
-            // [NOVO] Listeners para os botões de toggle
             toggleNotebooksBtn.addEventListener('click', () => togglePanel(notebooksPanel, toggleNotebooksBtn));
             togglePagesBtn.addEventListener('click', () => togglePanel(pagesPanel, togglePagesBtn));
             toggleEditorBtn.addEventListener('click', () => {
-                // Ao expandir o editor, assumimos que o utilizador quer focar-se nele
                 notebooksPanel.classList.remove('hidden');
                 pagesPanel.classList.remove('hidden');
                 editorPanel.classList.remove('hidden');
 
-                // Atualiza todos os icones para o estado "aberto"
                 toggleNotebooksBtn.textContent = '«';
                 togglePagesBtn.textContent = '«';
-                toggleEditorBtn.style.display = 'none'; // Esconde o botão do editor
+                toggleEditorBtn.style.display = 'none';
             });
 
             popupBody.addEventListener('click', (e) => {

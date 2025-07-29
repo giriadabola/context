@@ -467,8 +467,49 @@
         function placeCursorAtEndOf(el){if(!el)return;const s=window.getSelection();const r=document.createRange();r.selectNodeContents(el);r.collapse(false);s.removeAllRanges();s.addRange(r)}
         
         function showAddReferencePopup(){if(!activeEditorElement||!currentSelectionRange||currentSelectionRange.collapsed)return alert("Selecione texto para criar o link.");rangeForPendingReference=currentSelectionRange.cloneRange();refTitleInput.value="";document.getElementById('addRefUrlsContainer').innerHTML='';createUrlInputEntry('addRefUrlsContainer','',false);showPopup(addReferencePopup);refTitleInput.focus()}
-        async function addReferenceToDocument(title){saveStateForUndo();if(!rangeForPendingReference){alert("Nenhuma seleção.");hidePopup(addReferencePopup);return}const urls=Array.from(document.querySelectorAll('#addRefUrlsContainer .ref-url-input')).map(i=>i.value.trim()).filter(Boolean);if(urls.length===0)return alert("Pelo menos uma URL.");const newRef={id:generateId('ref-'),tituloReferencia:title,urls:urls};const span=document.createElement('span');span.className='referenced-text';span.dataset.refId=newRef.id;try{rangeForPendingReference.surroundContents(span);if(!currentDocumentData.referencias)currentDocumentData.referencias=[];currentDocumentData.referencias.push(newRef);await saveDocumentBody(true);await updateDoc(doc(db,"documentos",currentDocId),{referencias:currentDocumentData.referencias});renderReferences();updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));hidePopup(addReferencePopup);rangeForPendingReference=null}catch(e){console.error("Falha ao salvar referência:",e);alert("Erro ao salvar.")}}
-        function renderReferences(){
+async function addReferenceToDocument(title){
+            saveStateForUndo();
+            if(!rangeForPendingReference){alert("Nenhuma seleção de texto pendente.");hidePopup(addReferencePopup);return}
+            
+            const urls = Array.from(document.querySelectorAll('#addRefUrlsContainer .ref-url-input')).map(i=>i.value.trim()).filter(Boolean);
+            if(urls.length===0){alert("É necessária pelo menos uma URL."); return;}
+
+            const newRef = {id: generateId('ref-'), tituloReferencia: title, urls: urls};
+            const span = document.createElement('span');
+            span.className = 'referenced-text';
+            span.dataset.refId = newRef.id;
+
+            // --- INÍCIO DA CORREÇÃO COM REDE DE SEGURANÇA ---
+            try {
+                // Método 1 (Preferido): Mantém a formatação interna (negrito, etc.)
+                rangeForPendingReference.surroundContents(span);
+            } catch (e) {
+                console.warn("surroundContents falhou, usando método alternativo.", e);
+                // Método 2 (Alternativo): Mais robusto, mas pode perder formatação interna.
+                // É a nossa rede de segurança para evitar o erro.
+                const selectionText = rangeForPendingReference.toString();
+                rangeForPendingReference.deleteContents();
+                span.textContent = selectionText;
+                rangeForPendingReference.insertNode(span);
+            }
+            // --- FIM DA CORREÇÃO ---
+
+            if(!currentDocumentData.referencias) currentDocumentData.referencias = [];
+            currentDocumentData.referencias.push(newRef);
+
+            try {
+                await saveDocumentBody(true);
+                await updateDoc(doc(db, "documentos", currentDocId), {referencias: currentDocumentData.referencias});
+                renderReferences();
+                updateEmptyReferenceSpansStyles(span.closest('.text-editor-chapter'));
+                hidePopup(addReferencePopup);
+                rangeForPendingReference = null;
+            } catch (saveError) {
+                console.error("Falha ao salvar referência após criá-la:", saveError);
+                alert("Erro ao salvar a referência no banco de dados.");
+            }
+        }
+                function renderReferences(){
     if(!referencesListUl||!editorsContainer)return;
     referencesListUl.innerHTML="";
     const allRefs = currentDocumentData?.referencias || [];
@@ -608,8 +649,50 @@
         async function handleUnhideChapter(id){saveStateForUndo();const i=currentDocumentData.corpo.findIndex(c=>c.id===id);if(i>-1){delete currentDocumentData.corpo[i].isHidden;await saveDocumentBody(true);displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias);showHiddenChaptersPopup();if(!(currentDocumentData?.corpo||[]).some(c=>c.isHidden))hidePopup(document.getElementById('hiddenChaptersPopup'))}}
         
         function showSplitChapterPopup(wrapper,range){if(!range.collapsed)return alert("Posicione o cursor para dividir.");rangeForSplittingChapter=range.cloneRange();splitChapterPopup.dataset.sourceChapterId=wrapper.dataset.chapterId;showPopup(splitChapterPopup)}
-        async function executeChapterSplit(){const id=splitChapterPopup.dataset.sourceChapterId;if(!id||!rangeForSplittingChapter)return hidePopup(splitChapterPopup);saveStateForUndo();const w=editorsContainer.querySelector(`.chapter-wrapper[data-chapter-id="${id}"]`);const e=w.querySelector('.text-editor-chapter');if(!w||!e)return hidePopup(splitChapterPopup);const r=document.createRange();r.setStart(rangeForSplittingChapter.startContainer,rangeForSplittingChapter.startOffset);r.setEnd(e,e.childNodes.length);const c=r.extractContents();const t=document.createElement('div');t.appendChild(c);let h=t.innerHTML;if(h.trim()==='')h=`<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;if(e.innerHTML.trim()==='')e.innerHTML=`<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;const nw=createNewChapterElement(h,null,false);w.after(nw);rangeForSplittingChapter=null;hidePopup(splitChapterPopup);updateChapterActionButtonsState();saveDocumentBody(true)}
+        async function executeChapterSplit() {
+            const id = splitChapterPopup.dataset.sourceChapterId;
+            if (!id || !rangeForSplittingChapter) return hidePopup(splitChapterPopup);
 
+            saveStateForUndo();
+            const wrapper = editorsContainer.querySelector(`.chapter-wrapper[data-chapter-id="${id}"]`);
+            const editor = wrapper.querySelector('.text-editor-chapter');
+            if (!wrapper || !editor) return hidePopup(splitChapterPopup);
+            
+            // --- INÍCIO DA NOVA LÓGICA DE CORREÇÃO ---
+
+            // 1. Extrai o conteúdo, o que pode quebrar o HTML na caixa original
+            const range = document.createRange();
+            range.setStart(rangeForSplittingChapter.startContainer, rangeForSplittingChapter.startOffset);
+            range.setEnd(editor, editor.childNodes.length);
+            const contentFragment = range.extractContents();
+
+            // 2. Lê o HTML da caixa original (agora potencialmente quebrado) e força o navegador a reescrevê-lo, corrigindo-o.
+            const originalHtml = editor.innerHTML;
+            editor.innerHTML = originalHtml; // Este é o truque de sanitização!
+            
+            // 3. Pega o fragmento extraído e deixa o navegador convertê-lo para uma string de HTML corrigida.
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(contentFragment);
+            let newHtml = tempDiv.innerHTML;
+
+            // 4. Garante que nenhuma das caixas fique completamente vazia, o que as tornaria não-editáveis.
+            if (editor.innerHTML.trim() === '') {
+                editor.innerHTML = `<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;
+            }
+             if (newHtml.trim() === '') {
+                newHtml = `<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`;
+            }
+            // --- FIM DA NOVA LÓGICA DE CORREÇÃO ---
+
+            const newChapterWrapper = createNewChapterElement(newHtml, null, false);
+            wrapper.after(newChapterWrapper);
+
+            rangeForSplittingChapter = null;
+            hidePopup(splitChapterPopup);
+            updateChapterActionButtonsState();
+            saveDocumentBody(true);
+        }
+        
         async function showBackupPopup(){if(!currentDocId)return;const listUl=backupListContainer.querySelector('ul'),msgP=backupListContainer.querySelector('p');listUl.innerHTML='';msgP.textContent='Carregando...';msgP.style.display='block';showPopup(backupPopup);try{const q=query(collection(db,"backups"),where("originalDocId","==",currentDocId),orderBy("backupTimestamp","desc"));const snap=await getDocs(q);if(snap.empty){msgP.textContent='Nenhum backup.'}else{msgP.style.display='none';snap.forEach(docSnap=>{const b=docSnap.data();const li=document.createElement('li');li.dataset.backupId=docSnap.id;li.innerHTML=`<span class="backup-date">${formatDate(b.backupTimestamp)}</span>`;li.addEventListener('click',()=>handleRestoreBackup(docSnap.id));listUl.appendChild(li)})}}catch(e){console.error("Erro ao carregar backups:",e);msgP.textContent='Erro ao carregar.'}}
         async function handleCreateBackup(){if(!currentDocId||!currentDocumentData)return;syncDocumentStateFromDOM();createBackupBtn.disabled=true;createBackupBtn.textContent='A criar...';try{await addDoc(collection(db,"backups"),{originalDocId:currentDocId,backupTimestamp:serverTimestamp(),data:JSON.parse(JSON.stringify(currentDocumentData))});alert('Backup criado!');await showBackupPopup()}catch(e){console.error("Erro ao criar backup:",e);alert('Erro ao criar.')}finally{createBackupBtn.disabled=false;createBackupBtn.textContent='Criar Novo Backup'}}
         async function handleRestoreBackup(id){try{const docSnap=await getDoc(doc(db,"backups",id));if(!docSnap.exists())return alert('Backup não encontrado.');const b=docSnap.data();localStorage.setItem('pendingRestore',JSON.stringify({titulo:`${b.data.titulo} (Backup ${formatDate(b.backupTimestamp)})`,corpo:b.data.corpo,referencias:b.data.referencias}));window.open(window.location.href,'_blank')}catch(e){console.error("Erro ao restaurar backup:",e);alert("Erro ao restaurar.")}}

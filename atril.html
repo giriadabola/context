@@ -3,194 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atril de Documentos Interativo</title>
+    <title>Atril</title>
     <style>
-        :root {
-            color-scheme: dark light;
-        }
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-        }
-        .column {
-            padding: 20px;
-            height: 100vh;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-        #left-column {
-            flex: 0 0 300px;
-            border-right: 1px solid #444;
-            background-color: #252525;
-        }
-        #left-column h2 {
-            margin-top: 0;
-            color: #e0e0e0;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #settingsGearBtn {
-            cursor: pointer;
-            font-size: 0.9em;
-            padding: 5px;
-        }
-        #settingsGearBtn:hover {
-            color: #c0c0c0;
-        }
-        #document-titles-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        #document-titles-list li button {
-            display: block;
-            width: 100%;
-            padding: 10px 15px;
-            margin-bottom: 5px;
-            background-color: #383838;
-            color: #c0c0c0;
-            border: 1px solid #555;
-            border-radius: 4px;
-            text-align: left;
-            cursor: pointer;
-            font-size: 0.95em;
-        }
-        #document-titles-list li button:hover,
-        #document-titles-list li button.active {
-            background-color: #3a7ca5;
-            color: white;
-            border-color: #3a7ca5;
-        }
-        #loading-docs-message {
-            color: #999;
-        }
-        #right-column {
-            flex: 1;
-            padding-left: 30px;
-            position: relative;
-        }
-        #selected-doc-title {
-            font-size: 1.8em; /* Base size, scaled by applyFontSize */
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: #e0e0e0;
-            border-bottom: 1px solid #444;
-            padding-bottom: 15px;
-        }
-        #selected-doc-body {
-            margin-bottom: 30px;
-            line-height: 1.7;
-        }
-        #selected-doc-body, #selected-doc-body p, #selected-doc-body div,
-        #selected-doc-body h1, #selected-doc-body h2, #selected-doc-body h3,
-        #selected-doc-body li {
-            color: #d4d4d4;
-        }
-        #selected-doc-references-container {
-            margin-top: 40px;
-            border-top: 1px solid #444;
-            padding-top: 20px;
-        }
-        #selected-doc-references-container h3 {
-            /* Base size, scaled by applyFontSize */
-            margin-bottom: 15px;
-            color: #c0c0c0;
-        }
-        #selected-doc-references-list {
-            list-style: none;
-            padding: 0;
-        }
-        #selected-doc-references-list li {
+       :root {
+    color-scheme: dark light;
+}
+body {
+    font-family: sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+}
+.column {
+    padding: 20px;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+#left-column {
+    flex: 0 0 300px;
+    border-right: 1px solid #444;
+    background-color: #252525;
+}
+#left-column h2 {
+    margin-top: 0;
+    color: #e0e0e0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#settingsGearBtn, #downloadPdfBtn {
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 5px;
+    background: none;
+    border: none;
+    color: #d4d4d4;
+}
+#settingsGearBtn:hover, #downloadPdfBtn:hover {
+    color: #c0c0c0;
+}
+#document-titles-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#document-titles-list li button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    background-color: #383838;
+    color: #c0c0c0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+#document-titles-list li button:hover,
+#document-titles-list li button.active {
+    background-color: #3a7ca5;
+    color: white;
+    border-color: #3a7ca5;
+}
+#loading-docs-message {
+    color: #999;
+}
+#right-column {
+    flex: 1;
+    padding-left: 30px;
+    position: relative;
+}
+#selected-doc-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.8em;
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #e0e0e0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 15px;
+}
+#selected-doc-references-container {
+    margin-top: 40px;
+    border-top: 1px solid #444;
+    padding-top: 20px;
+}
+#selected-doc-references-container h3 {
+    margin-bottom: 15px;
+    color: #c0c0c0;
+}
+#selected-doc-references-list {
+    list-style: none;
+    padding: 0;
+}
+#selected-doc-references-list li {
     background: #353535;
     padding: 10px 15px;
     margin-bottom: 8px;
     border-radius: 4px;
     border: 1px solid #484848;
 }
-
-        #selected-doc-references-list li .ref-title-atril {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 6px;
-            color: #b0c4de;
-        }
-        #selected-doc-references-list li .ref-url-item-atril a {
-            text-decoration: none;
-            color: #7aa0c7;
-            word-break: break-all;
-            display: block;
-            margin-top: 3px;
-        }
-        #selected-doc-references-list li .ref-url-item-atril a:hover {
-            text-decoration: underline;
-            color: #87cefa;
-        }
-        #no-doc-selected {
-            color: #999;
-            font-style: italic;
-        }
-        .atril-highlight-scroll {
-            background-color: #2c3e50 !important;
-            transition: background-color 0.3s ease-out;
-            border-radius: 3px;
-            color: #e0efff !important;
-        }
-        #selected-doc-references-list li.atril-highlight-scroll {
-            background-color: #5a512e !important;
-        }
-        sup.ref-marker-popup.atril-highlight-scroll {
-             background-color: #5a512e !important;
-        }
-        .status-indicator {
-            font-size: 0.8em;
-            color: #888;
-            margin-left: 10px;
-        }
-        .editor-cursor-indicator {
-            display: inline-block;
-            width: 2px;
-            height: 1.2em;
-            background-color: #f0ad4e;
-            margin-left: -1px;
-            animation: blink 1s step-end infinite;
-            vertical-align: text-bottom;
-        }
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-        sup.ref-marker-popup {
-            cursor: pointer;
-            color: #7aa0c7;
-            font-size: 0.8em; /* Base size for the [1] marker itself */
-            font-weight: bold;
-            line-height: 1;
-            vertical-align: super;
-            margin: 0 1px;
-            padding: 1px 2px;
-            border-radius: 2px;
-        }
-        sup.ref-marker-popup a {
-            color: inherit;
-            text-decoration: none;
-        }
-        sup.ref-marker-popup:hover,
-        sup.ref-marker-popup:hover a {
-            background-color: #384858;
-            color: #a8c8e8;
-            text-decoration: none;
-        }
-
-        /* Styles for the Individual Reference Popup */
-        #referencePopup {
-            font-size: 0.85em; 
+#selected-doc-references-list li .ref-title-atril {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+    color: #b0c4de;
+}
+#selected-doc-references-list li .ref-url-item-atril a {
+    text-decoration: none;
+    color: #7aa0c7;
+    word-break: break-all;
+    display: block;
+    margin-top: 3px;
+}
+#selected-doc-references-list li .ref-url-item-atril a:hover {
+    text-decoration: underline;
+    color: #87cefa;
+}
+#no-doc-selected {
+    color: #999;
+    font-style: italic;
+}
+.atril-highlight-scroll {
+    background-color: #2c3e50 !important;
+    transition: background-color 0.3s ease-out;
+    border-radius: 3px;
+    color: #e0efff !important;
+}
+#selected-doc-references-list li.atril-highlight-scroll {
+    background-color: #5a512e !important;
+}
+sup.ref-marker-popup.atril-highlight-scroll {
+     background-color: #5a512e !important;
+}
+.status-indicator {
+    font-size: 0.8em;
+    color: #888;
+    margin-left: 10px;
+}
+.editor-cursor-indicator {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background-color: #f0ad4e;
+    margin-left: -1px;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+}
+@keyframes blink {
+    50% { opacity: 0; }
+}
+sup.ref-marker-popup {
+    cursor: pointer;
+    color: #7aa0c7;
+    font-size: 0.8em;
+    font-weight: bold;
+    line-height: 1;
+    vertical-align: super;
+    margin: 0 1px;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+sup.ref-marker-popup a {
+    color: inherit;
+    text-decoration: none;
+}
+sup.ref-marker-popup:hover,
+sup.ref-marker-popup:hover a {
+    background-color: #384858;
+    color: #a8c8e8;
+    text-decoration: none;
+}
+#referencePopup {
+    font-size: 0.85em; 
     max-height: 250px; 
     overflow-y: auto;  
 }
@@ -198,40 +190,140 @@
     font-size: 1.05em;
 }
 #referencePopupUrls a {
-    display: block; /* Garante que cada link ocupe sua própria linha */
+    display: block;
     text-decoration: none;
     word-break: break-all; 
     color: #87cefa; 
     font-size: 0.95em; 
-    line-height: 1.4;   /* Aumenta um pouco o espaçamento da linha do texto do link */
-    padding-top: 8px;     /* Adiciona espaço acima de cada link */
-    padding-bottom: 8px;  /* Adiciona espaço abaixo de cada link (para a borda) */
-    margin-bottom: 0;     /* Remove margem inferior, padding controla o espaço */
-    border-bottom: 1px dotted #5c5c5c; /* Linha separadora sutil */
-    border-radius: 2px; /* Suaviza um pouco o hover */
-    transition: background-color 0.2s ease-in-out; /* Transição suave para o hover */
+    line-height: 1.4;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 0;
+    border-bottom: 1px dotted #5c5c5c;
+    border-radius: 2px;
+    transition: background-color 0.2s ease-in-out;
 }
-
 #referencePopupUrls a:last-child {
     border-bottom: none;
 }
-
 #referencePopupUrls a:hover {
     text-decoration: underline;
-    background-color: rgba(255, 255, 255, 0.07); /* Leve destaque no hover */
+    background-color: rgba(255, 255, 255, 0.07);
 }
 
+/* --- BLOCO DE ESTILOS DE PADRONIZAÇÃO (VERSÃO FINAL) --- */
+/* 1. Define o estilo base para o contêiner do corpo do documento.
+   O JavaScript irá alterar a propriedade 'font-size' deste elemento. */
+#selected-doc-body {
+    margin-bottom: 30px;
+    font-family: Arial, sans-serif;
+    line-height: 1.7;
+    font-size: 14px; /* Tamanho inicial padrão */
+}
+
+/* 2. Regra para TODOS os elementos filhos dentro do corpo. */
+#selected-doc-body * {
+    /* Força o estilo visual (tipo, peso, estilo) a ser uniforme,
+       sobrescrevendo quaisquer estilos que venham do Firebase. */
+    font-family: inherit !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+
+    /* A propriedade 'font-size' herda o valor do pai (#selected-doc-body)
+       de forma natural. A AUSÊNCIA de '!important' aqui é a chave da solução,
+       permitindo que a herança dinâmica funcione. */
+    font-size: inherit;
+    line-height: inherit;
+}
+/* --- FIM DO BLOCO FINAL --- */
+
+
+/* --- ESTILOS PARA MENU RESPONSIVO --- */
+#mobileMenuBtn, #closeMenuBtn {
+    display: none;
+    background: none;
+    border: none;
+    color: #d4d4d4;
+    cursor: pointer;
+    font-size: 1.8em;
+    line-height: 1;
+}
+#closeMenuBtn {
+    padding: 0 10px;
+}
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+    }
+    #mobileMenuBtn {
+        display: inline-block;
+        margin-right: 15px;
+    }
+    #closeMenuBtn {
+        display: block;
+    }
+    #left-column h2 {
+        justify-content: space-between;
+    }
+    #left-column {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 300px;
+        max-width: 85%;
+        z-index: 1100;
+        border-right: 1px solid #555;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+    #left-column.menu-open {
+        transform: translateX(0);
+        box-shadow: 5px 0 15px rgba(0,0,0,0.4);
+    }
+    #right-column {
+        padding-left: 20px;
+    }
+    #menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1099;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s;
+    }
+    #menu-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+       
     </style>
 </head>
 <body>
+    <div id="menu-overlay"></div>
     <div id="left-column" class="column">
-        <h2>Documentos <span id="settingsGearBtn" title="Configurações de Leitura">⚙️</span></h2>
+        <h2>
+            <span>Documentos</span>
+            <button id="closeMenuBtn" title="Fechar Menu">&times;</button>
+        </h2>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px;">
+             <span id="settingsGearBtn" title="Configurações de Leitura">⚙️ Configurações</span>
+             <button id="downloadPdfBtn" title="Baixar como PDF" style="display: none; font-size: 1.2em; margin-right: 5px;">📥</button>
+        </div>
         <ul id="document-titles-list">
             <li id="loading-docs-message">Carregando documentos...</li>
         </ul>
     </div>
     <div id="right-column" class="column">
-        <h1 id="selected-doc-title">Selecione um Documento <span id="live-status-indicator" class="status-indicator"></span></h1>
+        <h1 id="selected-doc-title">
+            <button id="mobileMenuBtn" title="Abrir Menu">☰</button>
+            <span>Selecione um Documento</span>
+            <span id="live-status-indicator" class="status-indicator"></span>
+        </h1>
         <div id="selected-doc-body">
             <p id="no-doc-selected">Nenhum documento selecionado para visualização.</p>
         </div>
@@ -241,10 +333,10 @@
         </div>
     </div>
 
+    <!-- Popups e outros elementos invisíveis -->
     <div id="atrilSelectionToolbar" style="position: absolute; display: none; background: #444; padding: 5px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 1010;">
         <button id="suggestEditBtn" title="Sugerir Edição" style="background:none; border:none; color:white; font-size: 1.2em; cursor:pointer; padding: 5px;">✏️</button>
     </div>
-
     <div id="suggestionPopup" style="visibility: hidden; opacity: 0; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1005; transition: opacity 0.3s ease, visibility 0s linear 0.3s;">
         <div style="background: #333; color: #d4d4d4; padding: 25px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 450px; max-width: 90%;">
             <h3 style="margin-top: 0; color: #e0e0e0;">Sugerir Edição</h3>
@@ -266,14 +358,11 @@
             </div>
         </div>
     </div>
-
-    <!-- Reference Pop-up Panel - Note: some styles moved to <style> block -->
     <div id="referencePopup" style="position: absolute; display: none; background: #3a3a3a; color: #e0e0e0; border: 1px solid #555; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); z-index: 1020; padding: 10px 15px; width: 280px; max-width: 90%;">
         <button id="referencePopupCloseBtn" title="Fechar" style="position: absolute; top: 3px; right: 5px; background: none; border: none; color: #aaa; font-size: 1.4em; cursor: pointer; padding: 2px 5px;">×</button>
         <div id="referencePopupTitle" style="font-weight: bold; margin-bottom: 8px; color: #b0c4de; padding-right: 20px;"></div>
         <div id="referencePopupUrls"></div>
     </div>
-
     <div id="settingsPopup" style="visibility: hidden; opacity: 0; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1030; transition: opacity 0.3s ease, visibility 0s linear 0.3s;">
         <div style="background: #333; color: #d4d4d4; padding: 20px 25px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 300px; max-width: 90%;">
             <h3 style="margin-top: 0; color: #e0e0e0; border-bottom: 1px solid #444; padding-bottom: 10px;">Configurações</h3>
@@ -291,6 +380,8 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import {
@@ -298,6 +389,7 @@
             doc, onSnapshot, addDoc, serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        // --- All const declarations ---
         const firebaseConfig = {
             apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // EXEMPLO - SUBSTITUA
             authDomain: "bibliacontexto.firebaseapp.com", // EXEMPLO - SUBSTITUA
@@ -306,16 +398,8 @@
             messagingSenderId: "266293600679", // EXEMPLO - SUBSTITUA
             appId: "1:266293600679:web:3b7c264f0b5e35ebea1682" // EXEMPLO - SUBSTITUA
         };
-
-        if (!firebaseConfig || !firebaseConfig.projectId) {
-            console.error("CONFIGURAÇÃO DO FIREBASE INVÁLIDA OU AUSENTE!");
-            alert("ERRO CRÍTICO: Configuração do Firebase não encontrada.");
-            throw new Error("Firebase config error: projectId is missing.");
-        }
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
         const docTitlesListEl = document.getElementById('document-titles-list');
         const loadingDocsMsgEl = document.getElementById('loading-docs-message');
         const selectedDocTitleEl = document.getElementById('selected-doc-title');
@@ -324,7 +408,7 @@
         const referencesContainerEl = document.getElementById('selected-doc-references-container');
         const referencesListEl = document.getElementById('selected-doc-references-list');
         const liveStatusIndicatorEl = document.getElementById('live-status-indicator');
-
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
         const atrilSelectionToolbar = document.getElementById('atrilSelectionToolbar');
         const suggestEditBtn = document.getElementById('suggestEditBtn');
         const suggestionPopup = document.getElementById('suggestionPopup');
@@ -333,22 +417,23 @@
         const suggestedLink = document.getElementById('suggestedLink');
         const cancelSuggestionBtn = document.getElementById('cancelSuggestionBtn');
         const saveSuggestionBtn = document.getElementById('saveSuggestionBtn');
-
         const referencePopupEl = document.getElementById('referencePopup');
         const referencePopupTitleEl = document.getElementById('referencePopupTitle');
         const referencePopupUrlsEl = document.getElementById('referencePopupUrls');
         const referencePopupCloseBtn = document.getElementById('referencePopupCloseBtn');
-
         const settingsGearBtn = document.getElementById('settingsGearBtn');
         const settingsPopup = document.getElementById('settingsPopup');
         const decreaseFontBtn = document.getElementById('decreaseFontBtn');
         const currentFontSizeDisplay = document.getElementById('currentFontSizeDisplay');
         const increaseFontBtn = document.getElementById('increaseFontBtn');
         const closeSettingsPopupBtn = document.getElementById('closeSettingsPopupBtn');
-
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const leftColumnEl = document.getElementById('left-column');
+        const menuOverlay = document.getElementById('menu-overlay');
+        const rightColumnEl = document.getElementById('right-column');
         const CHAPTER_DELIMITER_STORAGE = '<hr class="chapter-break-for-storage" style="display:none;">';
         const CHAPTER_DELIMITER_VIEW = '<hr style="border:0; border-top:1px dashed #555; margin: 20px 0;">';
-
         let allDocumentsData = {};
         let currentActiveTitleButton = null;
         let currentDocContentListenerUnsubscribe = null;
@@ -358,7 +443,6 @@
         let currentAtrilSelectionRange = null;
         let currentAtrilSelectedText = "";
         let currentDocReferencesMap = {};
-
         const FONT_SIZE_STEP = 10;
         const MIN_FONT_SIZE_PERCENT = 70;
         const MAX_FONT_SIZE_PERCENT = 200;
@@ -366,17 +450,96 @@
         let currentFontSizePercent = DEFAULT_FONT_SIZE_PERCENT;
         const LS_FONT_SIZE_KEY = 'atrilFontSizePercent';
 
-
-        function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }
-
-
-        function applyDefaultStylesToBlocks(container, _targetFontSize, targetLineHeight) {
-            if (!container) return;
-            container.querySelectorAll('p, div').forEach(el => {
-                if (!el.style.lineHeight) el.style.lineHeight = targetLineHeight;
-            });
+        if (!firebaseConfig || !firebaseConfig.projectId) {
+            console.error("CONFIGURAÇÃO DO FIREBASE INVÁLIDA OU AUSENTE!");
+            alert("ERRO CRÍTICO: Configuração do Firebase não encontrada.");
+            throw new Error("Firebase config error: projectId is missing.");
         }
 
+        function sanitizeFilename(name) {
+            return name.replace(/[^a-z0-9_-\s]/gi, '').replace(/[\s]/g, '_').substring(0, 50) || 'documento';
+        }
+
+        async function downloadDocumentAsPdf() {
+            if (!displayedDocId || !allDocumentsData[displayedDocId]) {
+                alert("Nenhum documento carregado para baixar.");
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: "mm", format: "a4" });
+            const docData = allDocumentsData[displayedDocId];
+            const titleText = docData.titulo || 'Documento Sem Título';
+            const FONT_FAMILY = 'helvetica';
+            const FONT_SIZE = 12;
+            const FONT_STYLE = 'normal';
+            const FONT_COLOR = '#000000';
+            const MARGIN = 15;
+            const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+            const MAX_WIDTH = doc.internal.pageSize.getWidth() - MARGIN * 2;
+            const LINE_HEIGHT_RATIO = 1.4;
+            const PT_TO_MM = 0.352778; 
+            const LINE_HEIGHT_MM = FONT_SIZE * LINE_HEIGHT_RATIO * PT_TO_MM;
+            let currentY = MARGIN;
+            doc.setFont(FONT_FAMILY, FONT_STYLE);
+            doc.setTextColor(FONT_COLOR);
+            const checkPageBreak = (neededHeight) => {
+                if (currentY + neededHeight > PAGE_HEIGHT - MARGIN) {
+                    doc.addPage();
+                    currentY = MARGIN;
+                }
+            };
+            const writeWrappedText = (text, size, options = {}) => {
+                const { indent = 0 } = options;
+                const lineHeight = size * LINE_HEIGHT_RATIO * PT_TO_MM;
+                doc.setFontSize(size);
+                const lines = doc.splitTextToSize(text, MAX_WIDTH - indent);
+                lines.forEach(line => {
+                    checkPageBreak(lineHeight);
+                    doc.text(line, MARGIN + indent, currentY);
+                    currentY += lineHeight;
+                });
+            };
+            const addNewLine = (multiplier = 1) => {
+                currentY += (FONT_SIZE * PT_TO_MM) * multiplier;
+            };
+            writeWrappedText(titleText, 16);
+            addNewLine(2.5);
+            const rawBodyText = selectedDocBodyEl.innerText;
+            const paragraphs = rawBodyText.split('\n');
+            paragraphs.forEach(paragraph => {
+                const cleanedParagraph = paragraph.trim().replace(/\s+/g, ' ');
+                if (cleanedParagraph) {
+                    writeWrappedText(cleanedParagraph, FONT_SIZE);
+                    addNewLine(1.2);
+                }
+            });
+            const references = (docData.referencias || [])
+                .filter(ref => ref && ref.id && currentDocReferencesMap[ref.id] && currentDocReferencesMap[ref.id].displayNumber > 0)
+                .sort((a, b) => currentDocReferencesMap[a.id].displayNumber - currentDocReferencesMap[b.id].displayNumber);
+            if (references.length > 0) {
+                checkPageBreak(LINE_HEIGHT_MM * 3);
+                addNewLine(2);
+                doc.setFont(undefined, 'bold');
+                writeWrappedText("Referências", 14);
+                doc.setFont(undefined, 'normal');
+                addNewLine(1.5);
+                references.forEach(ref => {
+                    const refDetails = currentDocReferencesMap[ref.id];
+                    const refText = `[${refDetails.displayNumber}] ${refDetails.titulo}`;
+                    writeWrappedText(refText, FONT_SIZE);
+                    if (refDetails.urls && refDetails.urls.length > 0) {
+                        refDetails.urls.forEach(url => {
+                            writeWrappedText(url, FONT_SIZE - 2, { indent: 8 });
+                        });
+                    }
+                    addNewLine(1);
+                });
+            }
+            doc.save(`${sanitizeFilename(titleText)}.pdf`);
+        }
+
+        function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        
+        
         async function loadAllDocumentTitlesAndCache() {
             try {
                 const q = query(collection(db, "documentos"), where("ativo", "==", true), orderBy("titulo", "asc"));
@@ -398,6 +561,14 @@
                         listenToEditorCursor(docSnap.id);
                         hideReferencePopup();
                         hideSettingsPopup();
+                        // Fecha o menu em mobile após a seleção e marca que o usuário interagiu
+                        if (window.innerWidth <= 768) {
+                            leftColumnEl.classList.remove('menu-open');
+                            menuOverlay.classList.remove('visible');
+                            if (!localStorage.getItem('atrilMenuInteracted')) {
+                                localStorage.setItem('atrilMenuInteracted', 'true');
+                            }
+                        }
                     });
                     li.appendChild(button); docTitlesListEl.appendChild(li);
                 });
@@ -406,28 +577,21 @@
         }
 
         function updateDisplayedDocument(docData) {
+            const titleSpan = selectedDocTitleEl.querySelector('span:not(.status-indicator)');
             if (!docData) {
                 noDocSelectedMsgEl.style.display = 'block';
-                selectedDocTitleEl.textContent = "Selecione um Documento";
-                if(liveStatusIndicatorEl) selectedDocTitleEl.appendChild(liveStatusIndicatorEl);
+                if(titleSpan) titleSpan.textContent = "Selecione um Documento";
                 selectedDocBodyEl.innerHTML = '<p id="no-doc-selected">Nenhum documento para exibir.</p>';
                 referencesContainerEl.style.display = 'none';
+                downloadPdfBtn.style.display = 'none';
                 hideReferencePopup();
                 return;
             }
+            downloadPdfBtn.style.display = 'inline-block';
             const currentScrollTop = selectedDocBodyEl.scrollTop;
             noDocSelectedMsgEl.style.display = 'none';
-
-            let titleTextNode = null;
-            for(const node of selectedDocTitleEl.childNodes) {
-                if(node.nodeType === Node.TEXT_NODE) { titleTextNode = node; break; }
-            }
-            if(titleTextNode) { titleTextNode.textContent = escapeHTML(docData.titulo) || "Documento Sem Título"; }
-            else {
-                selectedDocTitleEl.textContent = escapeHTML(docData.titulo) || "Documento Sem Título";
-                if(liveStatusIndicatorEl) selectedDocTitleEl.appendChild(liveStatusIndicatorEl);
-            }
-
+            if(titleSpan) titleSpan.textContent = escapeHTML(docData.titulo) || "Documento Sem Título";
+            
             currentDocReferencesMap = {};
             let referenceDisplayCounter = 1;
             const encounteredRefIdsForNumbering = {};
@@ -443,7 +607,6 @@
                     }
                 });
             }
-
             let fullBodyHtml = "";
             const docIdentifier = escapeHTML(docData.titulo || (docData.id ? `ID: ${docData.id}` : 'Desconhecido'));
             if (typeof docData.corpo === 'string') {
@@ -499,7 +662,6 @@
                  fullBodyHtml = fullBodyHtml.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
             }
             selectedDocBodyEl.innerHTML = fullBodyHtml;
-
             const refTextSpans = Array.from(selectedDocBodyEl.querySelectorAll('span.referenced-text[data-ref-id]'));
             refTextSpans.forEach(span => {
                 const refId = span.dataset.refId;
@@ -531,11 +693,9 @@
                     tag.parentNode.replaceChild(supElement, tag);
                 } else { console.warn(`Ref ID '${refId}' (tag) não encontrada.`); tag.remove(); }
             });
-
             cursorIndicatorEl = null;
             selectedDocBodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
-            applyDefaultStylesToBlocks(selectedDocBodyEl, null, '1.7');
-
+            
             const references = docData.referencias || [];
             if (references.length === 0 || Object.values(currentDocReferencesMap).every(ref => ref.displayNumber === 0)) {
                 referencesContainerEl.style.display = 'none'; referencesListEl.innerHTML = '';
@@ -659,23 +819,49 @@
             }
         }
 
-        function showAtrilSelectionToolbar(x, y) {
-            if (!currentAtrilSelectionRange || currentAtrilSelectionRange.collapsed) { hideAtrilSelectionToolbar(); return; }
-            atrilSelectionToolbar.style.left = `${x}px`;
-            atrilSelectionToolbar.style.top = `${y - atrilSelectionToolbar.offsetHeight - 10}px`;
+        function showAtrilSelectionToolbar(centerX, top) {
+            // Primeiro, torna a barra de ferramentas visível para obter suas dimensões reais
             atrilSelectionToolbar.style.display = 'block';
+            const toolbarWidth = atrilSelectionToolbar.offsetWidth;
+            const toolbarHeight = atrilSelectionToolbar.offsetHeight;
+            const margin = 10; // Espaçamento entre o texto e a barra de ferramentas
+            // Calcula a posição final
+            // Horizontalmente: centraliza a barra de ferramentas sobre o centro da seleção
+            let finalLeft = centerX - (toolbarWidth / 2);
+            // Verticalmente: posiciona a barra acima do texto selecionado
+            let finalTop = top - toolbarHeight - margin;
+            // --- Verificações para não sair da tela ---
+            // Se não houver espaço acima, posiciona abaixo
+            if (finalTop < rightColumnEl.scrollTop) {
+                const rangeRect = currentAtrilSelectionRange.getBoundingClientRect();
+                finalTop = top + rangeRect.height + (margin / 2);
+            }
+            // Garante que não saia pelos lados
+            if (finalLeft < rightColumnEl.scrollLeft) {
+                finalLeft = rightColumnEl.scrollLeft + 5;
+            }
+            if ((finalLeft + toolbarWidth) > (rightColumnEl.scrollLeft + rightColumnEl.clientWidth)) {
+                finalLeft = rightColumnEl.scrollLeft + rightColumnEl.clientWidth - toolbarWidth - 5;
+            }
+            // Aplica as posições finais
+            atrilSelectionToolbar.style.left = `${finalLeft}px`;
+            atrilSelectionToolbar.style.top = `${finalTop}px`;
         }
+        
         function hideAtrilSelectionToolbar() { atrilSelectionToolbar.style.display = 'none'; }
+        
         function showSuggestionPopup() {
             originalTextPreview.textContent = currentAtrilSelectedText;
             suggestedText.value = ''; suggestedLink.value = '';
             suggestionPopup.style.visibility = 'visible'; suggestionPopup.style.opacity = '1';
             suggestedText.focus();
         }
+
         function hideSuggestionPopup() {
             suggestionPopup.style.opacity = '0'; suggestionPopup.style.visibility = 'hidden';
             currentAtrilSelectionRange = null; currentAtrilSelectedText = "";
         }
+
         async function saveSuggestion() {
             if (!displayedDocId) { alert("Nenhum doc selecionado."); return; }
             if (!currentAtrilSelectedText && !suggestedText.value.trim() && !suggestedLink.value.trim()) { alert("Nada a sugerir."); return; }
@@ -690,6 +876,7 @@
         }
 
         function hideReferencePopup() { if (referencePopupEl) referencePopupEl.style.display = 'none'; }
+        
         selectedDocBodyEl.addEventListener('click', (event) => {
             const targetSup = event.target.closest('sup.ref-marker-popup');
             if (targetSup) {
@@ -702,7 +889,7 @@
                         refData.urls.forEach(url => {
                             const urlLink = document.createElement('a'); urlLink.href = url;
                             urlLink.textContent = escapeHTML(url); urlLink.target = '_blank';
-                            urlLink.style.display = 'block'; // Keep this for proper layout of links
+                            urlLink.style.display = 'block';
                             referencePopupUrlsEl.appendChild(urlLink);
                         });
                     } else { referencePopupUrlsEl.textContent = 'Nenhum link disponível.'; }
@@ -724,7 +911,9 @@
                 return;
             }
         });
+        
         if(referencePopupCloseBtn) { referencePopupCloseBtn.addEventListener('click', (e) => { e.stopPropagation(); hideReferencePopup(); }); }
+        
         referencesListEl.addEventListener('click', (event) => {
             const clickedListItem = event.target.closest('li.reference-item-atril[data-ref-id]');
             if (clickedListItem) {
@@ -743,46 +932,57 @@
                 }
             }
         });
-
+        
         function showSettingsPopup() { settingsPopup.style.visibility = 'visible'; settingsPopup.style.opacity = '1'; }
         function hideSettingsPopup() { settingsPopup.style.opacity = '0'; settingsPopup.style.visibility = 'hidden'; }
-        function applyFontSize(percent) {
+        
+   function applyFontSize(percent) {
             const scaleFactor = percent / 100;
-            // Base font sizes (examples, adjust to your CSS defaults if different)
-            const baseBodyTextSize = 1.1; // em, for p, div, li in main body
-            const baseRefTitleSize = 1.0; // em, for titles in bottom ref list
-            const baseRefUrlSize = 0.9;  // em, for URLs in bottom ref list
-            const baseH1Size = 1.8; const baseH2Size = 1.5; const baseH3BodySize = 1.3; const baseH3RefContainer = 1.4;
+            const BASE_BODY_PX = 16; 
 
+            const newBodySize = BASE_BODY_PX * scaleFactor;
+            const newTitleSize = newBodySize * 1.3;
+            const newRefHeadingSize = newBodySize * 1.2;
+            const newRefTitleSize = newBodySize * 0.95;
+            const newRefUrlSize = newBodySize * 0.85;
+
+            // --- INÍCIO DA CORREÇÃO ---
             if (selectedDocBodyEl) {
-                selectedDocBodyEl.querySelectorAll('p, div, li, span:not(.ref-marker-popup):not(.editor-cursor-indicator):not(.status-indicator)').forEach(el => {
-                    if (!el.closest('#selected-doc-references-list') && !el.closest('#referencePopup')) { // Exclude bottom ref list and individual ref popup
-                        el.style.fontSize = `${baseBodyTextSize * scaleFactor}em`;
-                    }
-                });
-                 // Scale headings in main body
-                selectedDocBodyEl.querySelectorAll('h1:not(#selected-doc-title)').forEach(h => h.style.fontSize = `${baseH1Size * scaleFactor}em`); // Main title h1 is separate
-                selectedDocBodyEl.querySelectorAll('h2').forEach(h => h.style.fontSize = `${baseH2Size * scaleFactor}em`);
-                selectedDocBodyEl.querySelectorAll('h3:not(#selected-doc-references-container h3)').forEach(h => h.style.fontSize = `${baseH3BodySize * scaleFactor}em`);
-            }
-             // Title of the document
-            if (selectedDocTitleEl) selectedDocTitleEl.style.fontSize = `${baseH1Size * scaleFactor}em`;
+                // 1. Define o tamanho no contêiner pai (isso afeta texto solto e serve como base).
+                selectedDocBodyEl.style.fontSize = `${newBodySize}px`;
 
-            // Bottom references section title ("Referências")
+                // 2. APLICAÇÃO FORÇADA: Percorre os principais elementos de bloco dentro do corpo
+                // e garante que eles herdem o novo tamanho. Esta é a correção crucial
+                // para anular qualquer regra CSS conflitante que possa estar fixando o tamanho.
+                selectedDocBodyEl.querySelectorAll('p, div, li, h1, h2, h3, h4, h5, h6').forEach(el => {
+                    // Ao definir o estilo diretamente como 'inherit', forçamos o elemento
+                    // a buscar o valor que acabamos de definir no seu pai (#selected-doc-body).
+                    el.style.fontSize = 'inherit';
+                });
+            }
+            // --- FIM DA CORREÇÃO ---
+
+            // O resto da função continua normalmente para os outros elementos da UI
+            if (selectedDocTitleEl) {
+                const titleSpan = selectedDocTitleEl.querySelector('span:not(.status-indicator)');
+                if (titleSpan) titleSpan.style.fontSize = `${newTitleSize}px`;
+            }
+
             if (referencesContainerEl) {
                  const refContainerTitle = referencesContainerEl.querySelector('h3');
-                 if (refContainerTitle) refContainerTitle.style.fontSize = `${baseH3RefContainer * scaleFactor}em`;
+                 if (refContainerTitle) refContainerTitle.style.fontSize = `${newRefHeadingSize}px`;
             }
-            // Items in the bottom references list
+
             if (referencesListEl) {
-                referencesListEl.querySelectorAll('li').forEach(li => {
-                    li.querySelectorAll('.ref-title-atril').forEach(el => el.style.fontSize = `${baseRefTitleSize * scaleFactor}em`);
-                    li.querySelectorAll('.ref-url-item-atril a').forEach(el => el.style.fontSize = `${baseRefUrlSize * scaleFactor}em`);
-                });
+                referencesListEl.querySelectorAll('.ref-title-atril').forEach(el => el.style.fontSize = `${newRefTitleSize}px`);
+                referencesListEl.querySelectorAll('.ref-url-item-atril a').forEach(el => el.style.fontSize = `${newRefUrlSize}px`);
             }
-            // Does NOT apply to #referencePopup, which has its own CSS for font size.
-            if (currentFontSizeDisplay) currentFontSizeDisplay.textContent = `${percent}%`;
+
+            if (currentFontSizeDisplay) {
+                currentFontSizeDisplay.textContent = `${percent}%`;
+            }
         }
+        
         function updateFontSize(change) {
             let newSize = currentFontSizePercent + change;
             if (newSize < MIN_FONT_SIZE_PERCENT) newSize = MIN_FONT_SIZE_PERCENT;
@@ -792,6 +992,7 @@
             try { localStorage.setItem(LS_FONT_SIZE_KEY, currentFontSizePercent.toString()); }
             catch (e) { console.warn("Não foi possível salvar tamanho da fonte:", e); }
         }
+
         function loadFontSize() {
             try {
                 const storedSize = localStorage.getItem(LS_FONT_SIZE_KEY);
@@ -810,7 +1011,7 @@
         if (decreaseFontBtn) { decreaseFontBtn.addEventListener('click', () => updateFontSize(-FONT_SIZE_STEP)); }
         if (increaseFontBtn) { increaseFontBtn.addEventListener('click', () => updateFontSize(FONT_SIZE_STEP)); }
         if (closeSettingsPopupBtn) { closeSettingsPopupBtn.addEventListener('click', hideSettingsPopup); }
-
+        
         selectedDocBodyEl.addEventListener('mouseup', (event) => {
             if (atrilSelectionToolbar.contains(event.target) || suggestionPopup.style.visibility === 'visible' || (referencePopupEl && referencePopupEl.style.display !== 'none' && referencePopupEl.contains(event.target)) || event.target.closest('sup.ref-marker-popup')) {
                 return;
@@ -822,14 +1023,16 @@
                     currentAtrilSelectionRange = range.cloneRange();
                     currentAtrilSelectedText = selection.toString().trim();
                     if (currentAtrilSelectedText.length > 0) {
-                        const rect = range.getBoundingClientRect(); const columnRect = selectedDocBodyEl.getBoundingClientRect();
-                        let toolbarX = rect.left - columnRect.left; let toolbarY = rect.top - columnRect.top + selectedDocBodyEl.scrollTop;
-                        showAtrilSelectionToolbar(toolbarX, toolbarY);
+                        const rangeRect = range.getBoundingClientRect();
+                        const containerRect = rightColumnEl.getBoundingClientRect();
+                        const selectionTop = rangeRect.top - containerRect.top + rightColumnEl.scrollTop;
+                        const selectionCenterX = (rangeRect.left - containerRect.left + rightColumnEl.scrollLeft) + (rangeRect.width / 2);
+                        showAtrilSelectionToolbar(selectionCenterX, selectionTop);
                     } else { hideAtrilSelectionToolbar(); }
                 } else { hideAtrilSelectionToolbar(); }
             } else { hideAtrilSelectionToolbar(); }
         });
-
+        
         document.addEventListener('click', (event) => {
             if (referencePopupEl && referencePopupEl.style.display !== 'none') {
                 if (!event.target.closest('sup.ref-marker-popup') && !referencePopupEl.contains(event.target)) {
@@ -837,7 +1040,7 @@
                 }
             }
             if (settingsPopup && settingsPopup.style.visibility === 'visible') {
-                const popupContent = settingsPopup.querySelector('div > div'); // More specific to content box
+                const popupContent = settingsPopup.querySelector('div > div');
                 if (popupContent && !popupContent.contains(event.target) && event.target !== settingsGearBtn && !settingsGearBtn.contains(event.target)) {
                     hideSettingsPopup();
                 }
@@ -846,7 +1049,7 @@
                 !atrilSelectionToolbar.contains(event.target) &&
                 !event.target.closest('sup.ref-marker-popup') &&
                 !(referencePopupEl && referencePopupEl.style.display !== 'none' && referencePopupEl.contains(event.target)) &&
-                !(settingsPopup && settingsPopup.style.visibility === 'visible' && settingsPopup.querySelector('div > div').contains(event.target)) && // check against settings popup content
+                !(settingsPopup && settingsPopup.style.visibility === 'visible' && settingsPopup.querySelector('div > div').contains(event.target)) &&
                 event.target !== settingsGearBtn && !settingsGearBtn.contains(event.target)
                 ) {
                 const selection = window.getSelection();
@@ -857,14 +1060,35 @@
                 }
             }
         }, true);
-
+        
         suggestEditBtn.addEventListener('click', () => { if (currentAtrilSelectedText) { showSuggestionPopup(); hideAtrilSelectionToolbar(); } });
         cancelSuggestionBtn.addEventListener('click', hideSuggestionPopup);
         saveSuggestionBtn.addEventListener('click', saveSuggestion);
 
+        if (downloadPdfBtn) {
+            downloadPdfBtn.addEventListener('click', downloadDocumentAsPdf);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadAllDocumentTitlesAndCache();
             loadFontSize();
+
+            // --- CÓDIGO PARA CONTROLE DO MENU RESPONSIVO ---
+            const toggleMenu = () => {
+                leftColumnEl.classList.toggle('menu-open');
+                menuOverlay.classList.toggle('visible');
+            };
+            if (mobileMenuBtn && closeMenuBtn && menuOverlay) {
+                mobileMenuBtn.addEventListener('click', toggleMenu);
+                closeMenuBtn.addEventListener('click', toggleMenu);
+                menuOverlay.addEventListener('click', toggleMenu);
+            }
+            // Abrir o menu na primeira visita em mobile
+            const hasInteracted = localStorage.getItem('atrilMenuInteracted');
+            if (!hasInteracted && window.innerWidth <= 768) {
+                leftColumnEl.classList.add('menu-open');
+                menuOverlay.classList.add('visible');
+            }
         });
     </script>
 </body>

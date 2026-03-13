@@ -584,6 +584,43 @@ body.ref-inspector-open {
     }
 }
 
+#refInspectorPanel {
+    position: fixed;
+    top: 0;
+    right: -400px; /* Começa escondido fora da tela */
+    width: 380px;
+    height: 100%;
+    background: var(--secondary-bg);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+    z-index: 1002;
+    transition: 0.3s ease; /* Efeito de deslizar */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Quando o painel está ativo, ele desliza para a posição 0 */
+#refInspectorPanel.active {
+    right: 0;
+}
+
+/* Ajuste do corpo da página para empurrar o conteúdo para a esquerda */
+body.ref-inspector-open {
+    padding-right: 380px; 
+}
+
+/* Transição suave para o corpo da página */
+body {
+    transition: padding-right 0.3s ease;
+}
+
+/* Garante que em telas menores o container não quebre */
+@media (max-width: 1200px) {
+    body.ref-inspector-open .container {
+        margin-left: 20px;
+        max-width: calc(100% - 420px);
+    }
+}
 
     </style>
 </head>
@@ -761,20 +798,7 @@ body.ref-inspector-open {
     </div>
 </div>
 
-<div id="refViewPanel">
-    <div class="ref-view-header">
-        <h3 id="refViewTitle" style="margin:0; font-size:1.1em; color:var(--accent-color-hover);">Referência</h3>
-        <button id="closeRefViewBtn" style="background:none; border:none; color:var(--text-color); font-size:1.2rem; cursor:pointer;">✕</button>
-    </div>
     
-    <div class="ref-view-body" id="refViewLinks">
-        <!-- Links aparecem aqui -->
-    </div>
-
-    <div class="ref-view-footer">
-        <button id="scrollToRefBtn">Ver na lista de referências ↓</button>
-    </div>
-</div>
 
 <!-- Painel de Inspeção de Referência -->
 <div id="refInspectorPanel" style="position: fixed; top: 0; right: -400px; width: 380px; height: 100%; background: var(--secondary-bg); border-left: 1px solid var(--border-color); transition: 0.3s; z-index: 1002; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">
@@ -1367,16 +1391,16 @@ async function fetchMultimedia() {
 
 async function showInitialScreen() {
     // --- INÍCIO DO SALVAMENTO DE SEGURANÇA ---
-    // Se houver um documento aberto, salva tudo antes de sair
+    // Se houver um documento aberto, salva tudo antes de sair para não perder dados
     if (currentDocId && currentDocumentData) {
         try {
-            // 1. Sincroniza o HTML dos editores para o objeto currentDocumentData
+            // 1. Sincroniza o HTML dos editores para o objeto data
             syncDocumentStateFromDOM();
             
-            // 2. Pega o título atual do input
+            // 2. Pega o título atual
             const finalTitle = docTitleInput.value.trim() || "Sem Título";
 
-            // 3. Envia para o Firebase (ignora o tempo do debounce e salva na hora)
+            // 3. Envia para o Firebase de forma imediata
             const docRef = doc(db, "documentos", currentDocId);
             await updateDoc(docRef, {
                 titulo: finalTitle,
@@ -1386,33 +1410,46 @@ async function showInitialScreen() {
             console.log("Salvamento final concluído com sucesso.");
         } catch (e) {
             console.error("Erro ao realizar salvamento de segurança ao sair:", e);
-            // Opcional: alert("Erro ao salvar as últimas alterações.");
         }
     }
     // --- FIM DO SALVAMENTO DE SEGURANÇA ---
 
-    // 1. Alterna as telas na interface
+    // 1. Alterna as telas na interface principal
     editorInterfaceDiv.style.display = 'none';
     initialScreenDiv.style.display = 'block';
     
-    // 2. Reseta o Painel Lateral e a Lupa
-    document.getElementById('openSidePanelBtn').style.display = 'none';
+    // 2. Reset de Painéis e Botões Flutuantes
+    
+    // Esconde o botão da Lupa (Explorar)
+    const lupBtn = document.getElementById('openSidePanelBtn');
+    if (lupBtn) lupBtn.style.display = 'none';
+
+    // Fecha o Painel Lateral de Notas/Pastas (Explorar)
     const sidePanel = document.getElementById('sidePanel');
     if (sidePanel) sidePanel.style.right = '-400px';
-    document.body.classList.remove('panel-open'); // Remove o recuo do texto
+
+    // Fecha o Painel de Inspeção de Referências (O que estava causando o erro)
+    const refInspector = document.getElementById('refInspectorPanel');
+    if (refInspector) refInspector.style.right = '-400px';
+
+    // REMOVE AS CLASSES DO BODY (Volta o texto do editor para o centro/largura normal)
+    document.body.classList.remove('panel-open'); 
+    document.body.classList.remove('ref-inspector-open');
     
-    // 3. Limpa as variáveis de estado
+    // 3. Limpeza de Barras de Ferramentas do Editor
+    hideFloatingToolbar();
+    hideReferenceEyeToolbar();
+    
+    // 4. Reset das Variáveis de Estado
     currentDocId = null;
     currentDocumentData = null;
     
-    // 4. Limpa os campos da interface para a próxima abertura
+    // 5. Limpa os campos da interface para a próxima vez que abrir um documento
     docTitleInput.value = '';
     editorsContainer.innerHTML = '';
     referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
-    
-    // 5. Esconde barras de ferramentas flutuantes que possam ter ficado abertas
-    hideFloatingToolbar();
-    hideReferenceEyeToolbar();
+
+    console.log("Interface resetada e voltando para a tela inicial.");
 }
         
         async function createNewDocument(){undoStack=[];redoStack=[];showEditorInterfaceScreen();currentDocId=generateId('doc-');const chId=generateId('ch-');currentDocumentData={titulo:"Novo Documento",corpo:[{id:chId,html:''}],referencias:[],criadoEm:serverTimestamp(),atualizadoEm:serverTimestamp(),ativo:true};try{await setDoc(doc(db,"documentos",currentDocId),currentDocumentData);displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias)}catch(e){console.error("Erro ao criar documento:",e);alert("Erro ao criar documento.")}}
@@ -1824,31 +1861,55 @@ safely(viewReferenceFromToolbarBtn, 'click', () => {
     const id = referenceEyeToolbar.dataset.refId;
     if (!id) return;
 
+    // 1. Localiza os dados da referência no documento atual
     const refData = currentDocumentData?.referencias.find(r => r.id === id);
     if (!refData) return alert("Referência não encontrada.");
 
-    // 1. Preencher o painel
+    // 2. Preencher o conteúdo interno do painel (Título e Links)
     const inspectorBody = document.getElementById('refInspectorBody');
+    
+    // Gera o HTML dos links com um visual mais limpo e seguro
     const linksHtml = (refData.urls || []).map(u => 
-        `<a href="${u}" target="_blank" style="color:var(--accent-color-hover); display:block; margin-bottom:10px; word-break:break-all; text-decoration:none; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #444;">🔗 ${u}</a>`
+        `<a href="${escapeHTML(u)}" target="_blank" rel="noopener noreferrer" 
+            style="color:var(--accent-color-hover); display:block; margin-bottom:12px; 
+            word-break:break-all; text-decoration:none; background:#1a1a1a; 
+            padding:12px; border-radius:6px; border:1px solid #444; 
+            transition: background 0.2s;">
+            <span style="font-size:1.1em; margin-right:5px;">🔗</span> ${escapeHTML(u)}
+        </a>`
     ).join('');
 
     inspectorBody.innerHTML = `
-        <h2 style="font-size: 1.3em; margin-bottom: 20px; color: #e0e0e0;">${escapeHTML(refData.tituloReferencia)}</h2>
+        <h2 style="font-size: 1.35em; margin-bottom: 5px; color: #ffca28; line-height: 1.3;">
+            ${escapeHTML(refData.tituloReferencia)}
+        </h2>
+        <p style="font-size:0.85em; opacity:0.6; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:10px;">
+            ID: ${id}
+        </p>
         <div style="margin-top:10px;">
-            <p style="font-size:0.9em; opacity:0.7; margin-bottom:10px;">Links anexados:</p>
-            ${linksHtml || '<p>Nenhum link anexado.</p>'}
+            <p style="font-size:0.9em; opacity:0.8; margin-bottom:10px; font-weight:bold;">Links Anexados:</p>
+            ${linksHtml || '<p style="font-style:italic; opacity:0.5;">Nenhum link anexado a esta referência.</p>'}
         </div>
     `;
 
-    // 2. Abrir o painel e ajustar layout
-    // Fecha o painel de "Explorar" se estiver aberto para não encavalar
-    document.getElementById('sidePanel').style.right = '-400px';
+    // 3. Gerenciar o Estado da Interface (Abrir Painel)
     
-    document.getElementById('refInspectorPanel').style.right = '0px';
-    document.body.classList.add('ref-inspector-open');
-    document.body.classList.remove('panel-open'); // Remove o recuo da lupa
+    // Fecha o painel de "Explorar" (Notas/Lupa) se estiver aberto para não encavalar
+    const sidePanel = document.getElementById('sidePanel');
+    if (sidePanel) sidePanel.style.right = '-400px';
+    document.body.classList.remove('panel-open'); 
 
+    // Abre o Painel de Inspeção
+    const inspector = document.getElementById('refInspectorPanel');
+    if (inspector) {
+        inspector.style.right = '0px';
+        inspector.classList.add('active'); // Garante que a classe de visibilidade seja aplicada
+    }
+
+    // Empurra o conteúdo do documento para a esquerda
+    document.body.classList.add('ref-inspector-open');
+
+    // Esconde a barrinha flutuante do olho após o clique
     hideReferenceEyeToolbar();
 });
 

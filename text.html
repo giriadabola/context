@@ -407,16 +407,18 @@ body.panel-open {
     margin: 0 2px;
     border-radius: 4px;
     cursor: default;
-    display: inline;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: inline; /* Garante que não vire um bloco gigante */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.2s;
     font-weight: 500;
+    white-space: normal; /* Impede que o chip force o texto a ficar numa linha só */
 }
 
-/* TOM 1: Azul Suave */
-#editorsContainer .text-editor-chapter .referenced-text:nth-of-type(3n+1) {
-    background-color: #3a506b; /* Azul ardósia suave */
-    color: #d1e3ff;
+/* Estado: Quando o cursor está nele (Olho Ativo) */
+#editorsContainer .text-editor-chapter .referenced-text.eye-icon-active {
+    outline: 2px solid #ffffff !important;
+    outline-offset: 1px;
+    filter: brightness(1.2);
 }
 
 /* TOM 2: Cinzento Suave */
@@ -439,10 +441,22 @@ body.panel-open {
 
 /* Estado: Quando clicado (Ícone do Olho ativo) - Amarelo discreto */
 #editorsContainer .text-editor-chapter .referenced-text.eye-icon-active {
-    background-color: #5d5334 !important; 
-    color: #ffca28 !important;
-    border: 1px solid #ffca28;
-    outline: none;
+    outline: 2px solid white !important; /* Apenas uma borda de destaque */
+    outline-offset: 1px;
+    filter: brightness(1.3); /* Dá um brilho sutil sem mudar a cor base */
+    background-color: inherit; /* Mantém a cor original do chip */
+    color: inherit !important;
+}
+
+/* Ajuste do Destaque Temporário (Scroll) com Animação para sumir sozinho */
+#editorsContainer .text-editor-chapter .referenced-text.highlight-scroll, 
+.reference-item.highlight-scroll {
+    animation: fadeYellow 2s forwards;
+}
+
+@keyframes fadeYellow {
+    0% { background-color: #FFD54F !important; color: #000 !important; }
+    100% { /* Volta ao normal (o CSS dos chips reassume aqui) */ }
 }
 
 /* Estado: Vazio (Sem texto) */
@@ -1510,17 +1524,51 @@ async function showInitialScreen() {
     }, 0);
 });
         
-  chapterDiv.addEventListener('keydown', e => {
+chapterDiv.addEventListener('keydown', e => {
     const sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
     const range = sel.getRangeAt(0);
     
-    // Procura se estamos dentro de um texto com anexo
     const node = range.startContainer;
     const span = node.nodeType === Node.ELEMENT_NODE ? node.closest('span.referenced-text') : node.parentElement.closest('span.referenced-text');
-    
-    if (span) {
 
+    // --- TRAVA DE SEGURANÇA: SUBIR LINHA COM BACKSPACE ---
+    if (e.key === 'Backspace' && sel.isCollapsed && range.startOffset === 0) {
+        const currentBlock = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement.closest('p, div');
+        const prevBlock = currentBlock?.previousElementSibling;
+
+        if (prevBlock) {
+            e.preventDefault(); // Impede o navegador de fazer a união errada
+            saveStateForUndo();
+
+            // Move o conteúdo da linha de baixo para um "balde" temporário
+            const fragment = document.createDocumentFragment();
+            while (currentBlock.firstChild) {
+                fragment.appendChild(currentBlock.firstChild);
+            }
+
+            // Cria um nó de texto vazio (espaço) para garantir que o texto suba FORA de qualquer span
+            const spacer = document.createTextNode('\u00A0'); 
+            prevBlock.appendChild(spacer);
+            prevBlock.appendChild(fragment);
+
+            // Remove a linha de baixo que agora está vazia
+            currentBlock.remove();
+
+            // Coloca o cursor exatamente no início do texto que subiu
+            const newRange = document.createRange();
+            newRange.setStart(spacer, 1);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
+            saveDocumentBody(true);
+            return; 
+        }
+    }
+
+    // --- LOGICA PARA QUANDO JÁ ESTÁ DENTRO DO ANEXO ---
+    if (span) {
         const isCursorAtEnd = (el, r) => {
             if (!r.collapsed) return false;
             const tr = r.cloneRange();
@@ -1529,78 +1577,51 @@ async function showInitialScreen() {
             return tr.toString().trim() === '';
         };
         
-        // Função para verificar se o cursor está batendo na parede esquerda do anexo
         const isCursorAtBeginning = (el, r) => {
             if (!r.collapsed) return false;
             const tr = r.cloneRange();
             tr.selectNodeContents(el);
             tr.setEnd(r.startContainer, r.startOffset);
-            const isAtStart = (tr.toString().length === 0);
-            
-            // [LOG 2] Mostra o resultado do cálculo do cursor
-            console.log(`[Verificação] Cursor está exatamente no início do anexo? -> ${isAtStart ? 'SIM' : 'NÃO'}`);
-            return isAtStart;
+            return tr.toString().length === 0;
         };
 
-        // Lógica do ENTER
+        // Se der ENTER dentro do anexo, ele quebra a linha e sai do anexo
         if (e.key === 'Enter') {
-            console.log("[Ação] A tecla foi 'Enter'. Quebrando a linha.");
             e.preventDefault();
             saveStateForUndo();
             const block = span.closest('p, div');
-            if (isCursorAtEnd(span, range)) {
-                const p = document.createElement('p');
-                p.innerHTML = '<br>';
-                Object.assign(p.style, { fontFamily: DEFAULT_FONT_FAMILY, fontSize: DEFAULT_FONT_SIZE, lineHeight: DEFAULT_LINE_HEIGHT });
-                block.parentNode.insertBefore(p, block.nextSibling);
-                sel.collapse(p, 0);
-            } else {
-                const endRange = document.createRange();
-                endRange.setStart(range.startContainer, range.startOffset);
-                endRange.setEnd(block, block.childNodes.length);
-                const content = endRange.extractContents();
-                const p = document.createElement('p');
-                p.appendChild(content);
-                if (p.innerHTML.trim() === '') p.innerHTML = '<br>';
-                Object.assign(p.style, { fontFamily: getComputedStyle(block).fontFamily, fontSize: getComputedStyle(block).fontSize, lineHeight: getComputedStyle(block).lineHeight });
-                block.parentNode.insertBefore(p, block.nextSibling);
-                sel.collapse(p, 0);
-            }
+            
+            const endRange = document.createRange();
+            endRange.setStart(range.startContainer, range.startOffset);
+            endRange.setEnd(block, block.childNodes.length);
+            const content = endRange.extractContents();
+            
+            const p = document.createElement('p');
+            p.appendChild(content);
+            if (p.innerHTML.trim() === '') p.innerHTML = '<br>';
+            
+            // Aplica os estilos padrão no novo parágrafo
+            Object.assign(p.style, { 
+                fontFamily: getComputedStyle(block).fontFamily, 
+                fontSize: getComputedStyle(block).fontSize, 
+                lineHeight: getComputedStyle(block).lineHeight 
+            });
+            
+            block.parentNode.insertBefore(p, block.nextSibling);
+            sel.collapse(p, 0);
             saveDocumentBody(true);
         } 
-        // Lógica para letras e espaço (e.key.length === 1 garante que não é Shift, Ctrl, etc)
-        else if (e.key.length === 1 && sel.isCollapsed) {
-            
-            if (isCursorAtBeginning(span, range)) {
-                
-                e.preventDefault(); // Interrompe o comportamento normal do navegador de pintar a letra
-                saveStateForUndo();
-                
-                // Cria a letra/espaço fora da caixa e insere antes
-                const charToInsert = e.key === ' ' ? '\u00A0' : e.key; 
-const textNode = document.createTextNode(charToInsert);
-                span.parentNode.insertBefore(textNode, span);
-                
-                // Move o cursor para o lado direito da letra recém-criada (ainda fora da caixa)
-                const newRange = document.createRange();
-                newRange.setStart(textNode, 1);
-                newRange.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(newRange);
-                
-        
-
-                // Garante que o documento salva após digitar
-               clearTimeout(debounceTimer);
-debounceTimer = setTimeout(() => {
-    if (activeEditorElement === chapterDiv) {
-        // ...
-        saveDocumentBody(true); // Só salva após 1.5s de inatividade
-    }
-}, 1500);
-            } else {
-            
-            }
+        // Se digitar na "parede esquerda" do anexo, o texto fica fora
+        else if (e.key.length === 1 && sel.isCollapsed && isCursorAtBeginning(span, range)) {
+            e.preventDefault();
+            saveStateForUndo();
+            const textNode = document.createTextNode(e.key === ' ' ? '\u00A0' : e.key);
+            span.parentNode.insertBefore(textNode, span);
+            const newRange = document.createRange();
+            newRange.setStart(textNode, 1);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
         }
     }
 });
@@ -1956,7 +1977,44 @@ safely(archiveDocLink, 'click', e => {
         document.querySelectorAll('.close-popup-btn').forEach(btn=>safely(btn,'click',()=>hidePopup(btn.closest('.popup'))));
         safely(referencesListUl,'click',e=>{if(e.target.classList.contains('ref-title')){const id=e.target.dataset.refId;if(!id)return;const span=editorsContainer.querySelector(`.text-editor-chapter span.referenced-text[data-ref-id="${id}"]`);const item=referencesListUl.querySelector(`li.reference-item[data-ref-id="${id}"]`);document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));if(span){span.scrollIntoView({behavior:'smooth',block:'center'});span.classList.add('highlight-scroll');if(item)item.classList.add('highlight-scroll');setTimeout(()=>document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')),2500)}else{alert("Marcação não encontrada.")}}if(e.target.classList.contains('edit-ref-btn'))openEditReferencePopup(e.target.dataset.refId)});
         document.addEventListener('keydown',e=>{if(editorInterfaceDiv.style.display==='none'||document.querySelector('.popup.active'))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handleUndo()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();handleRedo()}});
-        document.addEventListener('selectionchange',()=>{const sel=window.getSelection();if(!activeEditorElement||!sel||!sel.rangeCount){hideFloatingToolbar();hideReferenceEyeToolbar();return}currentSelectionRange=sel.getRangeAt(0);if(activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){if(sel.isCollapsed){hideFloatingToolbar();const span=sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');if(span){rangeForSplitting=currentSelectionRange.cloneRange();showReferenceEyeToolbar(span)}else{hideReferenceEyeToolbar()}}else if(sel.toString().trim()!==''){hideReferenceEyeToolbar();showFloatingToolbar()}else{hideFloatingToolbar();hideReferenceEyeToolbar()}}});
+document.addEventListener('selectionchange', () => {
+    const sel = window.getSelection();
+    // Se não estiver editando ou não houver seleção, fecha tudo
+    if (!activeEditorElement || !sel || !sel.rangeCount) {
+        hideFloatingToolbar();
+        hideReferenceEyeToolbar();
+        return;
+    }
+
+    currentSelectionRange = sel.getRangeAt(0);
+
+    // Verifica se a seleção está dentro de um capítulo
+    if (activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)) {
+        
+        // Caso 1: Cursor parado (piscando)
+        if (sel.isCollapsed) {
+            hideFloatingToolbar();
+            // Procura se o cursor está dentro de um anexo
+            const span = sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');
+            
+            if (span) {
+                rangeForSplitting = currentSelectionRange.cloneRange();
+                showReferenceEyeToolbar(span); // Mostra o Olho e a Tesoura
+            } else {
+                hideReferenceEyeToolbar(); // Tira o destaque se saiu do anexo
+            }
+        } 
+        // Caso 2: Texto Selecionado (Arrastando o mouse)
+        else if (sel.toString().trim() !== '') {
+            hideReferenceEyeToolbar(); // Garante que o amarelo suma ao selecionar texto comum
+            showFloatingToolbar(); // Mostra barra de Link/Desvincular
+        } 
+        else {
+            hideFloatingToolbar();
+            hideReferenceEyeToolbar();
+        }
+    }
+});
     });
 
     // --- LÓGICA DE PASTAS GLOBAIS (TRANSVERSAIS) ---

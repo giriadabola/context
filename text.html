@@ -452,6 +452,139 @@ body.panel-open {
     border: 1px dashed #d9534f;
 }
 
+
+/* Painel de Visualização de Referência */
+#refViewPanel {
+    position: fixed;
+    top: 0;
+    right: -350px; /* Começa escondido */
+    width: 320px;
+    height: 100%;
+    background: var(--secondary-bg);
+    border-left: 2px solid var(--accent-color);
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+    z-index: 1005;
+    transition: 0.3s ease;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+#refViewPanel.active {
+    right: 0; /* Desliza para dentro */
+}
+
+#refViewPanel h3 {
+    margin-top: 0;
+    color: var(--accent-color-hover);
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    padding-right: 30px;
+}
+
+#refViewPanel .close-ref-view {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+#refViewPanel .close-ref-view:hover {
+    color: #fff;
+}
+
+#refViewPanel .ref-links-container {
+    margin-top: 20px;
+    overflow-y: auto;
+}
+
+/* Ajuste do corpo para não sobrepor */
+body.ref-panel-open {
+    padding-right: 380px; /* Mesma largura do painel */
+}
+
+#refViewPanel {
+    position: fixed;
+    top: 0;
+    right: -380px; 
+    width: 380px;
+    height: 100%;
+    background: var(--secondary-bg);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+    z-index: 1002;
+    transition: 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+#refViewPanel.active {
+    right: 0;
+}
+
+/* Conteúdo interno do painel */
+.ref-view-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--tertiary-bg);
+}
+
+.ref-view-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.ref-view-footer {
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    background: var(--tertiary-bg);
+}
+
+/* Estilo do botão de rolagem */
+#scrollToRefBtn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color-hover);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9em;
+    transition: 0.2s;
+}
+
+#scrollToRefBtn:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* Garante que o corpo do documento aceite o recuo */
+body {
+    transition: padding-right 0.3s ease;
+}
+
+/* Quando este painel estiver aberto, empurra o conteúdo */
+body.ref-inspector-open {
+    padding-right: 380px; 
+}
+
+/* Garante que o container central não quebre em telas médias */
+@media (max-width: 1200px) {
+    body.ref-inspector-open .container {
+        margin-left: 20px;
+        max-width: calc(100% - 420px);
+    }
+}
+
+
     </style>
 </head>
 <body>
@@ -628,6 +761,37 @@ body.panel-open {
     </div>
 </div>
 
+<div id="refViewPanel">
+    <div class="ref-view-header">
+        <h3 id="refViewTitle" style="margin:0; font-size:1.1em; color:var(--accent-color-hover);">Referência</h3>
+        <button id="closeRefViewBtn" style="background:none; border:none; color:var(--text-color); font-size:1.2rem; cursor:pointer;">✕</button>
+    </div>
+    
+    <div class="ref-view-body" id="refViewLinks">
+        <!-- Links aparecem aqui -->
+    </div>
+
+    <div class="ref-view-footer">
+        <button id="scrollToRefBtn">Ver na lista de referências ↓</button>
+    </div>
+</div>
+
+<!-- Painel de Inspeção de Referência -->
+<div id="refInspectorPanel" style="position: fixed; top: 0; right: -400px; width: 380px; height: 100%; background: var(--secondary-bg); border-left: 1px solid var(--border-color); transition: 0.3s; z-index: 1002; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">
+    <div style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #2d2d2d;">
+        <h3 style="margin: 0; color: #ffca28;">ℹ️ Detalhes da Referência</h3>
+        <button id="closeRefInspectorBtn" style="background: none; border: none; color: var(--text-color); font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    
+    <div id="refInspectorBody" style="flex: 1; overflow-y: auto; padding: 20px;">
+        <!-- Título e Links serão inseridos aqui -->
+    </div>
+
+    <div style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; background: #2d2d2d;">
+        <button id="inspectorScrollBtn" style="width: 100%; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer;">📍 Rolar até a lista (Final)</button>
+        <button id="inspectorEditBtn" style="width: 100%; padding: 10px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer;">✏️ Editar Referência</button>
+    </div>
+</div>
 
 
     <script type="module">
@@ -1656,7 +1820,62 @@ async function addReferenceToDocument(title){
         safely(attachLinkBtn,'click',showAddReferencePopup);
         safely(removeLinkBtn,'click',handleUnlinkSelection);
         safely(appendToRefBtn,'click',()=>{if(!activeEditorElement||!currentSelectionRange||currentSelectionRange.collapsed)return alert("Selecione texto para anexar.");rangeForPendingReference=currentSelectionRange.cloneRange();populateExistingRefsList();showPopup(selectExistingRefPopup)});
-        safely(viewReferenceFromToolbarBtn,'click',()=>{const id=referenceEyeToolbar.dataset.refId;if(!id)return;const i=referencesListUl.querySelector(`li.reference-item[data-ref-id="${id}"]`);document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll'));if(i){i.scrollIntoView({behavior:'smooth',block:'center'});i.classList.add('highlight-scroll');setTimeout(()=>document.querySelectorAll('.highlight-scroll').forEach(el=>el.classList.remove('highlight-scroll')),2500)}else{alert("Referência não encontrada.")}hideReferenceEyeToolbar()});
+safely(viewReferenceFromToolbarBtn, 'click', () => {
+    const id = referenceEyeToolbar.dataset.refId;
+    if (!id) return;
+
+    const refData = currentDocumentData?.referencias.find(r => r.id === id);
+    if (!refData) return alert("Referência não encontrada.");
+
+    // 1. Preencher o painel
+    const inspectorBody = document.getElementById('refInspectorBody');
+    const linksHtml = (refData.urls || []).map(u => 
+        `<a href="${u}" target="_blank" style="color:var(--accent-color-hover); display:block; margin-bottom:10px; word-break:break-all; text-decoration:none; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #444;">🔗 ${u}</a>`
+    ).join('');
+
+    inspectorBody.innerHTML = `
+        <h2 style="font-size: 1.3em; margin-bottom: 20px; color: #e0e0e0;">${escapeHTML(refData.tituloReferencia)}</h2>
+        <div style="margin-top:10px;">
+            <p style="font-size:0.9em; opacity:0.7; margin-bottom:10px;">Links anexados:</p>
+            ${linksHtml || '<p>Nenhum link anexado.</p>'}
+        </div>
+    `;
+
+    // 2. Abrir o painel e ajustar layout
+    // Fecha o painel de "Explorar" se estiver aberto para não encavalar
+    document.getElementById('sidePanel').style.right = '-400px';
+    
+    document.getElementById('refInspectorPanel').style.right = '0px';
+    document.body.classList.add('ref-inspector-open');
+    document.body.classList.remove('panel-open'); // Remove o recuo da lupa
+
+    hideReferenceEyeToolbar();
+});
+
+// Botão Fechar do Inspector
+document.getElementById('closeRefInspectorBtn').onclick = () => {
+    document.getElementById('refInspectorPanel').style.right = '-400px';
+    document.body.classList.remove('ref-inspector-open');
+};
+
+// Botão Rolar dentro do Inspector
+document.getElementById('inspectorScrollBtn').onclick = () => {
+    const id = referenceEyeToolbar.dataset.refId;
+    const item = referencesListUl.querySelector(`li.reference-item[data-ref-id="${id}"]`);
+    
+    if (item) {
+        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        item.classList.add('highlight-scroll');
+        setTimeout(() => item.classList.remove('highlight-scroll'), 2500);
+    }
+};
+
+// Botão Editar dentro do Inspector
+document.getElementById('inspectorEditBtn').onclick = () => {
+    const id = referenceEyeToolbar.dataset.refId;
+    openEditReferencePopup(id);
+};
+
         safely(splitAndInsertBtn,'mousedown',e=>{e.preventDefault();if(!rangeForSplitting||!activeEditorElement)return alert("Posição inválida.");saveStateForUndo();const b=rangeForSplitting.startContainer.parentElement.closest('p, div');if(!b)return;const r=document.createRange();r.setStart(rangeForSplitting.startContainer,rangeForSplitting.startOffset);r.setEnd(b,b.childNodes.length);const c=r.extractContents();const p=document.createElement('p');Object.assign(p.style,{fontFamily:DEFAULT_FONT_FAMILY,fontSize:DEFAULT_FONT_SIZE,lineHeight:DEFAULT_LINE_HEIGHT});p.appendChild(c);if(p.innerHTML.trim()==='')p.innerHTML='<br>';b.parentNode.insertBefore(p,b.nextSibling);hideReferenceEyeToolbar();const s=window.getSelection();s.removeAllRanges();s.addRange(rangeForSplitting);activeEditorElement.focus();saveDocumentBody(true);rangeForSplitting=null});
         safely(saveNewRefBtnElement,'click',()=>{if(refTitleInput.value.trim())addReferenceToDocument(refTitleInput.value.trim())});
         safely(saveEditedRefBtn,'click',saveEditedReference);

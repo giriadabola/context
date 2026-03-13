@@ -401,53 +401,54 @@ body.panel-open {
     }
 }
 
-/* Estilo Base: Transforma em "Chips" para não parecer mancha de marca-texto */
+/* Estilo Base: Transforma em "Chips" suaves */
 #editorsContainer .text-editor-chapter .referenced-text {
     padding: 2px 6px;
-    margin: 0 2px; /* Cria o "respiro" entre um link e outro */
+    margin: 0 2px;
     border-radius: 4px;
     cursor: default;
     display: inline;
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Borda sutil para definir o limite */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Sombra leve para dar profundidade */
+    border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.2s;
+    font-weight: 500;
 }
 
-/* TOM 1: Azul Profundo (Base) */
+/* TOM 1: Azul Suave */
 #editorsContainer .text-editor-chapter .referenced-text:nth-of-type(3n+1) {
-    background-color: #1e3a5f;
+    background-color: #3a506b; /* Azul ardósia suave */
     color: #d1e3ff;
 }
 
-/* TOM 2: Azul Cobalto (Mais vibrante para separar visualmente) */
+/* TOM 2: Cinzento Suave */
 #editorsContainer .text-editor-chapter .referenced-text:nth-of-type(3n+2) {
-    background-color: #2d5a88;
-    color: #eef6ff;
+    background-color: #4a4e51; /* Cinza médio suave */
+    color: #f0f0f0;
 }
 
-/* TOM 3: Azul Marinho Escuro (Mais sóbrio) */
+/* TOM 3: Verde Suave */
 #editorsContainer .text-editor-chapter .referenced-text:nth-of-type(3n+3) {
-    background-color: #0f2540;
-    color: #b0cfff;
+    background-color: #465c49; /* Verde musgo/sálvia */
+    color: #dcf5e1;
 }
 
-/* Efeito ao passar o mouse (opcional, ajuda a saber qual link você está olhando) */
+/* Efeito ao passar o mouse */
 #editorsContainer .text-editor-chapter .referenced-text:hover {
-    filter: brightness(1.2);
-    border-color: rgba(255, 255, 255, 0.3);
+    filter: brightness(1.15);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Estados Especiais: Olho e Vazio */
+/* Estado: Quando clicado (Ícone do Olho ativo) - Amarelo discreto */
 #editorsContainer .text-editor-chapter .referenced-text.eye-icon-active {
-    background-color: #ffca28 !important; /* Destaque em amarelo quando clicado */
-    color: #1e1e1e !important;
+    background-color: #5d5334 !important; 
+    color: #ffca28 !important;
+    border: 1px solid #ffca28;
     outline: none;
-    border-color: #fff;
 }
 
+/* Estado: Vazio (Sem texto) */
 #editorsContainer .text-editor-chapter .referenced-text.referenced-text-empty {
-    background-color: rgba(217, 83, 79, 0.2) !important;
-    color: #ff6b6b !important;
+    background-color: rgba(217, 83, 79, 0.15) !important;
+    color: #ff8b8b !important;
     border: 1px dashed #d9534f;
 }
 

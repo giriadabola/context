@@ -385,6 +385,22 @@
             background-color: rgba(255, 223, 100, 0.25) !important;
             border-bottom: 2px solid #FFC107;
         }
+        body {
+    transition: padding-right 0.3s ease; /* Mesma duração da transição do painel */
+}
+
+/* Quando esta classe estiver no body, o conteúdo empurra para a esquerda */
+body.panel-open {
+    padding-right: 380px; /* Largura exata do seu sidePanel */
+}
+
+/* Ajuste para telas menores: se a tela for pequena, o painel ocupa tudo ou o ajuste muda */
+@media (max-width: 1200px) {
+    body.panel-open .container {
+        margin-left: 20px; /* Garante que o doc não suma da tela em monitores menores */
+    }
+}
+
     </style>
 </head>
 <body>
@@ -415,12 +431,160 @@
     <div id="selectExistingRefPopup" class="popup"><div class="popup-content"><h3>Anexar</h3><div id="existingRefListContainer" class="scrollable-ref-list"><ul></ul></div><div class="popup-actions"><button id="confirmAppendRefBtn" disabled>Anexar</button><button class="close-popup-btn">Cancelar</button></div></div></div>
     <div id="splitChapterPopup" class="popup"><div class="popup-content"><h3>Dividir</h3><p>Criar novo capítulo?</p><div class="popup-actions"><button id="confirmSplitBtn" class="confirm-btn">Sim</button><button id="cancelSplitBtn" class="close-popup-btn">Não</button></div></div></div>
 
+    <!-- Botão da Lupa -->
+<button id="openSidePanelBtn" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--accent-color); color: white; border: none; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 999;">🔍</button>
+
+<!-- Painel Lateral -->
+<div id="sidePanel" style="position: fixed; top: 0; right: -400px; width: 380px; height: 100%; background: var(--secondary-bg); border-left: 1px solid var(--border-color); transition: 0.3s; z-index: 1002; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">
+    <div style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;">Explorar</h3>
+        <button id="closeSidePanelBtn" style="background: none; border: none; color: var(--text-color); font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    
+    <!-- Abas -->
+    <div style="display: flex; background: var(--tertiary-bg); border-bottom: 1px solid var(--border-color);">
+        <button class="tab-btn active" data-tab="tab-anotacoes" style="flex:1; padding: 10px; border:none; background:none; color:inherit; cursor:pointer; border-bottom: 2px solid var(--accent-color);">Anotações</button>
+        <button class="tab-btn" data-tab="tab-pastas" style="flex:1; padding: 10px; border:none; background:none; color:inherit; cursor:pointer; opacity: 0.6;">Pastas</button>
+        <button class="tab-btn" data-tab="tab-multimedia" style="flex:1; padding: 10px; border:none; background:none; color:inherit; cursor:pointer; opacity: 0.6;">Multimídia</button>
+        <button class="tab-btn" data-tab="tab-global" style="flex:1; padding: 10px; border:none; background:none; color:inherit; cursor:pointer; opacity: 0.6;">Global</button>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div id="sidePanelContent" style="flex: 1; overflow-y: auto; padding: 15px;">
+        <div id="tab-anotacoes" class="tab-content">
+            <button id="showNoteFormBtn" style="width: 100%; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 20px;">+ Criar Nota</button>
+            
+            <!-- Formulário de Nova Nota (Escondido) -->
+            <div id="noteForm" style="display: none; background: var(--tertiary-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--accent-color);">
+                <textarea id="noteTextInput" placeholder="Escreva sua nota..." style="width: 100%; background: #1e1e1e; border: 1px solid #444; color: white; padding: 10px; border-radius: 4px; resize: vertical; min-height: 80px;"></textarea>
+                <div id="noteUrlsContainer" style="margin-top: 10px;"></div>
+                <button id="addUrlToNoteBtn" style="background: none; border: 1px solid #555; color: #aaa; font-size: 0.8em; margin-top: 5px; cursor: pointer; padding: 2px 8px;">+ Anexo URL</button>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button id="saveNoteBtn" style="flex: 1; background: #4CAF50; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">Salvar</button>
+                    <button id="cancelNoteBtn" style="flex: 1; background: #d9534f; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Feed de Notas -->
+            <div id="notesFeed"></div>
+        </div>
+    <div id="tab-pastas" class="tab-content" style="display:none;">
+    <div id="folderHeader" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+        <button id="backFolderBtn" style="display:none; background:none; border:1px solid #555; color:white; cursor:pointer; padding:2px 8px; border-radius:4px;">⬅ Voltar</button>
+        <span id="currentFolderName" style="font-weight: bold; font-size: 0.9em;">Raiz</span>
+    </div>
+
+    <!-- Ações da Raiz -->
+    <div id="rootFolderActions">
+        <button id="createNewFolderBtn" style="width: 100%; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 15px;">+ Criar Pasta</button>
+    </div>
+
+    <!-- Ações Dentro de uma Pasta (Escondido inicialmente) -->
+    <div id="insideFolderActions" style="display: none; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+        <button onclick="triggerFolderAction('nota')" style="padding:8px; font-size:0.75em; background:#555; color:white; border:none; border-radius:4px; cursor:pointer;">+ Anotação</button>
+        <button onclick="triggerFolderAction('pasta')" style="padding:8px; font-size:0.75em; background:#555; color:white; border:none; border-radius:4px; cursor:pointer;">+ Subpasta</button>
+        <button onclick="triggerFolderAction('video')" style="padding:8px; font-size:0.75em; background:#cc0000; color:white; border:none; border-radius:4px; cursor:pointer;">+ Vídeo</button>
+        <button onclick="triggerFolderAction('foto')" style="padding:8px; font-size:0.75em; background:var(--accent-color); color:white; border:none; border-radius:4px; cursor:pointer;">+ Foto</button>
+    </div>
+
+       <!-- FORMULÁRIO DE NOTA INLINE PARA PASTAS -->
+    <div id="folderNoteForm" style="display: none; background: var(--tertiary-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--accent-color);">
+        <textarea id="folderNoteTextInput" placeholder="Escreva sua nota na pasta..." style="width: 100%; background: #1e1e1e; border: 1px solid #444; color: white; padding: 10px; border-radius: 4px; resize: vertical; min-height: 80px; box-sizing: border-box;"></textarea>
+        <div id="folderNoteUrlsContainer" style="margin-top: 10px;"></div>
+        <button onclick="createUrlInputEntry('folderNoteUrlsContainer', '', true)" style="background: none; border: 1px solid #555; color: #aaa; font-size: 0.8em; margin-top: 5px; cursor: pointer; padding: 2px 8px;">+ Anexo URL</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="saveFolderNoteBtn" style="flex: 1; background: #4CAF50; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">Salvar</button>
+            <button onclick="document.getElementById('folderNoteForm').style.display='none'" style="flex: 1; background: #555; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Lista de Conteúdo -->
+    <div id="folderContentList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+</div>
+
+<div id="tab-multimedia" class="tab-content" style="display:none;">
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button id="addVideoBtn" style="flex:1; padding: 8px; background: #cc0000; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">+ Vídeo</button>
+        <button id="addPhotoBtn" style="flex:1; padding: 8px; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">+ Foto</button>
+    </div>
+
+    <!-- Formulário para nova mídia (escondido) -->
+    <div id="mediaForm" style="display: none; background: var(--tertiary-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--accent-color); margin-bottom: 20px;">
+        <h4 id="mediaFormTitle" style="margin: 0 0 10px 0; font-size: 0.9em;">Adicionar</h4>
+        <input type="url" id="mediaUrlInput" placeholder="Cole a URL aqui..." style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box;">
+        <div style="display: flex; gap: 5px; margin-top: 10px;">
+            <button id="saveMediaBtn" style="flex:1; background: #4CAF50; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Salvar</button>
+            <button id="cancelMediaBtn" style="flex:1; background: #555; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Container das Mídias -->
+    <div id="mediaGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+</div>
+<div id="tab-global" class="tab-content" style="display:none;">
+    <div id="globalFolderHeader" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+        <button id="backGlobalFolderBtn" style="display:none; background:none; border:1px solid #555; color:white; cursor:pointer; padding:2px 8px; border-radius:4px;">⬅ Voltar</button>
+        <span id="currentGlobalFolderName" style="font-weight: bold; font-size: 0.9em; color: #ffca28;">🌍 Global / Raiz</span>
+    </div>
+
+    <div id="rootGlobalFolderActions">
+        <button id="createNewGlobalFolderBtn" style="width: 100%; padding: 10px; background: #ffca28; color: #333; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 15px; font-weight: bold;">+ Criar Pasta Global</button>
+    </div>
+
+    <div id="insideGlobalFolderActions" style="display: none; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+        <button onclick="triggerGlobalAction('nota')" style="padding:8px; font-size:0.75em; background:#555; color:white; border:none; border-radius:4px; cursor:pointer;">+ Anotação</button>
+        <button onclick="triggerGlobalAction('pasta')" style="padding:8px; font-size:0.75em; background:#555; color:white; border:none; border-radius:4px; cursor:pointer;">+ Subpasta</button>
+        <button onclick="triggerGlobalAction('video')" style="padding:8px; font-size:0.75em; background:#cc0000; color:white; border:none; border-radius:4px; cursor:pointer;">+ Vídeo</button>
+        <button onclick="triggerGlobalAction('foto')" style="padding:8px; font-size:0.75em; background:var(--accent-color); color:white; border:none; border-radius:4px; cursor:pointer;">+ Foto</button>
+    </div>
+
+    <!-- FORMULÁRIO DE NOTA GLOBAL (O QUE ESTAVA FALTANDO) -->
+    <div id="globalNoteForm" style="display: none; background: var(--tertiary-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffca28;">
+        <textarea id="globalNoteTextInput" placeholder="Escreva sua nota global..." style="width: 100%; background: #1e1e1e; border: 1px solid #444; color: white; padding: 10px; border-radius: 4px; resize: vertical; min-height: 80px; box-sizing: border-box; font-family: sans-serif;"></textarea>
+        <div id="globalNoteUrlsContainer" style="margin-top: 10px;"></div>
+        <button onclick="createUrlInputEntry('globalNoteUrlsContainer', '', true)" style="background: none; border: 1px solid #555; color: #aaa; font-size: 0.8em; margin-top: 5px; cursor: pointer; padding: 2px 8px; border-radius: 3px;">+ Anexo URL</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="saveGlobalNoteBtn" style="flex: 1; background: #4CAF50; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold;">Salvar</button>
+            <button onclick="document.getElementById('globalNoteForm').style.display='none'" style="flex: 1; background: #d9534f; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="globalFolderContentList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+</div>
+    </div>
+</div>
+
+<div id="actionInputPopup" class="popup">
+    <div class="popup-content" style="width: 450px;">
+        <h3 id="actionPopupTitle">Adicionar</h3>
+        
+        <!-- Área para Pasta, Foto e Vídeo (Simples) -->
+        <div id="simpleInputSection">
+            <input type="text" id="actionPopupInput" style="width: 100%; box-sizing: border-box; background: #1e1e1e; color: white; border: 1px solid #444; padding: 12px; border-radius: 4px;">
+        </div>
+
+        <!-- Área para Anotação (Igual ao Criar Nota) -->
+        <div id="noteInputSection" style="display:none;">
+            <textarea id="actionPopupTextarea" placeholder="Escreva sua nota..." style="width: 100%; box-sizing: border-box; background: #1e1e1e; border: 1px solid #444; color: white; padding: 10px; border-radius: 4px; resize: vertical; min-height: 120px; font-family: sans-serif;"></textarea>
+            <div id="actionPopupUrlsContainer" style="margin-top: 10px;"></div>
+            <button type="button" id="addUrlToPopupActionBtn" style="background: none; border: 1px solid #555; color: #aaa; font-size: 0.8em; margin-top: 5px; cursor: pointer; padding: 4px 10px; border-radius: 3px;">+ Anexo URL</button>
+        </div>
+
+        <div class="popup-actions" style="margin-top: 20px;">
+            <button id="confirmActionBtn" class="save-btn">Confirmar</button>
+            <button id="closeActionPopupBtn" class="close-popup-btn">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+
+
     <script type="module">
         const firebaseConfig = {
             apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", authDomain: "bibliacontexto.firebaseapp.com", projectId: "bibliacontexto", storageBucket: "bibliacontexto.firebasestorage.app", messagingSenderId: "266293600679", appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
         };
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, addDoc, query, where, orderBy, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         let app, db;
         try { app = initializeApp(firebaseConfig); db = getFirestore(app); console.log("Firebase inicializado!"); } catch (e) { console.error("ERRO AO INICIALIZAR O FIREBASE:", e); alert("Falha na conexão com o Firebase."); throw e; }
@@ -431,11 +595,541 @@
         let undoStack = [], redoStack = [];
         const DEFAULT_FONT_SIZE = '25px', DEFAULT_FONT_FAMILY = 'Arial, sans-serif', DEFAULT_LINE_HEIGHT = '1.6';
 
+        // --- LÓGICA DE PASTAS NAVEGÁVEIS ---
+
+let folderHistory = []; // Para voltar (stack)
+let currentFolderId = null; 
+let currentFolderName = "Raiz";
+let pendingActionData = null;
+
+// Elementos
+const folderContentList = document.getElementById('folderContentList');
+const backFolderBtn = document.getElementById('backFolderBtn');
+const folderNameSpan = document.getElementById('currentFolderName');
+const rootActions = document.getElementById('rootFolderActions');
+const insideActions = document.getElementById('insideFolderActions');
+
+// Criar Pasta na Raiz
+document.getElementById('createNewFolderBtn').onclick = () => triggerFolderAction('pasta');
+
+// Botão Voltar
+backFolderBtn.onclick = () => {
+    folderHistory.pop();
+    const prev = folderHistory[folderHistory.length - 1];
+    if (!prev) {
+        currentFolderId = null;
+        currentFolderName = "Raiz";
+    } else {
+        currentFolderId = prev.id;
+        currentFolderName = prev.nome;
+    }
+    renderFolderUI();
+};
+
+function triggerFolderAction(type) {
+    if (type === 'nota') {
+        const form = document.getElementById('folderNoteForm');
+        form.style.display = 'block';
+        document.getElementById('folderNoteUrlsContainer').innerHTML = "";
+        createUrlInputEntry('folderNoteUrlsContainer', '', true);
+        document.getElementById('folderNoteTextInput').focus();
+    } else {
+        openActionPopup(type, false);
+    }
+}
+
+
+async function fetchFolderContent() {
+    if (!currentDocId) return;
+    folderContentList.innerHTML = "<p style='text-align:center; opacity:0.5; font-size:0.8em;'>Carregando pasta...</p>";
+    
+    try {
+        const q = query(
+            collection(db, "itens_pasta"), 
+            where("idpagina", "==", currentDocId), 
+            where("parentId", "==", currentFolderId),
+            orderBy("criadoEm", "desc")
+        );
+        const snap = await getDocs(q);
+        folderContentList.innerHTML = "";
+
+        if (snap.empty) {
+            folderContentList.innerHTML = "<p style='font-size:0.8em; opacity:0.4; text-align:center; margin-top:10px;'>Pasta vazia</p>";
+            return;
+        }
+
+        snap.forEach(d => {
+            const item = d.data();
+            const id = d.id;
+            const isDone = item.concluido || false;
+            const card = document.createElement('div');
+            
+            // MODO VISUALIZAÇÃO
+            const renderView = () => {
+                card.style = `background: var(--tertiary-bg); padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid ${item.tipo === 'nota' ? (isDone ? '#4CAF50' : 'var(--accent-color)') : '#444'}; position: relative; opacity: ${isDone ? '0.6' : '1'}; cursor: pointer; border: 1px solid #444; overflow: hidden; display: flex; flex-direction: column;`;
+                
+                let icon = (item.tipo === 'pasta') ? "📁" : (item.tipo === 'video' ? "▶️" : (item.tipo === 'foto' ? "🖼️" : "📝"));
+                
+                let botoesNota = item.tipo === 'nota' ? `
+                    <button class="done-f-btn" style="background:none; border:none; cursor:pointer; font-size:1.1em;">${isDone ? '✅' : '⬜'}</button>
+                    <button class="edit-f-btn" style="background:none; border:none; cursor:pointer; color:#888;">✏️</button>
+                ` : '';
+
+                let linksHtml = (item.urls || []).map(u => `<a href="${u}" target="_blank" style="color:var(--accent-color-hover); font-size:0.75em; display:block; text-decoration:none; margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 100%;">🔗 ${u}</a>`).join('');
+
+                card.innerHTML = `
+                    <!-- CABEÇALHO: ÍCONE E BOTÕES -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; width: 100%;">
+                        <span style="font-size:1.1em;">${icon}</span>
+                        <div style="display: flex; gap: 12px;">
+                            ${botoesNota}
+                            <button class="del-f-btn" style="background:none; border:none; color:#d9534f; cursor:pointer; font-size:1.1em;">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- TEXTO ABAIXO -->
+                    <div style="font-size:0.9em; white-space:pre-wrap; overflow-wrap: anywhere; word-break: break-word; text-decoration: ${isDone ? 'line-through' : 'none'}; line-height: 1.4; flex: 1; min-width: 0;">${item.conteudo}</div>
+                    <div style="width: 100%; overflow: hidden;">${linksHtml}</div>
+                `;
+
+                card.onclick = () => {
+                    if (item.tipo === 'pasta') enterFolder(id, item.conteudo);
+                    else if (item.tipo !== 'nota') window.open(item.conteudo, '_blank');
+                };
+
+                card.querySelector('.del-f-btn').onclick = (e) => { e.stopPropagation(); deleteFolderItem(e, id); };
+
+                if (item.tipo === 'nota') {
+                    card.querySelector('.done-f-btn').onclick = async (e) => {
+                        e.stopPropagation();
+                        await updateDoc(doc(db, "itens_pasta", id), { concluido: !isDone });
+                        fetchFolderContent();
+                    };
+                    card.querySelector('.edit-f-btn').onclick = (e) => {
+                        e.stopPropagation();
+                        renderEdit();
+                    };
+                }
+            };
+
+            // MODO EDIÇÃO
+            const renderEdit = () => {
+                card.style.opacity = "1";
+                card.innerHTML = `
+                    <div style="margin-top: 5px;">
+                        <textarea class="edit-f-txt" style="width:100%; background:#111; color:white; border:1px solid var(--accent-color); border-radius:4px; padding:12px; min-height:350px; font-family:inherit; box-sizing: border-box; font-size:1em; line-height:1.5;">${item.conteudo}</textarea>
+                    </div>
+                    <div class="edit-f-urls" style="margin-top:10px;"></div>
+                    <button class="add-u-f-btn" style="background:none; border:1px solid #555; color:#aaa; font-size:0.7em; cursor:pointer; padding:2px 8px; margin-top:5px; border-radius:3px;">+ URL</button>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button class="save-f-btn" style="flex:1.5; background:#4CAF50; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em; font-weight:bold;">Salvar</button>
+                        <button class="del-f-inline" style="flex:1; background:#d9534f; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em;">Excluir</button>
+                        <button class="cancel-f-btn" style="flex:1; background:#555; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em;">Sair</button>
+                    </div>
+                `;
+                const urlCont = card.querySelector('.edit-f-urls');
+                (item.urls || []).forEach(u => createUrlInputEntryInElement(urlCont, u));
+                if((item.urls || []).length === 0) createUrlInputEntryInElement(urlCont, '');
+
+                card.onclick = null;
+                card.querySelector('.add-u-f-btn').onclick = () => createUrlInputEntryInElement(urlCont, '');
+                card.querySelector('.cancel-f-btn').onclick = () => renderView();
+                card.querySelector('.del-f-inline').onclick = (e) => deleteFolderItem(e, id);
+                card.querySelector('.save-f-btn').onclick = async () => {
+                    const novoTxt = card.querySelector('.edit-f-txt').value.trim();
+                    const novasUrls = Array.from(urlCont.querySelectorAll('.ref-url-input')).map(i => i.value.trim()).filter(Boolean);
+                    if(!novoTxt) return alert("Não pode ficar vazio.");
+                    await updateDoc(doc(db, "itens_pasta", id), { conteudo: novoTxt, urls: novasUrls });
+                    item.conteudo = novoTxt; 
+                    item.urls = novasUrls;
+                    renderView();
+                };
+            };
+
+            renderView();
+            folderContentList.appendChild(card);
+        });
+    } catch (e) { console.error("Erro na pasta:", e); }
+}
+
+         
+
+function enterFolder(id, nome) {
+    currentFolderId = id;
+    currentFolderName = nome;
+    folderHistory.push({ id, nome });
+    renderFolderUI();
+}
+
+function renderFolderUI() {
+    folderNameSpan.textContent = currentFolderName;
+    if (currentFolderId) {
+        backFolderBtn.style.display = "block";
+        rootActions.style.display = "none";
+        insideActions.style.display = "grid";
+    } else {
+        backFolderBtn.style.display = "none";
+        rootActions.style.display = "block";
+        insideActions.style.display = "none";
+    }
+    fetchFolderContent();
+}
+
+async function deleteFolderItem(e, id) {
+    e.stopPropagation(); // Impede de abrir a pasta ao clicar no X
+    if (confirm("Excluir este item?")) {
+        await deleteDoc(doc(db, "itens_pasta", id));
+        fetchFolderContent(); // Atualiza a lista
+    }
+}
+
+// Atualize o listener das abas para incluir as pastas
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+        // ... sua lógica de destaque de botões ...
+        if (currentDocId && targetTab === 'tab-pastas') renderFolderUI();
+    });
+});
+
+
+        const sidePanel = document.getElementById('sidePanel');
+const openSidePanelBtn = document.getElementById('openSidePanelBtn');
+const closeSidePanelBtn = document.getElementById('closeSidePanelBtn');
+const noteForm = document.getElementById('noteForm');
+const showNoteFormBtn = document.getElementById('showNoteFormBtn');
+const noteUrlsContainer = document.getElementById('noteUrlsContainer');
+const notesFeed = document.getElementById('notesFeed');
+
+// Abrir/Fechar Painel
+openSidePanelBtn.addEventListener('click', () => {
+    sidePanel.style.right = '0px';
+    document.body.classList.add('panel-open'); // Empurra o conteúdo
+    if (currentDocId) fetchNotes();
+});
+
+// Fechar Painel
+closeSidePanelBtn.addEventListener('click', () => {
+    sidePanel.style.right = '-400px';
+    document.body.classList.remove('panel-open'); // Volta ao normal
+});
+
+// Troca de Abas
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // 1. Reset visual de todos os botões das abas
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.style.opacity = '0.6';
+            b.style.borderBottom = 'none';
+        });
+
+        // 2. Destacar a aba clicada
+        btn.classList.add('active');
+        btn.style.opacity = '1';
+        btn.style.borderBottom = '2px solid var(--accent-color)';
+        
+        // 3. Esconder todos os conteúdos e mostrar o da aba selecionada
+        const targetTab = btn.dataset.tab;
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        document.getElementById(targetTab).style.display = 'block';
+
+        // 4. Carregar os dados específicos da aba selecionada
+        if (currentDocId) {
+            if (targetTab === 'tab-anotacoes') {
+                fetchNotes();
+            } else if (targetTab === 'tab-multimedia') {
+                fetchMultimedia();
+            }
+            // Adicione aqui verificações para 'tab-pastas' ou 'tab-global' futuramente
+        }
+    });
+});
+
+// Lógica de Notas
+showNoteFormBtn.addEventListener('click', () => {
+    noteForm.style.display = 'block';
+    showNoteFormBtn.style.display = 'none';
+    noteUrlsContainer.innerHTML = '';
+    createUrlInputEntry('noteUrlsContainer', '', true);
+});
+
+document.getElementById('cancelNoteBtn').addEventListener('click', () => {
+    noteForm.style.display = 'none';
+    showNoteFormBtn.style.display = 'block';
+});
+
+document.getElementById('addUrlToNoteBtn').addEventListener('click', () => createUrlInputEntry('noteUrlsContainer', '', true));
+
+document.getElementById('saveNoteBtn').addEventListener('click', async () => {
+    const texto = document.getElementById('noteTextInput').value.trim();
+    const urls = Array.from(document.querySelectorAll('#noteUrlsContainer .ref-url-input')).map(i => i.value.trim()).filter(Boolean);
+    
+    if (!texto) return alert("Escreva algo na nota.");
+    if (!currentDocId) return alert("Abra um documento primeiro.");
+
+    try {
+        await addDoc(collection(db, "pesquisa"), {
+            idpagina: currentDocId,
+            texto: texto,
+            urls: urls,
+            criadoEm: serverTimestamp()
+        });
+        document.getElementById('noteTextInput').value = '';
+        noteForm.style.display = 'none';
+        showNoteFormBtn.style.display = 'block';
+        fetchNotes();
+    } catch (e) {
+        console.error("Erro ao salvar nota:", e);
+    }
+});
+
+async function fetchNotes() {
+    if (!currentDocId) return;
+    notesFeed.innerHTML = "<p style='text-align:center; opacity:0.5; font-size:0.9em;'>Carregando notas...</p>";
+    
+    try {
+        const q = query(collection(db, "pesquisa"), where("idpagina", "==", currentDocId), orderBy("criadoEm", "desc"));
+        const snap = await getDocs(q);
+        notesFeed.innerHTML = "";
+        
+        if (snap.empty) {
+            notesFeed.innerHTML = "<p style='font-size:0.9em; opacity:0.5; text-align:center;'>Nenhuma nota para este documento.</p>";
+            return;
+        }
+
+        snap.forEach(d => {
+            const data = d.data();
+            const noteId = d.id;
+            const card = document.createElement('div');
+            card.className = 'note-card';
+            
+            // Estilo do Card com proteção de transbordamento (overflow: hidden)
+            const applyCardStyle = () => {
+                const isDone = data.concluido || false;
+                card.style = `background: var(--tertiary-bg); padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid ${isDone ? '#4CAF50' : 'var(--accent-color)'}; position: relative; opacity: ${isDone ? '0.6' : '1'}; transition: all 0.3s; border: 1px solid #444; overflow: hidden; display: flex; flex-direction: column;`;
+            };
+
+           const renderViewMode = () => {
+    applyCardStyle();
+    const isDone = data.concluido || false;
+    let linksHtml = (data.urls || []).map(u => `<a href="${u}" target="_blank" style="color:var(--accent-color-hover); font-size:0.85em; display:block; text-decoration:none; margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 100%;">🔗 ${u}</a>`).join('');
+    
+    card.innerHTML = `
+        <!-- CABEÇALHO: ÍCONE À ESQUERDA, BOTÕES À DIREITA -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px;">
+            <span style="font-size:1.1em;">📝</span>
+            <div style="display: flex; gap: 12px;">
+                <button class="toggle-done-btn" style="background:none; border:none; cursor:pointer; font-size: 1.1em;" title="Checklist">${isDone ? '✅' : '⬜'}</button>
+                <button class="edit-note-btn" style="background:none; border:none; cursor:pointer; color:#888;" title="Editar">✏️</button>
+                <button class="delete-note-btn-top" style="background:none; border:none; color:#d9534f; cursor:pointer; font-size:1.1em;">✕</button>
+            </div>
+        </div>
+
+        <!-- TEXTO: COMEÇA NA EXTREMA ESQUERDA -->
+        <div class="note-text" style="font-size:0.95em; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; text-decoration: ${isDone ? 'line-through' : 'none'}; color: ${isDone ? '#777' : 'inherit'}; line-height: 1.4;">${escapeHTML(data.texto)}</div>
+        
+        <div style="margin-top:8px; width: 100%; overflow: hidden;">${linksHtml}</div>
+    `;
+
+    card.querySelector('.edit-note-btn').onclick = () => renderEditMode();
+    card.querySelector('.toggle-done-btn').onclick = async () => {
+        await updateDoc(doc(db, "pesquisa", noteId), { concluido: !isDone });
+        data.concluido = !isDone; renderViewMode(); 
+    };
+    card.querySelector('.delete-note-btn-top').onclick = () => deleteNote(noteId);
+};
+
+            // Função do modo EDIÇÃO (Inalterada, mas garantindo largura 100%)
+        const renderEditMode = () => {
+    card.style.opacity = "1";
+    card.innerHTML = `
+        <div style="margin-top: 5px;">
+            <textarea class="edit-note-textarea" style="width:100%; background:#111; color:white; border:1px solid var(--accent-color); border-radius:4px; padding:12px; min-height:350px; font-family:inherit; box-sizing: border-box; line-height:1.5; font-size:1em;">${data.texto}</textarea>
+        </div>
+        <div class="edit-note-urls" style="margin-top:10px; width: 100%;"></div>
+        <button class="add-url-edit-btn" style="background:none; border:1px solid #555; color:#aaa; font-size:0.7em; cursor:pointer; padding:2px 8px; margin-top:5px; border-radius:3px;">+ URL</button>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="save-edit-btn" style="flex:1.5; background:#4CAF50; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em; font-weight:bold;">Salvar</button>
+            <button class="delete-note-btn" style="flex:1; background:#d9534f; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em;">Excluir</button>
+            <button class="cancel-edit-btn" style="flex:1; background:#555; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em;">Sair</button>
+        </div>
+    `;
+
+                const urlContainer = card.querySelector('.edit-note-urls');
+                (data.urls || []).forEach(u => createUrlInputEntryInElement(urlContainer, u));
+                if((data.urls || []).length === 0) createUrlInputEntryInElement(urlContainer, '');
+
+                card.querySelector('.add-url-edit-btn').onclick = () => createUrlInputEntryInElement(urlContainer, '');
+                card.querySelector('.cancel-edit-btn').onclick = () => renderViewMode();
+                card.querySelector('.delete-note-btn').onclick = () => deleteNote(noteId);
+                
+                card.querySelector('.save-edit-btn').onclick = async () => {
+                    const novoTexto = card.querySelector('.edit-note-textarea').value.trim();
+                    const novasUrls = Array.from(urlContainer.querySelectorAll('.ref-url-input')).map(i => i.value.trim()).filter(Boolean);
+                    if(!novoTexto) return alert("A nota não pode ficar vazia.");
+                    
+                    await updateDoc(doc(db, "pesquisa", noteId), { texto: novoTexto, urls: novasUrls });
+                    data.texto = novoTexto; data.urls = novasUrls;
+                    renderViewMode();
+                };
+            };
+
+            renderViewMode();
+            notesFeed.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Erro ao buscar notas:", e);
+        notesFeed.innerHTML = "Erro ao carregar.";
+    }
+}
+
+       
+
+
+// Auxiliar para criar inputs de URL dentro de um elemento específico (para o modo edit)
+function createUrlInputEntryInElement(container, val = '') {
+    const ig = document.createElement('div');
+    ig.className = 'url-input-group';
+    ig.style = "display:flex; margin-bottom:3px;";
+    ig.innerHTML = `
+        <input type="url" class="ref-url-input" value="${val}" placeholder="URL" style="flex:1; font-size:0.8em; background:#222; border:1px solid #444; color:white; padding:3px;">
+        <button type="button" style="padding:0 5px; background:#d9534f; color:white; border:none; cursor:pointer;">X</button>
+    `;
+    ig.querySelector('button').onclick = () => ig.remove();
+    container.appendChild(ig);
+}
+
+// Função para excluir nota
+async function deleteNote(id) {
+    if(!confirm("Deseja excluir esta nota permanentemente?")) return;
+    try {
+        await deleteDoc(doc(db, "pesquisa", id));
+        fetchNotes(); // Recarrega o feed
+    } catch (e) {
+        console.error("Erro ao excluir:", e);
+    }
+}
+
+
+// --- LÓGICA DE MULTIMÍDIA ---
+
+const mediaGrid = document.getElementById('mediaGrid');
+const mediaForm = document.getElementById('mediaForm');
+const mediaUrlInput = document.getElementById('mediaUrlInput');
+let currentMediaType = 'foto'; // 'foto' ou 'video'
+let editingMediaId = null;
+
+// Abrir formulário
+document.getElementById('addVideoBtn').onclick = () => openMediaForm('video');
+document.getElementById('addPhotoBtn').onclick = () => openMediaForm('foto');
+
+function openMediaForm(type, existingId = null, existingUrl = '') {
+    currentMediaType = type;
+    editingMediaId = existingId;
+    mediaForm.style.display = 'block';
+    document.getElementById('mediaFormTitle').textContent = (existingId ? 'Editar ' : 'Adicionar ') + (type === 'video' ? 'Vídeo' : 'Foto');
+    mediaUrlInput.value = existingUrl;
+    mediaUrlInput.focus();
+}
+
+document.getElementById('cancelMediaBtn').onclick = () => {
+    mediaForm.style.display = 'none';
+    editingMediaId = null;
+};
+
+// Salvar Mídia (Novo ou Editado)
+document.getElementById('saveMediaBtn').onclick = async () => {
+    const url = mediaUrlInput.value.trim();
+    if (!url) return alert("Insira uma URL válida.");
+
+    try {
+        if (editingMediaId) {
+            await updateDoc(doc(db, "multimedia", editingMediaId), { url: url });
+        } else {
+            await addDoc(collection(db, "multimedia"), {
+                idpagina: currentDocId,
+                url: url,
+                tipo: currentMediaType,
+                criadoEm: serverTimestamp()
+            });
+        }
+        mediaForm.style.display = 'none';
+        editingMediaId = null;
+        fetchMultimedia();
+    } catch (e) {
+        console.error("Erro ao salvar mídia:", e);
+    }
+};
+
+// Auxiliar para pegar thumbnail do YouTube
+function getYoutubeThumb(url) {
+    const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+        return `https://img.youtube.com/vi/${match[2]}/mqdefault.jpg`;
+    }
+    return null;
+}
+
+async function fetchMultimedia() {
+    if (!currentDocId) return;
+    mediaGrid.innerHTML = "Carregando...";
+    try {
+        const q = query(collection(db, "multimedia"), where("idpagina", "==", currentDocId), orderBy("criadoEm", "desc"));
+        const snap = await getDocs(q);
+        mediaGrid.innerHTML = "";
+
+        snap.forEach(d => {
+            const data = d.data();
+            const id = d.id;
+            const card = document.createElement('div');
+            card.style = "background: #2a2a2a; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid #444;";
+
+            // Define a imagem da miniatura
+            let thumbUrl = data.url;
+            if (data.tipo === 'video') {
+                const ytThumb = getYoutubeThumb(data.url);
+                thumbUrl = ytThumb || 'https://via.placeholder.com/150/000000/FFFFFF?text=Video';
+            }
+
+            card.innerHTML = `
+                <div style="width:100%; aspect-ratio: 16/9; overflow:hidden; background:#000; cursor:pointer;" onclick="window.open('${data.url}', '_blank')">
+                    <img src="${thumbUrl}" style="width:100%; height:100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/150/000000/FFFFFF?text=Erro+Imagem'">
+                    ${data.tipo === 'video' ? '<div style="position:absolute; top:35%; left:40%; font-size:20px; text-shadow: 0 0 10px black;">▶️</div>' : ''}
+                </div>
+                <div style="padding: 5px; display: flex; justify-content: space-between; background: #222;">
+                    <button class="edit-media-btn" style="background:none; border:none; color:#aaa; cursor:pointer; font-size:0.8em;">✏️</button>
+                    <button class="delete-media-btn" style="background:none; border:none; color:#d9534f; cursor:pointer; font-size:0.8em;">🗑️</button>
+                </div>
+            `;
+
+            card.querySelector('.edit-media-btn').onclick = () => openMediaForm(data.tipo, id, data.url);
+            card.querySelector('.delete-media-btn').onclick = async () => {
+                if(confirm("Excluir mídia?")) {
+                    await deleteDoc(doc(db, "multimedia", id));
+                    fetchMultimedia();
+                }
+            };
+
+            mediaGrid.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Erro ao carregar mídia:", e);
+    }
+}
+
+
+
         function generateId(p='e-'){return p+Date.now()+'-'+Math.random().toString(36).substring(2,7)}
         function showPopup(el){if(el)el.classList.add('active')}
         function hidePopup(el){if(el)el.classList.remove('active')}
         function applyDefaultStylesToBlocks(c){if(!c)return;c.querySelectorAll('p, div').forEach(el=>{if(!el.style.fontSize)el.style.fontSize=DEFAULT_FONT_SIZE;if(!el.style.lineHeight)el.style.lineHeight=DEFAULT_LINE_HEIGHT;})}
-            function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        function createUrlInputEntry(cId,val='',canRemove=true){const c=document.getElementById(cId);if(!c)return;const ig=document.createElement('div');ig.className='url-input-group';const ui=document.createElement('input');ui.type='url';ui.className='ref-url-input';ui.placeholder='URL';ui.value=val;ig.appendChild(ui);if(canRemove){const rb=document.createElement('button');rb.type='button';rb.textContent='X';rb.addEventListener('click',()=>{ig.remove();if(c.childElementCount===0)createUrlInputEntry(c.id,'',false)});ig.appendChild(rb)}c.appendChild(ig)}
+            function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        
+        
+        function createUrlInputEntry(cId,val='',canRemove=true){const c=document.getElementById(cId);if(!c)return;const ig=document.createElement('div');ig.className='url-input-group';const ui=document.createElement('input');ui.type='url';ui.className='ref-url-input';ui.placeholder='URL';ui.value=val;ig.appendChild(ui);if(canRemove){const rb=document.createElement('button');rb.type='button';rb.textContent='X';rb.addEventListener('click',()=>{ig.remove();if(c.childElementCount===0)createUrlInputEntry(c.id,'',false)});ig.appendChild(rb)}c.appendChild(ig)}
+        
+        
         function formatDate(ts){if(!ts||!ts.toDate)return'Data inválida';const d=ts.toDate();return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
         
         function syncDocumentStateFromDOM(){if(!editorsContainer||!currentDocumentData)return;currentDocumentData.titulo=docTitleInput.value.trim()||"Sem Título";const order=Array.from(editorsContainer.querySelectorAll('.chapter-wrapper')).map(w=>w.dataset.chapterId);const existingChapterIds=new Set(currentDocumentData.corpo.map(ch=>ch.id));editorsContainer.querySelectorAll('.chapter-wrapper').forEach(wrapper=>{if(!existingChapterIds.has(wrapper.dataset.chapterId)){currentDocumentData.corpo.push({id:wrapper.dataset.chapterId,html:'',isHidden:wrapper.style.display==='none'})}});currentDocumentData.corpo.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));currentDocumentData.corpo.forEach(ch=>{const wrapper=editorsContainer.querySelector(`.chapter-wrapper[data-chapter-id="${ch.id}"]`);if(wrapper&&wrapper.style.display!=='none'){ch.html=wrapper.querySelector('.text-editor-chapter').innerHTML}})}
@@ -448,8 +1142,63 @@
         function hideReferenceEyeToolbar(){if(referenceEyeToolbar)referenceEyeToolbar.style.display='none';if(activeReferencedTextSpanForEye){activeReferencedTextSpanForEye.classList.remove('eye-icon-active');activeReferencedTextSpanForEye=null}}
         function showReferenceEyeToolbar(span){if(!referenceEyeToolbar||!span)return;hideFloatingToolbar();const r=span.getBoundingClientRect();referenceEyeToolbar.style.left=`${r.left+window.scrollX+(r.width/2)-(referenceEyeToolbar.offsetWidth/2)}px`;referenceEyeToolbar.style.top=`${r.top+window.scrollY-referenceEyeToolbar.offsetHeight-5}px`;referenceEyeToolbar.style.display='flex';referenceEyeToolbar.dataset.refId=span.dataset.refId;splitAndInsertBtn.disabled=!span.closest('.text-editor-chapter');if(activeReferencedTextSpanForEye&&activeReferencedTextSpanForEye!==span)activeReferencedTextSpanForEye.classList.remove('eye-icon-active');activeReferencedTextSpanForEye=span;activeReferencedTextSpanForEye.classList.add('eye-icon-active')}
         
-        function showEditorInterfaceScreen(){initialScreenDiv.style.display='none';editorInterfaceDiv.style.display='block'}
-        async function showInitialScreen(){editorInterfaceDiv.style.display='none';initialScreenDiv.style.display='block';currentDocId=null;currentDocumentData=null;docTitleInput.value='';editorsContainer.innerHTML='';referencesListUl.innerHTML="<li>Nenhuma referência.</li>";hideFloatingToolbar();hideReferenceEyeToolbar()}
+        function showEditorInterfaceScreen() {
+    initialScreenDiv.style.display = 'none';
+    editorInterfaceDiv.style.display = 'block';
+    // MOSTRAR LUPA
+    document.getElementById('openSidePanelBtn').style.display = 'block'; 
+}
+
+
+async function showInitialScreen() {
+    // --- INÍCIO DO SALVAMENTO DE SEGURANÇA ---
+    // Se houver um documento aberto, salva tudo antes de sair
+    if (currentDocId && currentDocumentData) {
+        try {
+            // 1. Sincroniza o HTML dos editores para o objeto currentDocumentData
+            syncDocumentStateFromDOM();
+            
+            // 2. Pega o título atual do input
+            const finalTitle = docTitleInput.value.trim() || "Sem Título";
+
+            // 3. Envia para o Firebase (ignora o tempo do debounce e salva na hora)
+            const docRef = doc(db, "documentos", currentDocId);
+            await updateDoc(docRef, {
+                titulo: finalTitle,
+                corpo: currentDocumentData.corpo,
+                atualizadoEm: serverTimestamp()
+            });
+            console.log("Salvamento final concluído com sucesso.");
+        } catch (e) {
+            console.error("Erro ao realizar salvamento de segurança ao sair:", e);
+            // Opcional: alert("Erro ao salvar as últimas alterações.");
+        }
+    }
+    // --- FIM DO SALVAMENTO DE SEGURANÇA ---
+
+    // 1. Alterna as telas na interface
+    editorInterfaceDiv.style.display = 'none';
+    initialScreenDiv.style.display = 'block';
+    
+    // 2. Reseta o Painel Lateral e a Lupa
+    document.getElementById('openSidePanelBtn').style.display = 'none';
+    const sidePanel = document.getElementById('sidePanel');
+    if (sidePanel) sidePanel.style.right = '-400px';
+    document.body.classList.remove('panel-open'); // Remove o recuo do texto
+    
+    // 3. Limpa as variáveis de estado
+    currentDocId = null;
+    currentDocumentData = null;
+    
+    // 4. Limpa os campos da interface para a próxima abertura
+    docTitleInput.value = '';
+    editorsContainer.innerHTML = '';
+    referencesListUl.innerHTML = "<li>Nenhuma referência.</li>";
+    
+    // 5. Esconde barras de ferramentas flutuantes que possam ter ficado abertas
+    hideFloatingToolbar();
+    hideReferenceEyeToolbar();
+}
         
         async function createNewDocument(){undoStack=[];redoStack=[];showEditorInterfaceScreen();currentDocId=generateId('doc-');const chId=generateId('ch-');currentDocumentData={titulo:"Novo Documento",corpo:[{id:chId,html:''}],referencias:[],criadoEm:serverTimestamp(),atualizadoEm:serverTimestamp(),ativo:true};try{await setDoc(doc(db,"documentos",currentDocId),currentDocumentData);displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias)}catch(e){console.error("Erro ao criar documento:",e);alert("Erro ao criar documento.")}}
         async function loadDocument(id){if(!id)return;undoStack=[];redoStack=[];showEditorInterfaceScreen();editorsContainer.innerHTML="<p>Carregando...</p>";docTitleInput.value="Carregando...";currentDocId=id;try{const docSnap=await getDoc(doc(db,"documentos",currentDocId));if(docSnap.exists()){currentDocumentData=docSnap.data();displayDocumentContent(currentDocumentData.titulo,currentDocumentData.corpo,currentDocumentData.referencias)}else{alert("Documento não encontrado.");editorsContainer.innerHTML="<p>Documento não encontrado.</p>"}}catch(e){console.error("Erro ao carregar documento:",e);alert("Erro ao carregar o documento.");editorsContainer.innerHTML=`<p style="color:red;">Falha ao carregar: ${e.message}</p>`}}
@@ -458,7 +1207,153 @@
         function displayDocumentContent(title,corpo,refs){docTitleInput.value=title||"";editorsContainer.innerHTML='';activeEditorElement=null;(corpo&&corpo.length>0?corpo:[{id:generateId('ch-'),html:''}]).forEach(ch=>{const w=createNewChapterElement(ch.html,ch.id);if(ch.isHidden)w.style.display='none'});updateChapterActionButtonsState();renderReferences()}
         
         function updateEmptyReferenceSpansStyles(c){if(!c)return;c.querySelectorAll('span.referenced-text[data-ref-id]').forEach(s=>s.classList.toggle('referenced-text-empty',s.textContent.trim()===''))}
-        function createNewChapterElement(html='',id=null,focus=false){const wrapper=document.createElement('div');wrapper.className='chapter-wrapper';wrapper.dataset.chapterId=id||generateId('ch-');const toolbar=document.createElement('div');toolbar.className='chapter-toolbar';toolbar.innerHTML=`<button title="Cima">🔼</button><button title="Baixo">🔽</button><button title="Desfazer">↶</button><button title="Refazer">↷</button><button title="Fonte">T</button><button title="Tamanho">Aa</button><button title="Ocultar">🗑️</button><button title="Dividir">🔨</button>`;toolbar.children[0].addEventListener('click',e=>{e.stopPropagation();handleMoveChapter(wrapper,'up')});toolbar.children[1].addEventListener('click',e=>{e.stopPropagation();handleMoveChapter(wrapper,'down')});toolbar.children[2].addEventListener('click',e=>{e.stopPropagation();handleUndo()});toolbar.children[3].addEventListener('click',e=>{e.stopPropagation();handleRedo()});toolbar.children[4].addEventListener('click',e=>{e.stopPropagation();handleFormatFontFamily(wrapper)});toolbar.children[5].addEventListener('click',e=>{e.stopPropagation();handleFormatFontSize(wrapper)});toolbar.children[6].addEventListener('click',e=>{e.stopPropagation();handleHideChapter(wrapper)});toolbar.children[7].addEventListener('click',e=>{e.stopPropagation();const editor=wrapper.querySelector('.text-editor-chapter');const sel=window.getSelection();if(sel.rangeCount>0&&editor.contains(sel.anchorNode))showSplitChapterPopup(wrapper,sel.getRangeAt(0));else alert("Clique no texto para dividir.")});wrapper.appendChild(toolbar);const chapterDiv=document.createElement('div');chapterDiv.className='text-editor-chapter';chapterDiv.setAttribute('contenteditable','true');chapterDiv.innerHTML=html.trim()===''?`<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`:html;applyDefaultStylesToBlocks(chapterDiv);updateEmptyReferenceSpansStyles(chapterDiv);let typingSaved=false;chapterDiv.addEventListener('focus',()=>{activeEditorElement=chapterDiv;document.querySelectorAll('.chapter-wrapper.active-chapter-wrapper').forEach(w=>w.classList.remove('active-chapter-wrapper'));wrapper.classList.add('active-chapter-wrapper');typingSaved=false});chapterDiv.addEventListener('input',()=>{const sel=window.getSelection();if(sel&&sel.isCollapsed&&sel.rangeCount>0){const n=sel.getRangeAt(0).startContainer;if(n.nodeType===Node.TEXT_NODE&&n.parentNode.classList.contains('referenced-text')){const s=n.parentNode;if(/\s+$/.test(n.textContent)&&sel.getRangeAt(0).startOffset===n.textContent.length){const sp=n.textContent.match(/\s+$/)[0];n.textContent=n.textContent.replace(/\s+$/,'');const sn=document.createTextNode(sp);s.parentNode.insertBefore(sn,s.nextSibling);const nr=document.createRange();nr.setStart(sn,sn.length);nr.collapse(true);sel.removeAllRanges();sel.addRange(nr)}}}if(!typingSaved){saveStateForUndo();typingSaved=true}clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{if(activeEditorElement===chapterDiv){applyDefaultStylesToBlocks(chapterDiv);updateEmptyReferenceSpansStyles(chapterDiv);saveDocumentBody(true)}},1500)});chapterDiv.addEventListener('paste',e=>{saveStateForUndo();e.preventDefault();const text=(e.clipboardData||window.clipboardData).getData('text/plain');if(text){document.execCommand('insertText',false,text);setTimeout(()=>{if(activeEditorElement){applyDefaultStylesToBlocks(activeEditorElement);updateEmptyReferenceSpansStyles(activeEditorElement)}saveDocumentBody(true)},0)}});chapterDiv.addEventListener('keydown',e=>{if(e.key==='Enter'){const sel=window.getSelection();if(!sel||!sel.rangeCount)return;const range=sel.getRangeAt(0);const span=range.startContainer.parentElement.closest('span.referenced-text');if(span){e.preventDefault();saveStateForUndo();const block=span.closest('p, div');if(isCursorAtEnd(span,range)){const p=document.createElement('p');p.innerHTML='<br>';Object.assign(p.style,{fontFamily:DEFAULT_FONT_FAMILY,fontSize:DEFAULT_FONT_SIZE,lineHeight:DEFAULT_LINE_HEIGHT});block.parentNode.insertBefore(p,block.nextSibling);sel.collapse(p,0)}else{const endRange=document.createRange();endRange.setStart(range.startContainer,range.startOffset);endRange.setEnd(block,block.childNodes.length);const content=endRange.extractContents();const p=document.createElement('p');p.appendChild(content);if(p.innerHTML.trim()==='')p.innerHTML='<br>';Object.assign(p.style,{fontFamily:getComputedStyle(block).fontFamily,fontSize:getComputedStyle(block).fontSize,lineHeight:getComputedStyle(block).lineHeight});block.parentNode.insertBefore(p,block.nextSibling);sel.collapse(p,0)}saveDocumentBody(true)}}});function isCursorAtEnd(el,r){if(!r.collapsed)return false;const tr=r.cloneRange();tr.selectNodeContents(el);tr.setStart(r.endContainer,r.endOffset);return tr.toString().trim()===''}wrapper.appendChild(chapterDiv);editorsContainer.appendChild(wrapper);updateChapterActionButtonsState();if(focus){placeCursorAtEndOf(chapterDiv);chapterDiv.focus({preventScroll:true});activeEditorElement=chapterDiv}return wrapper}
+        function createNewChapterElement(html='',id=null,focus=false){const wrapper=document.createElement('div');wrapper.className='chapter-wrapper';wrapper.dataset.chapterId=id||generateId('ch-');const toolbar=document.createElement('div');toolbar.className='chapter-toolbar';toolbar.innerHTML=`<button title="Cima">🔼</button><button title="Baixo">🔽</button><button title="Desfazer">↶</button><button title="Refazer">↷</button><button title="Fonte">T</button><button title="Tamanho">Aa</button><button title="Ocultar">🗑️</button><button title="Dividir">🔨</button>`;toolbar.children[0].addEventListener('click',e=>{e.stopPropagation();handleMoveChapter(wrapper,'up')});toolbar.children[1].addEventListener('click',e=>{e.stopPropagation();handleMoveChapter(wrapper,'down')});toolbar.children[2].addEventListener('click',e=>{e.stopPropagation();handleUndo()});toolbar.children[3].addEventListener('click',e=>{e.stopPropagation();handleRedo()});toolbar.children[4].addEventListener('click',e=>{e.stopPropagation();handleFormatFontFamily(wrapper)});toolbar.children[5].addEventListener('click',e=>{e.stopPropagation();handleFormatFontSize(wrapper)});toolbar.children[6].addEventListener('click',e=>{e.stopPropagation();handleHideChapter(wrapper)});toolbar.children[7].addEventListener('click',e=>{e.stopPropagation();const editor=wrapper.querySelector('.text-editor-chapter');const sel=window.getSelection();if(sel.rangeCount>0&&editor.contains(sel.anchorNode))showSplitChapterPopup(wrapper,sel.getRangeAt(0));else alert("Clique no texto para dividir.")});wrapper.appendChild(toolbar);const chapterDiv=document.createElement('div');chapterDiv.className='text-editor-chapter';chapterDiv.setAttribute('contenteditable','true');chapterDiv.innerHTML=html.trim()===''?`<p style="font-family:${DEFAULT_FONT_FAMILY};font-size:${DEFAULT_FONT_SIZE};line-height:${DEFAULT_LINE_HEIGHT};"><br></p>`:html;applyDefaultStylesToBlocks(chapterDiv);updateEmptyReferenceSpansStyles(chapterDiv);let typingSaved=false;chapterDiv.addEventListener('focus',()=>{activeEditorElement=chapterDiv;document.querySelectorAll('.chapter-wrapper.active-chapter-wrapper').forEach(w=>w.classList.remove('active-chapter-wrapper'));wrapper.classList.add('active-chapter-wrapper');typingSaved=false});chapterDiv.addEventListener('input',()=>{const sel=window.getSelection();if(sel&&sel.isCollapsed&&sel.rangeCount>0){const n=sel.getRangeAt(0).startContainer;if(n.nodeType===Node.TEXT_NODE&&n.parentNode.classList.contains('referenced-text')){const s=n.parentNode;if(/\s+$/.test(n.textContent)&&sel.getRangeAt(0).startOffset===n.textContent.length){const sp=n.textContent.match(/\s+$/)[0];n.textContent=n.textContent.replace(/\s+$/,'');const sn=document.createTextNode(sp);s.parentNode.insertBefore(sn,s.nextSibling);const nr=document.createRange();nr.setStart(sn,sn.length);nr.collapse(true);sel.removeAllRanges();sel.addRange(nr)}}}if(!typingSaved){saveStateForUndo();typingSaved=true}clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{if(activeEditorElement===chapterDiv){applyDefaultStylesToBlocks(chapterDiv);updateEmptyReferenceSpansStyles(chapterDiv);saveDocumentBody(true)}},1500)});
+       chapterDiv.addEventListener('paste', e => {
+    saveStateForUndo();
+    e.preventDefault();
+    
+    const clipboard = (e.clipboardData || window.clipboardData);
+    const htmlData = clipboard.getData('text/html');
+    const plainText = clipboard.getData('text/plain');
+
+    if (htmlData) {
+        // Cria um elemento temporário para processar o HTML colado
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlData;
+        
+        // Remove tags indesejadas que possam vir de cópias externas
+        tempDiv.querySelectorAll('style, script, meta, link').forEach(el => el.remove());
+        
+        // Percorre todos os elementos para limpar estilos, MAS preserva as suas referências
+        tempDiv.querySelectorAll('*').forEach(el => {
+            if (el.tagName === 'SPAN' && el.classList.contains('referenced-text') && el.hasAttribute('data-ref-id')) {
+                // É um link do seu editor! Salva o ID, limpa e recria.
+                const refId = el.getAttribute('data-ref-id');
+                while(el.attributes.length > 0) el.removeAttribute(el.attributes[0].name); // Remove tudo
+                el.className = 'referenced-text'; // Devolve a classe
+                el.setAttribute('data-ref-id', refId); // Devolve o ID da referência
+            } else {
+                // Se for outro elemento (p, b, i, etc), remove apenas as classes e estilos para manter o editor limpo
+                el.removeAttribute('class');
+                el.removeAttribute('id');
+                el.removeAttribute('style');
+            }
+        });
+
+        // Insere o HTML limpo e com as referências preservadas
+        document.execCommand('insertHTML', false, tempDiv.innerHTML);
+    } else if (plainText) {
+        // Fallback caso o usuário não tenha copiado HTML
+        document.execCommand('insertText', false, plainText);
+    }
+
+    // Aplica os estilos padrão e salva
+    setTimeout(() => {
+        if (activeEditorElement) {
+            applyDefaultStylesToBlocks(activeEditorElement);
+            updateEmptyReferenceSpansStyles(activeEditorElement);
+        }
+        renderReferences(); // Atualiza a lista lateral, pois a ordem dos links no texto pode ter mudado
+        saveDocumentBody(true);
+    }, 0);
+});
+        
+  chapterDiv.addEventListener('keydown', e => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    
+    // Procura se estamos dentro de um texto com anexo
+    const node = range.startContainer;
+    const span = node.nodeType === Node.ELEMENT_NODE ? node.closest('span.referenced-text') : node.parentElement.closest('span.referenced-text');
+    
+    if (span) {
+
+        const isCursorAtEnd = (el, r) => {
+            if (!r.collapsed) return false;
+            const tr = r.cloneRange();
+            tr.selectNodeContents(el);
+            tr.setStart(r.endContainer, r.endOffset);
+            return tr.toString().trim() === '';
+        };
+        
+        // Função para verificar se o cursor está batendo na parede esquerda do anexo
+        const isCursorAtBeginning = (el, r) => {
+            if (!r.collapsed) return false;
+            const tr = r.cloneRange();
+            tr.selectNodeContents(el);
+            tr.setEnd(r.startContainer, r.startOffset);
+            const isAtStart = (tr.toString().length === 0);
+            
+            // [LOG 2] Mostra o resultado do cálculo do cursor
+            console.log(`[Verificação] Cursor está exatamente no início do anexo? -> ${isAtStart ? 'SIM' : 'NÃO'}`);
+            return isAtStart;
+        };
+
+        // Lógica do ENTER
+        if (e.key === 'Enter') {
+            console.log("[Ação] A tecla foi 'Enter'. Quebrando a linha.");
+            e.preventDefault();
+            saveStateForUndo();
+            const block = span.closest('p, div');
+            if (isCursorAtEnd(span, range)) {
+                const p = document.createElement('p');
+                p.innerHTML = '<br>';
+                Object.assign(p.style, { fontFamily: DEFAULT_FONT_FAMILY, fontSize: DEFAULT_FONT_SIZE, lineHeight: DEFAULT_LINE_HEIGHT });
+                block.parentNode.insertBefore(p, block.nextSibling);
+                sel.collapse(p, 0);
+            } else {
+                const endRange = document.createRange();
+                endRange.setStart(range.startContainer, range.startOffset);
+                endRange.setEnd(block, block.childNodes.length);
+                const content = endRange.extractContents();
+                const p = document.createElement('p');
+                p.appendChild(content);
+                if (p.innerHTML.trim() === '') p.innerHTML = '<br>';
+                Object.assign(p.style, { fontFamily: getComputedStyle(block).fontFamily, fontSize: getComputedStyle(block).fontSize, lineHeight: getComputedStyle(block).lineHeight });
+                block.parentNode.insertBefore(p, block.nextSibling);
+                sel.collapse(p, 0);
+            }
+            saveDocumentBody(true);
+        } 
+        // Lógica para letras e espaço (e.key.length === 1 garante que não é Shift, Ctrl, etc)
+        else if (e.key.length === 1 && sel.isCollapsed) {
+            
+            if (isCursorAtBeginning(span, range)) {
+                
+                e.preventDefault(); // Interrompe o comportamento normal do navegador de pintar a letra
+                saveStateForUndo();
+                
+                // Cria a letra/espaço fora da caixa e insere antes
+                const charToInsert = e.key === ' ' ? '\u00A0' : e.key; 
+const textNode = document.createTextNode(charToInsert);
+                span.parentNode.insertBefore(textNode, span);
+                
+                // Move o cursor para o lado direito da letra recém-criada (ainda fora da caixa)
+                const newRange = document.createRange();
+                newRange.setStart(textNode, 1);
+                newRange.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                
+        
+
+                // Garante que o documento salva após digitar
+               clearTimeout(debounceTimer);
+debounceTimer = setTimeout(() => {
+    if (activeEditorElement === chapterDiv) {
+        // ...
+        saveDocumentBody(true); // Só salva após 1.5s de inatividade
+    }
+}, 1500);
+            } else {
+            
+            }
+        }
+    }
+});
+        
+        wrapper.appendChild(chapterDiv);editorsContainer.appendChild(wrapper);updateChapterActionButtonsState();if(focus){placeCursorAtEndOf(chapterDiv);chapterDiv.focus({preventScroll:true});activeEditorElement=chapterDiv}return wrapper}
         function updateChapterActionButtonsState(){const w=Array.from(editorsContainer.querySelectorAll('.chapter-wrapper'));w.forEach((el,i)=>{const up=el.querySelector('.chapter-toolbar button:nth-child(1)');if(up)up.disabled=(i===0);const down=el.querySelector('.chapter-toolbar button:nth-child(2)');if(down)down.disabled=(i===w.length-1);const rem=el.querySelector('.chapter-toolbar button:nth-child(7)');if(rem)rem.disabled=(w.length<=1)})}
         function handleHideChapter(w){if(editorsContainer.querySelectorAll('.chapter-wrapper:not([style*="display: none"])').length<=1)return alert("Não pode ocultar.");if(window.confirm("Ocultar capítulo?")){saveStateForUndo();const id=w.dataset.chapterId;const i=currentDocumentData.corpo.findIndex(c=>c.id===id);if(i>-1){currentDocumentData.corpo[i].isHidden=true;w.style.display='none';updateChapterActionButtonsState();saveDocumentBody(true)}}}
         function handleFormatFontFamily(w){const e=w.querySelector('.text-editor-chapter');if(!e)return;saveStateForUndo();e.querySelectorAll('p, div, span, strong, em, b, i, u').forEach(el=>el.style.fontFamily=DEFAULT_FONT_FAMILY);saveDocumentBody(true);alert('Fonte formatada.')}
@@ -732,6 +1627,394 @@ safely(archiveDocLink, 'click', e => {
         document.addEventListener('keydown',e=>{if(editorInterfaceDiv.style.display==='none'||document.querySelector('.popup.active'))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();handleUndo()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();handleRedo()}});
         document.addEventListener('selectionchange',()=>{const sel=window.getSelection();if(!activeEditorElement||!sel||!sel.rangeCount){hideFloatingToolbar();hideReferenceEyeToolbar();return}currentSelectionRange=sel.getRangeAt(0);if(activeEditorElement.contains(currentSelectionRange.commonAncestorContainer)){if(sel.isCollapsed){hideFloatingToolbar();const span=sel.anchorNode.parentElement?.closest('span.referenced-text[data-ref-id]');if(span){rangeForSplitting=currentSelectionRange.cloneRange();showReferenceEyeToolbar(span)}else{hideReferenceEyeToolbar()}}else if(sel.toString().trim()!==''){hideReferenceEyeToolbar();showFloatingToolbar()}else{hideFloatingToolbar();hideReferenceEyeToolbar()}}});
     });
+
+    // --- LÓGICA DE PASTAS GLOBAIS (TRANSVERSAIS) ---
+
+let globalFolderHistory = []; 
+let globalCurrentFolderId = null; 
+let globalCurrentFolderName = "Raiz";
+
+const globalFolderContentList = document.getElementById('globalFolderContentList');
+const backGlobalFolderBtn = document.getElementById('backGlobalFolderBtn');
+const globalFolderNameSpan = document.getElementById('currentGlobalFolderName');
+const rootGlobalActions = document.getElementById('rootGlobalFolderActions');
+const insideGlobalActions = document.getElementById('insideGlobalFolderActions');
+
+document.getElementById('createNewGlobalFolderBtn').onclick = () => triggerGlobalAction('pasta');
+
+backGlobalFolderBtn.onclick = () => {
+    // Remove a pasta atual do histórico
+    globalFolderHistory.pop();
+    
+    // Pega a pasta anterior
+    const prev = globalFolderHistory[globalFolderHistory.length - 1];
+    
+    if (!prev) {
+        // Se não houver anterior, volta para a Raiz
+        globalCurrentFolderId = null;
+        globalCurrentFolderName = "Raiz";
+    } else {
+        // Se houver, define os IDs da pasta anterior
+        globalCurrentFolderId = prev.id;
+        globalCurrentFolderName = prev.nome;
+    }
+    
+    // Atualiza a tela
+    renderGlobalFolderUI();
+};
+
+function triggerGlobalAction(type) {
+    if (type === 'nota') {
+        const form = document.getElementById('globalNoteForm');
+        form.style.display = 'block';
+        document.getElementById('globalNoteUrlsContainer').innerHTML = "";
+        createUrlInputEntry('globalNoteUrlsContainer', '', true);
+        document.getElementById('globalNoteTextInput').focus();
+    } else {
+        openActionPopup(type, true);
+    }
+}
+
+async function fetchGlobalFolderContent() {
+    globalFolderContentList.innerHTML = "<p style='text-align:center; opacity:0.5; font-size:0.9em;'>Carregando itens globais...</p>";
+    
+    try {
+        const q = query(
+            collection(db, "itens_globais"), 
+            where("parentId", "==", globalCurrentFolderId),
+            orderBy("criadoEm", "desc")
+        );
+        const snap = await getDocs(q);
+        globalFolderContentList.innerHTML = ""; 
+
+        if (snap.empty) {
+            globalFolderContentList.innerHTML = "<p style='font-size:0.8em; opacity:0.4; text-align:center; margin-top:20px;'>Nenhum item nesta pasta global.</p>";
+            return;
+        }
+
+        snap.forEach(d => {
+            const item = d.data();
+            const id = d.id;
+            const isDone = item.concluido || false;
+            const card = document.createElement('div');
+            
+            // MODO VISUALIZAÇÃO
+            const renderView = () => {
+                card.style = `background: var(--tertiary-bg); padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid ${item.tipo === 'nota' ? '#ffca28' : '#444'}; position: relative; opacity: ${isDone ? '0.6' : '1'}; cursor: pointer; border: 1px solid #555; overflow: hidden; display: flex; flex-direction: column;`;
+                
+                let icon = (item.tipo === 'pasta') ? "📁" : (item.tipo === 'video' ? "▶️" : (item.tipo === 'foto' ? "🖼️" : "📝"));
+                let botoesNota = item.tipo === 'nota' ? `
+                    <button class="done-g-btn" style="background:none; border:none; cursor:pointer; font-size:1.1em;">${isDone ? '✅' : '⬜'}</button>
+                    <button class="edit-g-btn" style="background:none; border:none; cursor:pointer; color:#888;">✏️</button>
+                ` : '';
+
+                let linksHtml = (item.urls || []).map(u => `<a href="${u}" target="_blank" style="color:#ffca28; font-size:0.75em; display:block; text-decoration:none; margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 100%;">🔗 ${u}</a>`).join('');
+
+                card.innerHTML = `
+                    <!-- CABEÇALHO: ÍCONE E BOTÕES -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; width: 100%;">
+                        <span style="font-size:1.1em; ${item.tipo === 'pasta' ? 'filter: sepia(1) saturate(5) hue-rotate(10deg);' : ''}">${icon}</span>
+                        <div style="display: flex; gap: 12px;">
+                            ${botoesNota}
+                            <button class="del-g-btn" style="background:none; border:none; color:#d9534f; cursor:pointer; font-size: 1.1em;">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- TEXTO ABAIXO -->
+                    <div style="font-size:0.95em; white-space:pre-wrap; overflow-wrap: anywhere; word-break: break-word; text-decoration: ${isDone ? 'line-through' : 'none'}; color: ${isDone ? '#777' : '#e0e0e0'}; line-height: 1.4; flex: 1; min-width: 0;">${item.conteudo}</div>
+                    <div style="width: 100%; overflow: hidden;">${linksHtml}</div>
+                `;
+
+                card.onclick = () => {
+                    if (item.tipo === 'pasta') enterGlobalFolder(id, item.conteudo);
+                    else if (item.tipo !== 'nota') window.open(item.conteudo, '_blank');
+                };
+
+                card.querySelector('.del-g-btn').onclick = (e) => { e.stopPropagation(); deleteGlobalItem(e, id); };
+
+                if (item.tipo === 'nota') {
+                    card.querySelector('.done-g-btn').onclick = async (e) => {
+                        e.stopPropagation();
+                        await updateDoc(doc(db, "itens_globais", id), { concluido: !isDone });
+                        fetchGlobalFolderContent();
+                    };
+                    card.querySelector('.edit-g-btn').onclick = (e) => { e.stopPropagation(); renderEdit(); };
+                }
+            };
+
+            // MODO EDIÇÃO
+            const renderEdit = () => {
+                card.style.opacity = "1";
+                card.innerHTML = `
+                    <textarea class="edit-g-txt" style="width:100%; background:#111; color:white; border:1px solid #ffca28; border-radius:4px; padding:12px; min-height:350px; font-family:inherit; box-sizing: border-box; font-size:1em; line-height:1.5;">${item.conteudo}</textarea>
+                    <div class="edit-g-urls" style="margin-top:10px;"></div>
+                    <button class="add-u-g-btn" style="background:none; border:1px solid #555; color:#aaa; font-size:0.7em; cursor:pointer; padding:2px 8px; margin-top:5px; border-radius:3px;">+ URL</button>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button class="save-g-btn" style="flex:1.5; background:#4CAF50; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em; font-weight:bold;">Salvar</button>
+                        <button class="del-g-inline" style="flex:1; background:#d9534f; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em;">Excluir</button>
+                        <button class="cancel-g-btn" style="flex:1; background:#555; color:white; border:none; border-radius:4px; padding:10px; cursor:pointer; font-size:0.9em;">Sair</button>
+                    </div>
+                `;
+                const urlCont = card.querySelector('.edit-g-urls');
+                (item.urls || []).forEach(u => createUrlInputEntryInElement(urlCont, u));
+                if((item.urls || []).length === 0) createUrlInputEntryInElement(urlCont, '');
+                
+                card.querySelector('.add-u-g-btn').onclick = () => createUrlInputEntryInElement(urlCont, '');
+                card.querySelector('.cancel-g-btn').onclick = () => renderView();
+                card.querySelector('.del-g-inline').onclick = (e) => deleteGlobalItem(e, id);
+                card.querySelector('.save-g-btn').onclick = async () => {
+                    const novoTxt = card.querySelector('.edit-g-txt').value.trim();
+                    const novasUrls = Array.from(urlCont.querySelectorAll('.ref-url-input')).map(i => i.value.trim()).filter(Boolean);
+                    if(!novoTxt) return alert("Não pode ficar vazia.");
+                    await updateDoc(doc(db, "itens_globais", id), { conteudo: novoTxt, urls: novasUrls });
+                    item.conteudo = novoTxt; item.urls = novasUrls;
+                    renderView();
+                };
+            };
+            renderView();
+            globalFolderContentList.appendChild(card);
+        });
+    } catch (e) { 
+        console.error("Erro Global:", e);
+    }
+}
+
+function enterGlobalFolder(id, nome) {
+    globalCurrentFolderId = id;
+    globalCurrentFolderName = nome;
+    globalFolderHistory.push({ id, nome });
+    renderGlobalFolderUI();
+}
+
+function renderGlobalFolderUI() {
+    globalFolderNameSpan.textContent = `🌍 Global / ${globalCurrentFolderName}`;
+    if (globalCurrentFolderId) {
+        backGlobalFolderBtn.style.display = "block";
+        rootGlobalActions.style.display = "none";
+        insideGlobalActions.style.display = "grid";
+    } else {
+        backGlobalFolderBtn.style.display = "none";
+        rootGlobalActions.style.display = "block";
+        insideGlobalActions.style.display = "none";
+    }
+    fetchGlobalFolderContent();
+}
+
+async function deleteGlobalItem(e, id) {
+    e.stopPropagation();
+    if (confirm("Excluir este item GLOBAL?")) {
+        await deleteDoc(doc(db, "itens_globais", id));
+        fetchGlobalFolderContent();
+    }
+}
+
+// Atualizar o listener de abas
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+        if (targetTab === 'tab-global') renderGlobalFolderUI();
+    });
+});
+
+function openActionPopup(type, isGlobal = false) {
+    pendingActionData = { type, isGlobal };
+    
+    const simpleSection = document.getElementById('simpleInputSection');
+    const noteSection = document.getElementById('noteInputSection');
+    const title = document.getElementById('actionPopupTitle');
+    const urlContainer = document.getElementById('actionPopupUrlsContainer');
+
+    // Títulos amigáveis
+    const labels = { 'pasta': 'Nova Pasta', 'nota': 'Nova Anotação', 'video': 'Link do Vídeo', 'foto': 'Link da Imagem' };
+    title.textContent = (isGlobal ? "🌍 Global: " : "") + labels[type];
+
+    // Limpa tudo antes de abrir
+    urlContainer.innerHTML = "";
+    document.getElementById('actionPopupInput').value = "";
+    document.getElementById('actionPopupTextarea').value = "";
+
+    if (type === 'nota') {
+        // Se for nota, mostra a área de texto e links
+        simpleSection.style.display = "none";
+        noteSection.style.display = "block";
+        createUrlInputEntry('actionPopupUrlsContainer', '', true); // Já cria um campo de link
+    } else {
+        // Se for pasta/foto/video, mostra apenas um campo de linha única
+        simpleSection.style.display = "block";
+        noteSection.style.display = "none";
+    }
+
+    showPopup(document.getElementById('actionInputPopup'));
+}
+
+// Botão para adicionar mais links dentro do popup
+document.getElementById('addUrlToPopupActionBtn').onclick = () => {
+    createUrlInputEntry('actionPopupUrlsContainer', '', true);
+};
+
+document.getElementById('confirmActionBtn').onclick = async () => {
+    const { type, isGlobal } = pendingActionData;
+    let valorPrincipal = "";
+    let listaUrls = [];
+
+    if (type === 'nota') {
+        valorPrincipal = document.getElementById('actionPopupTextarea').value.trim();
+        // Pega todos os links que o usuário digitou
+        listaUrls = Array.from(document.querySelectorAll('#actionPopupUrlsContainer .ref-url-input'))
+                         .map(i => i.value.trim())
+                         .filter(Boolean);
+    } else {
+        valorPrincipal = document.getElementById('actionPopupInput').value.trim();
+    }
+
+    if (!valorPrincipal) return alert("Por favor, preencha o conteúdo.");
+
+    const colecao = isGlobal ? "itens_globais" : "itens_pasta";
+    const paiId = isGlobal ? globalCurrentFolderId : currentFolderId;
+
+    try {
+        const dados = {
+            parentId: paiId,
+            tipo: type,
+            conteudo: valorPrincipal,
+            urls: listaUrls, // Salva a lista de links
+            criadoEm: serverTimestamp()
+        };
+        if (!isGlobal) dados.idpagina = currentDocId;
+
+        await addDoc(collection(db, colecao), dados);
+        hidePopup(document.getElementById('actionInputPopup'));
+        if (isGlobal) fetchGlobalFolderContent(); else fetchFolderContent();
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao salvar.");
+    }
+};
+
+document.getElementById('confirmActionBtn').onclick = async () => {
+    const input = document.getElementById('actionPopupInput');
+    const valor = input.value.trim();
+    
+    if (!valor) {
+        alert("Por favor, preencha o campo.");
+        return;
+    }
+    
+    const { type, isGlobal } = pendingActionData;
+    
+    // Define qual "gaveta" do Firebase usar
+    const colecao = isGlobal ? "itens_globais" : "itens_pasta";
+    // Define qual pasta pai usar
+    const paiId = isGlobal ? globalCurrentFolderId : currentFolderId;
+    
+    try {
+        const dadosParaSalvar = {
+            parentId: paiId,
+            tipo: type,
+            conteudo: valor,
+            criadoEm: serverTimestamp()
+        };
+        
+        // Se NÃO for global, avisa o Firebase a qual página esse item pertence
+        if (!isGlobal) {
+            dadosParaSalvar.idpagina = currentDocId;
+        }
+
+        // Envia para o Banco de Dados
+        await addDoc(collection(db, colecao), dadosParaSalvar);
+        
+        // Fecha o popup
+        hidePopup(document.getElementById('actionInputPopup'));
+        
+        // Atualiza a lista na tela para mostrar o novo item
+        if (isGlobal) {
+            fetchGlobalFolderContent(); 
+        } else {
+            fetchFolderContent();
+        }
+    } catch (erro) {
+        console.error("Erro ao salvar:", erro);
+        alert("Ocorreu um erro ao salvar.");
+    }
+};
+
+document.getElementById('closeActionPopupBtn').onclick = () => {
+    hidePopup(document.getElementById('actionInputPopup'));
+};
+
+// --- CÓDIGO PARA CORRIGIR OS ERROS DE "NOT DEFINED" ---
+
+// Isso torna as funções visíveis para os botões do HTML
+window.triggerFolderAction = triggerFolderAction;
+window.triggerGlobalAction = triggerGlobalAction;
+window.deleteFolderItem = deleteFolderItem;
+window.deleteGlobalItem = deleteGlobalItem;
+
+// Se você tiver a função de excluir mídia também, adicione esta linha:
+if (typeof deleteMedia !== 'undefined') window.deleteMedia = deleteMedia;
+
+// Se o seu botão de "confirmar" no popup ainda der erro, garanta que estas funções existam:
+window.enterFolder = enterFolder;
+window.enterGlobalFolder = enterGlobalFolder;
+
+// Salvar Nota dentro de uma Pasta Local
+document.getElementById('saveFolderNoteBtn').onclick = async () => {
+    const texto = document.getElementById('folderNoteTextInput').value.trim();
+    const urls = Array.from(document.querySelectorAll('#folderNoteUrlsContainer .ref-url-input')).map(i => i.value.trim()).filter(Boolean);
+    if (!texto) return alert("Escreva a nota.");
+    try {
+        await addDoc(collection(db, "itens_pasta"), {
+            idpagina: currentDocId,
+            parentId: currentFolderId,
+            tipo: 'nota',
+            conteudo: texto,
+            urls: urls,
+            concluido: false,
+            criadoEm: serverTimestamp()
+        });
+        document.getElementById('folderNoteTextInput').value = "";
+        document.getElementById('folderNoteForm').style.display = 'none';
+        fetchFolderContent();
+    } catch (e) { console.error(e); }
+};
+        
+   
+
+// Se você criou a aba Global, faça o mesmo para o botão 'saveGlobalNoteBtn'
+// A única diferença é que na coleção "itens_globais" você não envia o "idpagina".
+window.createUrlInputEntry = createUrlInputEntry;
+
+
+// Salvar Nota Global
+document.getElementById('saveGlobalNoteBtn').onclick = async () => {
+    const texto = document.getElementById('globalNoteTextInput').value.trim();
+    const urls = Array.from(document.querySelectorAll('#globalNoteUrlsContainer .ref-url-input')).map(i => i.value.trim()).filter(Boolean);
+    if (!texto) return alert("Escreva a nota.");
+    try {
+        await addDoc(collection(db, "itens_globais"), {
+            parentId: globalCurrentFolderId, // Sem idpagina pois é global
+            tipo: 'nota',
+            conteudo: texto,
+            urls: urls,
+            concluido: false,
+            criadoEm: serverTimestamp()
+        });
+        document.getElementById('globalNoteTextInput').value = "";
+        document.getElementById('globalNoteForm').style.display = 'none';
+        fetchGlobalFolderContent();
+    } catch (e) { console.error(e); }
+};
+
+
+window.addEventListener('beforeunload', (e) => {
+    if (currentDocId) {
+        // A maioria dos navegadores modernos não permite mensagens personalizadas,
+        // mas isso acionará o aviso padrão de "Deseja sair? Alterações não salvas".
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
     </script>
 </body>
 </html>

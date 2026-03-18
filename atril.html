@@ -300,6 +300,16 @@ sup.ref-marker-popup:hover a {
         visibility: visible;
     }
 }
+
+/* Estilo para destacar o texto associado à referência clicada */
+.atril-text-underlined {
+    text-decoration: underline;
+    text-decoration-color: #7aa0c7; /* Cor azulada das referências */
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    transition: all 0.2s ease;
+}
+
        
     </style>
 </head>
@@ -875,42 +885,57 @@ sup.ref-marker-popup:hover a {
             } catch (error) { console.error("Erro ao salvar sugestão:", error); alert("Falha ao salvar."); }
         }
 
-        function hideReferencePopup() { if (referencePopupEl) referencePopupEl.style.display = 'none'; }
+        function hideReferencePopup() { 
+    if (referencePopupEl) referencePopupEl.style.display = 'none'; 
+    // Remove o sublinhado de qualquer texto quando o popup fecha
+    selectedDocBodyEl.querySelectorAll('.atril-text-underlined').forEach(el => el.classList.remove('atril-text-underlined'));
+}
         
-        selectedDocBodyEl.addEventListener('click', (event) => {
-            const targetSup = event.target.closest('sup.ref-marker-popup');
-            if (targetSup) {
-                event.preventDefault(); event.stopPropagation();
-                const refId = targetSup.dataset.refId; const refData = currentDocReferencesMap[refId];
-                if (refData) {
-                    referencePopupTitleEl.innerHTML = `<sup>[${refData.displayNumber}]</sup> ${escapeHTML(refData.titulo)}`;
-                    referencePopupUrlsEl.innerHTML = '';
-                    if (refData.urls && refData.urls.length > 0) {
-                        refData.urls.forEach(url => {
-                            const urlLink = document.createElement('a'); urlLink.href = url;
-                            urlLink.textContent = escapeHTML(url); urlLink.target = '_blank';
-                            urlLink.style.display = 'block';
-                            referencePopupUrlsEl.appendChild(urlLink);
-                        });
-                    } else { referencePopupUrlsEl.textContent = 'Nenhum link disponível.'; }
-                    const supRect = targetSup.getBoundingClientRect(); const bodyRect = document.body.getBoundingClientRect();
-                    let popupTop = supRect.bottom - bodyRect.top + window.scrollY + 5;
-                    let popupLeft = supRect.left - bodyRect.left + window.scrollX;
-                    referencePopupEl.style.display = 'block'; const popupRect = referencePopupEl.getBoundingClientRect();
-                    if (popupLeft + popupRect.width > (window.innerWidth + window.scrollX - 10)) { popupLeft = window.innerWidth + window.scrollX - popupRect.width - 10; }
-                    if (popupLeft < (window.scrollX + 10)) { popupLeft = window.scrollX + 10; }
-                    if (popupTop + popupRect.height > (window.innerHeight + window.scrollY - 10)) {
-                        popupTop = supRect.top - bodyRect.top + window.scrollY - popupRect.height - 5;
-                        if (popupTop < (window.scrollY + 10) ) { popupTop = window.scrollY + 10; }
-                    }
-                    if (popupTop < (window.scrollY + 10) && supRect.bottom - bodyRect.top + window.scrollY + 5 + popupRect.height <= (window.innerHeight + window.scrollY - 10) ){
-                         popupTop = supRect.bottom - bodyRect.top + window.scrollY + 5;
-                    }
-                    referencePopupEl.style.top = `${popupTop}px`; referencePopupEl.style.left = `${popupLeft}px`;
-                } else { hideReferencePopup(); }
-                return;
+    selectedDocBodyEl.addEventListener('click', (event) => {
+    const targetSup = event.target.closest('sup.ref-marker-popup');
+    if (targetSup) {
+        event.preventDefault(); event.stopPropagation();
+        const refId = targetSup.dataset.refId; const refData = currentDocReferencesMap[refId];
+        
+        if (refData) {
+            // --- NOVO COMPORTAMENTO: Sublinhar o texto associado ---
+            // Remove sublinhados anteriores
+            selectedDocBodyEl.querySelectorAll('.atril-text-underlined').forEach(el => el.classList.remove('atril-text-underlined'));
+            
+            // O texto referenciado é o irmão anterior (previousSibling) do <sup>
+            const associatedSpan = targetSup.previousElementSibling;
+            if (associatedSpan && associatedSpan.classList.contains('referenced-text') && associatedSpan.dataset.refId === refId) {
+                associatedSpan.classList.add('atril-text-underlined');
             }
-        });
+            // -------------------------------------------------------
+
+            referencePopupTitleEl.innerHTML = `<sup>[${refData.displayNumber}]</sup> ${escapeHTML(refData.titulo)}`;
+            referencePopupUrlsEl.innerHTML = '';
+            if (refData.urls && refData.urls.length > 0) {
+                refData.urls.forEach(url => {
+                    const urlLink = document.createElement('a'); urlLink.href = url;
+                    urlLink.textContent = escapeHTML(url); urlLink.target = '_blank';
+                    urlLink.style.display = 'block';
+                    referencePopupUrlsEl.appendChild(urlLink);
+                });
+            } else { referencePopupUrlsEl.textContent = 'Nenhum link disponível.'; }
+            
+            const supRect = targetSup.getBoundingClientRect(); const bodyRect = document.body.getBoundingClientRect();
+            let popupTop = supRect.bottom - bodyRect.top + window.scrollY + 5;
+            let popupLeft = supRect.left - bodyRect.left + window.scrollX;
+            referencePopupEl.style.display = 'block'; const popupRect = referencePopupEl.getBoundingClientRect();
+            
+            if (popupLeft + popupRect.width > (window.innerWidth + window.scrollX - 10)) { popupLeft = window.innerWidth + window.scrollX - popupRect.width - 10; }
+            if (popupLeft < (window.scrollX + 10)) { popupLeft = window.scrollX + 10; }
+            if (popupTop + popupRect.height > (window.innerHeight + window.scrollY - 10)) {
+                popupTop = supRect.top - bodyRect.top + window.scrollY - popupRect.height - 5;
+                if (popupTop < (window.scrollY + 10) ) { popupTop = window.scrollY + 10; }
+            }
+            referencePopupEl.style.top = `${popupTop}px`; referencePopupEl.style.left = `${popupLeft}px`;
+        } else { hideReferencePopup(); }
+        return;
+    }
+});
         
         if(referencePopupCloseBtn) { referencePopupCloseBtn.addEventListener('click', (e) => { e.stopPropagation(); hideReferencePopup(); }); }
         

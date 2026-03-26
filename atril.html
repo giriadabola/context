@@ -470,7 +470,7 @@ sup.ref-marker-popup:hover a {
             return name.replace(/[^a-z0-9_-\s]/gi, '').replace(/[\s]/g, '_').substring(0, 50) || 'documento';
         }
 
-async function downloadDocumentAsPdf() {
+ async function downloadDocumentAsPdf() {
     if (!displayedDocId || !allDocumentsData[displayedDocId]) {
         alert("Nenhum documento carregado para baixar.");
         return;
@@ -480,18 +480,17 @@ async function downloadDocumentAsPdf() {
     const docData = allDocumentsData[displayedDocId];
     const titleText = docData.titulo || 'Documento Sem Título';
     
-    const MARGIN = 15;
+    const MARGIN = 20; // Margem um pouco maior para ficar elegante
     const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
     const MAX_WIDTH = doc.internal.pageSize.getWidth() - MARGIN * 2;
-    const LINE_HEIGHT_RATIO = 1.4;
+    const LINE_HEIGHT_RATIO = 1.6;
     const PT_TO_MM = 0.352778; 
     let currentY = MARGIN;
 
-    // Estruturas para gerenciar os links de ida e volta
-    const bodyMarkerPositions = []; // Onde os [n] aparecem no texto (para ir para baixo)
-    const firstOccurrenceInBody = {}; // Salva a 1ª posição de cada [n] (para voltar para cima)
-    const referenceListPositions = []; // Onde os itens da lista final estão (para os links de volta)
-    const referenceDestinations = {}; // Página/Y de cada item na lista final
+    const bodyMarkerPositions = [];
+    const firstOccurrenceInBody = {};
+    const referenceListPositions = [];
+    const referenceDestinations = {};
 
     const checkPageBreak = (neededHeight) => {
         if (currentY + neededHeight > PAGE_HEIGHT - MARGIN) {
@@ -502,90 +501,162 @@ async function downloadDocumentAsPdf() {
         return false;
     };
 
-    // Escreve o corpo e mapeia os números [n]
-    const writeBodyWithBidirectionalMapping = (text, size) => {
-        doc.setFontSize(size);
-        const lineHeight = size * LINE_HEIGHT_RATIO * PT_TO_MM;
-        const lines = doc.splitTextToSize(text, MAX_WIDTH);
+    const isCapslockSubtitle = (text) => {
+        const trimmed = text.trim();
+        return trimmed.length > 3 && trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed);
+    };
+
+    // FUNÇÃO PARA DESENHAR LINHA JUSTIFICADA COM SUPORTE A [N]
+    const drawJustifiedLine = (line, x, y, baseSize, isLastLine = false) => {
+        const parts = line.split(/(\s+|\[\d+\])/g).filter(p => p.length > 0);
         
-        lines.forEach(line => {
-            checkPageBreak(lineHeight);
-            doc.text(line, MARGIN, currentY);
-            
-            const refRegex = /\[(\d+)\]/g;
-            let match;
-            while ((match = refRegex.exec(line)) !== null) {
-                const refNum = match[1];
-                const textBefore = line.substring(0, match.index);
-                const wordWidth = doc.getTextWidth(textBefore);
-                const markerWidth = doc.getTextWidth(match[0]);
-                const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
-
-                // 1. Salva posição para o link de IDA (Texto -> Lista)
-                bodyMarkerPositions.push({
-                    refNum, page: pageNum, x: MARGIN + wordWidth, y: currentY - (size * PT_TO_MM), w: markerWidth, h: lineHeight
-                });
-
-                // 2. Salva a PRIMEIRA ocorrência para o link de VOLTA (Lista -> Texto)
-                if (!firstOccurrenceInBody[refNum]) {
-                    firstOccurrenceInBody[refNum] = { page: pageNum, y: currentY - 10 }; // -10 para dar margem no scroll
+        // Se for a última linha ou tiver apenas uma palavra, não justifica (alinha à esquerda)
+        if (isLastLine || line.trim().split(/\s+/).length <= 1) {
+            let curX = x;
+            parts.forEach(part => {
+                if (/^\[\d+\]$/.test(part)) {
+                    renderSuperscript(part, curX, y, baseSize);
+                    curX += doc.getTextWidth(part);
+                } else {
+                    doc.text(part, curX, y);
+                    curX += doc.getTextWidth(part);
                 }
+            });
+            return;
+        }
+
+        // Cálculo para Justificação
+        let totalContentWidth = 0;
+        let spacePartsCount = 0;
+
+        parts.forEach(part => {
+            if (part.trim() === "") {
+                spacePartsCount++;
+            } else if (/^\[\d+\]$/.test(part)) {
+                doc.setFontSize(baseSize * 0.65);
+                totalContentWidth += doc.getTextWidth(part);
+                doc.setFontSize(baseSize);
+            } else {
+                totalContentWidth += doc.getTextWidth(part);
             }
-            currentY += lineHeight;
+        });
+
+        const extraSpace = MAX_WIDTH - totalContentWidth;
+        const spaceWidth = spacePartsCount > 0 ? extraSpace / spacePartsCount : 0;
+
+        let runningX = x;
+        parts.forEach(part => {
+            if (part.trim() === "") {
+                runningX += spaceWidth;
+            } else if (/^\[\d+\]$/.test(part)) {
+                renderSuperscript(part, runningX, y, baseSize);
+                runningX += doc.getTextWidth(part);
+            } else {
+                doc.text(part, runningX, y);
+                runningX += doc.getTextWidth(part);
+            }
         });
     };
 
-    // 1. Título
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, 'bold');
-    doc.text(doc.splitTextToSize(titleText, MAX_WIDTH), MARGIN, currentY);
-    currentY += 15;
-    doc.setFont(undefined, 'normal');
+    const renderSuperscript = (part, x, y, baseSize) => {
+        const refNum = part.match(/\d+/)[0];
+        const supSize = baseSize * 0.65;
+        const shiftY = baseSize * 0.4 * PT_TO_MM;
+        
+        doc.setFontSize(supSize);
+        doc.text(part, x, y - shiftY);
+        
+        const partWidth = doc.getTextWidth(part);
+        bodyMarkerPositions.push({
+            refNum, 
+            page: doc.internal.getCurrentPageInfo().pageNumber, 
+            x: x, 
+            y: y - shiftY - (supSize * PT_TO_MM), 
+            w: partWidth, 
+            h: baseSize * PT_TO_MM
+        });
+        
+        if (!firstOccurrenceInBody[refNum]) {
+            firstOccurrenceInBody[refNum] = { 
+                page: doc.internal.getCurrentPageInfo().pageNumber, 
+                y: y - 10 
+            };
+        }
+        doc.setFontSize(baseSize);
+    };
 
-    // 2. Corpo do Texto
+    // 1. Título
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(20);
+    const splitTitle = doc.splitTextToSize(titleText, MAX_WIDTH);
+    doc.text(splitTitle, MARGIN, currentY);
+    currentY += (splitTitle.length * 12);
+
+    // 2. Corpo
     const rawBodyText = selectedDocBodyEl.innerText;
-    rawBodyText.split('\n').forEach(p => {
-        const cleaned = p.trim().replace(/\s+/g, ' ');
-        if (cleaned) { writeBodyWithBidirectionalMapping(cleaned, 12); currentY += 2; }
+    const paragraphs = rawBodyText.split('\n');
+
+    paragraphs.forEach(p => {
+        const cleaned = p.trim();
+        if (!cleaned) return;
+
+        if (isCapslockSubtitle(cleaned)) {
+            doc.addPage();
+            currentY = MARGIN;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(58, 124, 165); 
+            doc.setFontSize(14);
+            doc.text(doc.splitTextToSize(cleaned, MAX_WIDTH), MARGIN, currentY);
+            currentY += 12;
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(0, 0, 0);
+        } else {
+            doc.setFontSize(12);
+            const lineHeight = 12 * LINE_HEIGHT_RATIO * PT_TO_MM;
+            const lines = doc.splitTextToSize(cleaned, MAX_WIDTH);
+            
+            lines.forEach((line, index) => {
+                checkPageBreak(lineHeight);
+                const isLastLine = (index === lines.length - 1);
+                drawJustifiedLine(line, MARGIN, currentY, 12, isLastLine);
+                currentY += lineHeight;
+            });
+            currentY += 3; 
+        }
     });
 
-    // 3. Referências (O Destino e a Origem do retorno)
+    // 3. Referências
     const references = (docData.referencias || [])
         .filter(ref => ref && ref.id && currentDocReferencesMap[ref.id] && currentDocReferencesMap[ref.id].displayNumber > 0)
         .sort((a, b) => currentDocReferencesMap[a.id].displayNumber - currentDocReferencesMap[b.id].displayNumber);
 
     if (references.length > 0) {
-        checkPageBreak(25);
-        currentY += 10;
+        doc.addPage();
+        currentY = MARGIN;
         doc.setFont(undefined, 'bold');
+        doc.setFontSize(14);
         doc.text("Referências", MARGIN, currentY);
         currentY += 10;
         doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
 
         references.forEach(ref => {
             const refDetails = currentDocReferencesMap[ref.id];
             const refNum = refDetails.displayNumber;
             const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
-
-            // Salva onde esta referência começa para o scroll de IDA
             referenceDestinations[refNum] = { page: pageNum, y: currentY - 5 };
 
-            // Escreve o cabeçalho da referência e salva área para o link de VOLTA
             const refHeader = `[${refNum}] ${refDetails.titulo}`;
             const headerLines = doc.splitTextToSize(refHeader, MAX_WIDTH);
-            
-            headerLines.forEach((l, idx) => {
+            headerLines.forEach((l) => {
                 checkPageBreak(7);
-                const headerW = doc.getTextWidth(l);
-                // Salva a área clicável do cabeçalho
                 referenceListPositions.push({
-                    refNum, page: pageNum, x: MARGIN, y: currentY - 5, w: headerW, h: 6
+                    refNum, page: pageNum, x: MARGIN, y: currentY - 5, w: doc.getTextWidth(l), h: 6
                 });
                 doc.text(l, MARGIN, currentY);
                 currentY += 6;
             });
 
-            // Links externos (URLs)
             if (refDetails.urls) {
                 doc.setTextColor(0, 0, 255);
                 refDetails.urls.forEach(url => {
@@ -598,25 +669,19 @@ async function downloadDocumentAsPdf() {
         });
     }
 
-    // --- CRIAÇÃO DOS LINKS BIDIRECIONAIS ---
-    
-    // IDA: Do corpo para a lista de referências
+    // APLICAR LINKS
     bodyMarkerPositions.forEach(pos => {
         const dest = referenceDestinations[pos.refNum];
         if (dest) {
             doc.setPage(pos.page);
             doc.link(pos.x, pos.y, pos.w, pos.h, { pageNumber: dest.page, top: dest.y });
-            doc.setDrawColor(122, 160, 199); // Sublinhado discreto
-            doc.line(pos.x, pos.y + pos.h - 1, pos.x + pos.w, pos.y + pos.h - 1);
         }
     });
 
-    // VOLTA: Da lista de referências para o corpo (1ª ocorrência)
     referenceListPositions.forEach(pos => {
         const origin = firstOccurrenceInBody[pos.refNum];
         if (origin) {
             doc.setPage(pos.page);
-            // Ao clicar no título da referência, volta para onde ela foi citada
             doc.link(pos.x, pos.y, pos.w, pos.h, { pageNumber: origin.page, top: origin.y });
         }
     });

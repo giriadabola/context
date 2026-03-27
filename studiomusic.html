@@ -244,12 +244,112 @@
         .search-results div:hover {
             background-color: #555;
         }
+
+        /* Ajuste no link de voltar */
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #7aa0c7;
+            text-decoration: none;
+            z-index: 101;
+        }
+
+        /* Botão Hamburger (Escondido por padrão) */
+        .mobile-menu-btn {
+            display: none;
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #252525;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 90;
+        }
+
+        /* --- RESPONSIVIDADE MOBILE --- */
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: block; } /* Mostra o botão no mobile */
+            .back-link { font-size: 0.8em; top: 25px; } /* Ajusta o link voltar */
+            
+            #settingsBtn { width: 35px; height: 35px; top: 15px; right: 15px; }
+
+            .content-wrapper {
+                flex-direction: column;
+                margin-top: 60px;
+            }
+
+            /* Sidebar vira um Drawer (Menu Lateral) */
+            #collectionsNav {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 260px;
+                z-index: 2000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                border-radius: 0;
+                height: 100vh;
+                max-width: 80%;
+            }
+
+            #collectionsNav.active {
+                transform: translateX(0);
+            }
+
+            #overlay.active {
+                display: block !important;
+            }
+
+            /* Grid de faixas vira 1 coluna */
+            #tracksList {
+                grid-template-columns: 1fr;
+            }
+
+            .track-item .video-container {
+                max-width: 100%;
+            }
+
+            /* Popup ajustado */
+            .popup-content {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .popup-tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .tab-btn {
+                padding: 10px 10px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper { margin-top: 80px; }
+            .mobile-menu-btn { top: 60px; width: 90%; }
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <a href="index.html" style="position: absolute; top:20px; left: 20px; color: #7aa0c7;">Voltar ao Editor</a>
+      <div id="overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1500; display:none;"></div>
+
+   <div class="main-container">
+        <!-- BOTÃO VOLTAR (Ajustado para mobile) -->
+        <a href="index.html" class="back-link">Voltar ao Editor</a>
+        
+        <!-- NOVO: Botão Hamburger para Mobile -->
+        <button id="menuToggle" class="mobile-menu-btn">☰ Coleções</button>
+        
         <button id="settingsBtn" title="Configurações e Criação">⚙️</button>
 
         <div class="content-wrapper">
@@ -333,7 +433,7 @@
 
     <script type="module">
         const firebaseConfig = {
-          apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY", // Mesma chave da outra página
+          apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY",
           authDomain: "bibliacontexto.firebaseapp.com",
           projectId: "bibliacontexto",
           storageBucket: "bibliacontexto.firebasestorage.app",
@@ -350,21 +450,28 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
-            console.log("Firebase inicializado com sucesso no Studio: Music!");
+            console.log("Firebase inicializado com sucesso!");
         } catch (error) {
-            console.error("ERRO CRÍTICO AO INICIALIZAR O FIREBASE:", error);
-            alert("Falha crítica ao conectar com o Firebase.");
+            console.error("Erro ao inicializar Firebase:", error);
         }
 
+        // Elementos da Interface
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsPopup = document.getElementById('settingsPopup');
         const collectionsListUl = document.getElementById('collectionsList');
         const tracksListDiv = document.getElementById('tracksList');
+        const closePopupBtn = settingsPopup.querySelector('.close-popup-btn');
+        
+        // Elementos Mobile e Overlay
+        const menuToggle = document.getElementById('menuToggle');
+        const collectionsNav = document.getElementById('collectionsNav');
+        const overlay = document.getElementById('overlay');
+
+        // Inputs e Botões de Criação
         const newCollectionInput = document.getElementById('newCollectionInput');
         const saveCollectionBtn = document.getElementById('saveCollectionBtn');
         const newTagInput = document.getElementById('newTagInput');
         const saveTagBtn = document.getElementById('saveTagBtn');
-        const closePopupBtn = settingsPopup.querySelector('.close-popup-btn');
         const trackDescriptionInput = document.getElementById('trackDescriptionInput');
         const trackUrlInput = document.getElementById('trackUrlInput');
         const trackDurationCategoryInput = document.getElementById('trackDurationCategoryInput');
@@ -376,35 +483,162 @@
         const tagSearchResultsDiv = document.getElementById('tagSearchResults');
         const selectedTagsListDiv = document.getElementById('selectedTagsList');
         const saveTrackBtn = document.getElementById('saveTrackBtn');
+
         let selectedCollectionsForNewTrack = new Set();
         let selectedTagsForNewTrack = new Set();
         let allCollections = [];
         let allTags = [];
 
+        // Funções de Utilidade
         function showPopup() { settingsPopup.classList.add('active'); }
         function hidePopup() { settingsPopup.classList.remove('active'); }
-        function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, function(tag) { return map[tag] || tag; }); }        function getYouTubeVideoId(url) { if (!url) return null; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
-        async function saveNewItem(type, inputElement) { const name = inputElement.value.trim(); if (!name) { alert(`O nome para ${type} não pode ser vazio.`); return; } const q = query(collection(db, "instrumental"), where("tipo", "==", type), where("nome", "==", name)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { alert(`${type.charAt(0).toUpperCase() + type.slice(1)} "${name}" já existe.`); return; } try { await addDoc(collection(db, "instrumental"), { nome: name, tipo: type, criadoEm: serverTimestamp() }); alert(`${type.charAt(0).toUpperCase() + type.slice(1)} salva com sucesso!`); inputElement.value = ''; if (type === 'colecao') { loadCollectionsNav(); } else { loadAllTags(); } } catch (e) { console.error(`Erro ao salvar ${type}: `, e); alert(`Ocorreu um erro ao salvar a ${type}.`); } }
-        async function saveNewTrack() { const descricao = trackDescriptionInput.value.trim(); const youtubeUrl = trackUrlInput.value.trim(); const duracaoCategoria = trackDurationCategoryInput.value; const duracaoMinutos = trackDurationMinutesInput.value; const colecoes = Array.from(selectedCollectionsForNewTrack); const tags = Array.from(selectedTagsForNewTrack); if (!descricao || !youtubeUrl || colecoes.length === 0) { alert("Descrição, Link do YouTube e pelo menos uma Coleção são obrigatórios."); return; } if (!getYouTubeVideoId(youtubeUrl)) { alert("O link do YouTube parece ser inválido."); return; } try { await addDoc(collection(db, "instrumental"), { tipo: 'faixa', descricao, youtubeUrl, duracaoCategoria, duracaoMinutos: Number(duracaoMinutos) || 0, colecoes, tags, criadoEm: serverTimestamp() }); alert("Faixa salva com sucesso!"); trackDescriptionInput.value = ''; trackUrlInput.value = ''; trackDurationMinutesInput.value = ''; selectedCollectionsForNewTrack.clear(); selectedTagsForNewTrack.clear(); renderSelectedItems('colecao'); renderSelectedItems('tag'); hidePopup(); } catch(e) { console.error("Erro ao salvar faixa: ", e); alert("Ocorreu um erro ao salvar a faixa."); } }
-        async function loadCollectionsNav() { collectionsListUl.innerHTML = '<li>Carregando...</li>'; allCollections = []; const q = query(collection(db, "instrumental"), where("tipo", "==", "colecao")); const querySnapshot = await getDocs(q); collectionsListUl.innerHTML = ''; if (querySnapshot.empty) { collectionsListUl.innerHTML = '<li>Nenhuma coleção encontrada.</li>'; return; } querySnapshot.forEach(doc => { const collectionData = doc.data(); allCollections.push(collectionData.nome); const li = document.createElement('li'); li.textContent = escapeHTML(collectionData.nome); li.dataset.collectionName = collectionData.nome; li.addEventListener('click', () => { document.querySelectorAll('#collectionsList li.active').forEach(el => el.classList.remove('active')); li.classList.add('active'); loadTracksForCollection(collectionData.nome); }); collectionsListUl.appendChild(li); }); console.log("Coleções carregadas para busca:", allCollections); }
-        async function loadAllTags() { allTags = []; const q = query(collection(db, "instrumental"), where("tipo", "==", "tag")); const querySnapshot = await getDocs(q); querySnapshot.forEach(doc => { allTags.push(doc.data().nome); }); console.log("Tags carregadas para busca:", allTags); }
-        async function loadTracksForCollection(collectionName) { document.querySelector('#tracksDisplay h2').textContent = 'Faixas'; tracksListDiv.innerHTML = '<p>Carregando faixas...</p>'; const q = query(collection(db, "instrumental"), where("tipo", "==", "faixa"), where("colecoes", "array-contains", collectionName)); const querySnapshot = await getDocs(q); tracksListDiv.innerHTML = ''; if (querySnapshot.empty) { tracksListDiv.innerHTML = '<p>Nenhuma faixa encontrada nesta coleção.</p>'; return; } querySnapshot.forEach(doc => { const trackData = doc.data(); const trackElement = createTrackElement(trackData); tracksListDiv.appendChild(trackElement); }); }
-        async function loadTracksByTag(tagName) { document.querySelector('#tracksDisplay h2').innerHTML = `Faixas com a Tag: <span class="tag-highlight">${escapeHTML(tagName)}</span>`; tracksListDiv.innerHTML = '<p>Carregando faixas...</p>'; const q = query(collection(db, "instrumental"), where("tipo", "==", "faixa"), where("tags", "array-contains", tagName)); const querySnapshot = await getDocs(q); tracksListDiv.innerHTML = ''; if (querySnapshot.empty) { tracksListDiv.innerHTML = `<p>Nenhuma faixa encontrada com a tag "${escapeHTML(tagName)}".</p>`; return; } querySnapshot.forEach(doc => { const trackData = doc.data(); const trackElement = createTrackElement(trackData); tracksListDiv.appendChild(trackElement); }); }
-        function createTrackElement(data) { const videoId = getYouTubeVideoId(data.youtubeUrl); const div = document.createElement('div'); div.className = 'track-item'; let tagsHTML = ''; if (data.tags && data.tags.length > 0) { tagsHTML = data.tags.map(tag => `<span class="clickable-tag" data-tag-name="${escapeHTML(tag)}">${escapeHTML(tag)}</span>`).join(''); } div.innerHTML = `<h3>${escapeHTML(data.descricao)}</h3> ${videoId ? `<div class="video-container"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''} <p><strong>Link:</strong> <a href="${escapeHTML(data.youtubeUrl)}" target="_blank">${escapeHTML(data.youtubeUrl)}</a></p> <p><strong>Duração:</strong> ${escapeHTML(data.duracaoCategoria)} (${data.duracaoMinutos || '?'} min)</p> <div class="tags-list">${tagsHTML}</div>`; return div; }
-        function handleSearch(type, searchTerm, resultsDiv) { const lowerCaseSearchTerm = searchTerm.toLowerCase(); resultsDiv.innerHTML = ''; if (!lowerCaseSearchTerm) { resultsDiv.style.display = 'none'; return; } const sourceList = type === 'colecao' ? allCollections : allTags; const selectedSet = type === 'colecao' ? selectedCollectionsForNewTrack : selectedTagsForNewTrack; const filteredResults = sourceList.filter(itemName => itemName.toLowerCase().includes(lowerCaseSearchTerm) && !selectedSet.has(itemName)); if (filteredResults.length === 0) { resultsDiv.style.display = 'none'; return; } filteredResults.forEach(itemName => { const itemDiv = document.createElement('div'); itemDiv.textContent = itemName; itemDiv.addEventListener('click', () => { selectedSet.add(itemName); renderSelectedItems(type); resultsDiv.innerHTML = ''; resultsDiv.style.display = 'none'; (type === 'colecao' ? trackCollectionsSearchInput : trackTagsSearchInput).value = ''; }); resultsDiv.appendChild(itemDiv); }); resultsDiv.style.display = 'block'; }
-        function renderSelectedItems(type) { const listDiv = type === 'colecao' ? selectedCollectionsListDiv : selectedTagsListDiv; const selectedSet = type === 'colecao' ? selectedCollectionsForNewTrack : selectedTagsForNewTrack; listDiv.innerHTML = ''; selectedSet.forEach(itemName => { const itemSpan = document.createElement('span'); itemSpan.className = 'selected-item'; itemSpan.textContent = itemName; const removeBtn = document.createElement('span'); removeBtn.className = 'remove-item-btn'; removeBtn.textContent = 'x'; removeBtn.onclick = () => { selectedSet.delete(itemName); renderSelectedItems(type); }; itemSpan.appendChild(removeBtn); listDiv.appendChild(itemSpan); }); }
-        settingsBtn.addEventListener('click', showPopup);
-        closePopupBtn.addEventListener('click', hidePopup);
-        saveCollectionBtn.addEventListener('click', () => saveNewItem('colecao', newCollectionInput));
-        saveTagBtn.addEventListener('click', () => saveNewItem('tag', newTagInput));
-        saveTrackBtn.addEventListener('click', saveNewTrack);
-        trackCollectionsSearchInput.addEventListener('input', () => handleSearch('colecao', trackCollectionsSearchInput.value.trim(), collectionSearchResultsDiv));
-        trackTagsSearchInput.addEventListener('input', () => handleSearch('tag', trackTagsSearchInput.value.trim(), tagSearchResultsDiv));
-        const tabsContainer = document.querySelector('.popup-tabs');
-        tabsContainer.addEventListener('click', (e) => { const clickedTab = e.target.closest('.tab-btn'); if (!clickedTab) return; tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active')); clickedTab.classList.add('active'); const tabId = clickedTab.dataset.tab; document.getElementById(tabId).classList.add('active'); });
-        tracksListDiv.addEventListener('click', (e) => { const tagElement = e.target.closest('.clickable-tag'); if (tagElement) { const tagName = tagElement.dataset.tagName; document.querySelectorAll('#collectionsList li.active').forEach(el => el.classList.remove('active')); loadTracksByTag(tagName); } });
-        document.addEventListener('click', (e) => { if (!e.target.closest('.search-select-container')) { collectionSearchResultsDiv.style.display = 'none'; tagSearchResultsDiv.style.display = 'none'; } });
-        window.addEventListener('DOMContentLoaded', () => { loadCollectionsNav(); loadAllTags(); });
+        function escapeHTML(str) { if (typeof str !== 'string') return ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '`': '&#96;' }; return str.replace(/[&<>"'`]/g, (tag) => map[tag] || tag); }
+        function getYouTubeVideoId(url) { if (!url) return null; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
+
+        // --- LÓGICA FIREBASE: SALVAR ---
+        async function saveNewItem(type, inputElement) { 
+            const name = inputElement.value.trim(); 
+            if (!name) return; 
+            try { 
+                await addDoc(collection(db, "instrumental"), { nome: name, tipo: type, criadoEm: serverTimestamp() }); 
+                alert("Salvo com sucesso!"); 
+                inputElement.value = ''; 
+                type === 'colecao' ? loadCollectionsNav() : loadAllTags(); 
+            } catch (e) { console.error(e); } 
+        }
+
+        async function saveNewTrack() { 
+            const descricao = trackDescriptionInput.value.trim(); 
+            const youtubeUrl = trackUrlInput.value.trim(); 
+            const colecoes = Array.from(selectedCollectionsForNewTrack); 
+            if (!descricao || !youtubeUrl || colecoes.length === 0) { alert("Preencha descrição, link e coleção."); return; } 
+            try { 
+                await addDoc(collection(db, "instrumental"), { 
+                    tipo: 'faixa', descricao, youtubeUrl, 
+                    duracaoCategoria: trackDurationCategoryInput.value, 
+                    duracaoMinutos: Number(trackDurationMinutesInput.value) || 0, 
+                    colecoes, tags: Array.from(selectedTagsForNewTrack), 
+                    criadoEm: serverTimestamp() 
+                }); 
+                alert("Faixa salva!"); 
+                hidePopup(); 
+            } catch(e) { console.error(e); } 
+        }
+
+        // --- LÓGICA FIREBASE: CARREGAR ---
+        async function loadCollectionsNav() { 
+            collectionsListUl.innerHTML = '<li>Carregando...</li>'; 
+            allCollections = []; 
+            const q = query(collection(db, "instrumental"), where("tipo", "==", "colecao")); 
+            const snap = await getDocs(q); 
+            collectionsListUl.innerHTML = ''; 
+            snap.forEach(doc => { 
+                const data = doc.data(); 
+                allCollections.push(data.nome); 
+                const li = document.createElement('li'); 
+                li.textContent = data.nome; 
+                li.onclick = () => { 
+                    document.querySelectorAll('#collectionsList li').forEach(el => el.classList.remove('active'));
+                    li.classList.add('active');
+                    loadTracksForCollection(data.nome);
+                    // Fechar menu no mobile ao clicar
+                    if (window.innerWidth <= 768) { collectionsNav.classList.remove('active'); overlay.classList.remove('active'); }
+                };
+                collectionsListUl.appendChild(li); 
+            }); 
+        }
+
+        async function loadAllTags() { 
+            allTags = []; 
+            const q = query(collection(db, "instrumental"), where("tipo", "==", "tag")); 
+            const snap = await getDocs(q); 
+            snap.forEach(doc => allTags.push(doc.data().nome)); 
+        }
+
+        async function loadTracksForCollection(colName) { 
+            tracksListDiv.innerHTML = '<p>Carregando...</p>'; 
+            const q = query(collection(db, "instrumental"), where("tipo", "==", "faixa"), where("colecoes", "array-contains", colName)); 
+            const snap = await getDocs(q); 
+            tracksListDiv.innerHTML = snap.empty ? '<p>Vazio.</p>' : ''; 
+            snap.forEach(doc => tracksListDiv.appendChild(createTrackElement(doc.data()))); 
+        }
+
+        async function loadTracksByTag(tagName) {
+            document.querySelector('#tracksDisplay h2').innerHTML = `Tag: <span class="tag-highlight">${tagName}</span>`;
+            const q = query(collection(db, "instrumental"), where("tipo", "==", "faixa"), where("tags", "array-contains", tagName));
+            const snap = await getDocs(q);
+            tracksListDiv.innerHTML = snap.empty ? '<p>Nenhuma faixa encontrada.</p>' : '';
+            snap.forEach(doc => tracksListDiv.appendChild(createTrackElement(doc.data())));
+        }
+
+        function createTrackElement(data) { 
+            const videoId = getYouTubeVideoId(data.youtubeUrl); 
+            const div = document.createElement('div'); 
+            div.className = 'track-item'; 
+            const tagsHTML = data.tags ? data.tags.map(t => `<span class="clickable-tag" data-tag="${escapeHTML(t)}">${escapeHTML(t)}</span>`).join('') : ''; 
+            div.innerHTML = `<h3>${escapeHTML(data.descricao)}</h3> ${videoId ? `<div class="video-container"><iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe></div>` : ''} <div class="tags-list">${tagsHTML}</div>`; 
+            return div; 
+        }
+
+        // --- EVENTOS E BUSCA ---
+        function handleSearch(type, term, resDiv) { 
+            const lower = term.toLowerCase(); 
+            resDiv.innerHTML = ''; 
+            if (!lower) { resDiv.style.display = 'none'; return; } 
+            const source = type === 'colecao' ? allCollections : allTags; 
+            const selected = type === 'colecao' ? selectedCollectionsForNewTrack : selectedTagsForNewTrack; 
+            const filtered = source.filter(n => n.toLowerCase().includes(lower) && !selected.has(n)); 
+            filtered.forEach(n => { 
+                const d = document.createElement('div'); 
+                d.textContent = n; 
+                d.onclick = () => { selected.add(n); renderSelectedItems(type); resDiv.style.display='none'; (type==='colecao'?trackCollectionsSearchInput:trackTagsSearchInput).value=''; }; 
+                resDiv.appendChild(d); 
+            }); 
+            resDiv.style.display = filtered.length ? 'block' : 'none'; 
+        }
+
+        function renderSelectedItems(type) { 
+            const div = type === 'colecao' ? selectedCollectionsListDiv : selectedTagsListDiv; 
+            const set = type === 'colecao' ? selectedCollectionsForNewTrack : selectedTagsForNewTrack; 
+            div.innerHTML = ''; 
+            set.forEach(n => { 
+                const s = document.createElement('span'); s.className = 'selected-item'; s.innerHTML = `${n} <span class="remove-item-btn" onclick="this.parentElement.remove()">x</span>`; 
+                s.querySelector('.remove-item-btn').onclick = () => { set.delete(n); renderSelectedItems(type); };
+                div.appendChild(s); 
+            }); 
+        }
+
+        // Configuração de Eventos Gerais
+        settingsBtn.onclick = showPopup;
+        closePopupBtn.onclick = hidePopup;
+        saveCollectionBtn.onclick = () => saveNewItem('colecao', newCollectionInput);
+        saveTagBtn.onclick = () => saveNewItem('tag', newTagInput);
+        saveTrackBtn.onclick = saveNewTrack;
+        
+        trackCollectionsSearchInput.oninput = () => handleSearch('colecao', trackCollectionsSearchInput.value, collectionSearchResultsDiv);
+        trackTagsSearchInput.oninput = () => handleSearch('tag', trackTagsSearchInput.value, tagSearchResultsDiv);
+
+        // Menu Mobile e Overlay
+        menuToggle.onclick = () => { collectionsNav.classList.add('active'); overlay.classList.add('active'); };
+        overlay.onclick = () => { collectionsNav.classList.remove('active'); overlay.classList.remove('active'); hidePopup(); };
+
+        // Abas do Popup
+        document.querySelector('.popup-tabs').onclick = (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        };
+
+        // Filtro por Tag ao clicar na faixa
+        tracksListDiv.onclick = (e) => {
+            const tagEl = e.target.closest('.clickable-tag');
+            if (tagEl) loadTracksByTag(tagEl.dataset.tag);
+        };
+
+        // Inicialização
+        window.onload = () => { loadCollectionsNav(); loadAllTags(); };
     </script>
 </body>
 </html>

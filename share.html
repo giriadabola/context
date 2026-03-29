@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atril - Partilha</title>
+    <style>
+        :root { color-scheme: dark light; }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            display: flex;
+            justify-content: center;
+            overflow-y: auto;
+            min-height: 100vh;
+        }
+        #container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            position: relative;
+        }
+        #selected-doc-title {
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            color: #e0e0e0;
+            border-bottom: 2px solid #3a7ca5;
+            padding-bottom: 15px;
+            text-align: left;
+        }
+        #selected-doc-body {
+            line-height: 1.8;
+            font-size: 17px;
+            margin-bottom: 40px;
+            /* TEXTO JUSTIFICADO */
+            text-align: justify;
+            hyphens: auto; /* Ajuda na justificação quebrando palavras se necessário */
+        }
+        #selected-doc-body * {
+            font-family: inherit !important;
+            font-size: inherit;
+        }
+
+        /* ESTILO PARA SUBTEMAS (CAPS LOCK) */
+        .atril-subheading {
+            display: block;
+            font-size: 1.25em !important; /* Um pouco maior */
+            font-weight: bold !important; /* Negrito */
+            margin-top: 35px;
+            margin-bottom: 15px;
+            color: #3a7ca5; /* Cor de destaque azulada */
+            text-align: left; /* Subtemas costumam ficar melhor à esquerda */
+        }
+
+        /* Estilos das Referências */
+        sup.ref-marker-popup {
+            cursor: pointer;
+            color: #7aa0c7;
+            font-size: 0.8em;
+            font-weight: bold;
+            vertical-align: super;
+            margin: 0 2px;
+            padding: 1px 2px;
+        }
+        sup.ref-marker-popup a { color: inherit; text-decoration: none; }
+        
+        #referencePopup {
+            position: absolute;
+            display: none;
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            z-index: 10000;
+            padding: 15px;
+            width: 320px; 
+            max-width: calc(100% - 40px);
+            box-sizing: border-box;
+            font-size: 0.85em;
+            text-align: left; /* Popup sempre à esquerda */
+        }
+        #referencePopupTitle { font-weight: bold; margin-bottom: 8px; color: #b0c4de; padding-right: 20px; }
+        
+        #referencePopupUrls a {
+            display: block;
+            color: #87cefa;
+            text-decoration: none;
+            margin-top: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px dotted #555;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+        #referencePopupUrls a:last-child { border-bottom: none; }
+        
+        .atril-text-underlined {
+            text-decoration: underline;
+            text-decoration-color: #7aa0c7;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+        }
+
+        #selected-doc-references-container {
+            margin-top: 50px;
+            border-top: 1px solid #444;
+            padding-top: 20px;
+        }
+        #selected-doc-references-list { list-style: none; padding: 0; }
+        #selected-doc-references-list li {
+            background: #252525;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            text-align: left;
+        }
+        .loading { text-align: center; margin-top: 50px; color: #888; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="content" style="display:none;">
+            <h1 id="selected-doc-title"></h1>
+            <div id="selected-doc-body"></div>
+            
+            <div id="selected-doc-references-container">
+                <h3>Referências</h3>
+                <ul id="selected-doc-references-list"></ul>
+            </div>
+        </div>
+        <div id="message" class="loading">Carregando documento...</div>
+
+        <div id="referencePopup">
+            <button id="referencePopupCloseBtn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; color: #aaa; font-size: 1.4em; cursor: pointer;">&times;</button>
+            <div id="referencePopupTitle"></div>
+            <div id="referencePopupUrls"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhunMuQHzK-Mp8DaXb1bRFLGTem5GZfjY",
+            authDomain: "bibliacontexto.firebaseapp.com",
+            projectId: "bibliacontexto",
+            storageBucket: "bibliacontexto.firebasestorage.app",
+            messagingSenderId: "266293600679",
+            appId: "1:266293600679:web:3b7c264f0b5e35ebea1682"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const bodyEl = document.getElementById('selected-doc-body');
+        const containerEl = document.getElementById('container');
+        const refPopup = document.getElementById('referencePopup');
+        let currentDocReferencesMap = {};
+
+        function escapeHTML(str) { 
+            if (typeof str !== 'string') return '';
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' };
+            return str.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        async function loadSharedDocument() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const docId = urlParams.get('id');
+            if (!docId) { document.getElementById('message').textContent = "ID Inválido."; return; }
+
+            try {
+                const docSnap = await getDoc(doc(db, "documentos", docId));
+                if (docSnap.exists()) { renderDocument(docSnap.data()); } 
+                else { document.getElementById('message').textContent = "Documento não encontrado."; }
+            } catch (error) { document.getElementById('message').textContent = "Erro ao carregar."; }
+        }
+
+        function renderDocument(data) {
+            document.getElementById('message').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('selected-doc-title').textContent = data.titulo;
+
+            let counter = 1;
+            if (data.referencias) {
+                data.referencias.forEach(ref => {
+                    currentDocReferencesMap[ref.id] = {
+                        titulo: ref.tituloReferencia || "Referência",
+                        urls: ref.urls || (ref.urlReferencia ? [ref.urlReferencia] : []),
+                        displayNumber: 0
+                    };
+                });
+            }
+
+            let fullHtml = Array.isArray(data.corpo) ? 
+                data.corpo.map(item => typeof item === 'string' ? item : (item.html || item.texto || "")).join("") : 
+                (data.corpo || "");
+
+            bodyEl.innerHTML = fullHtml;
+
+            // --- LÓGICA PARA DETETAR SUBTEMAS (TEXTO EM CAPS LOCK) ---
+            // Procura em parágrafos, divs ou cabeçalhos
+            bodyEl.querySelectorAll('p, div, span').forEach(el => {
+                const text = el.innerText.trim();
+                // Verifica se: tem mais de 3 letras, é igual à sua versão em maiúsculas e contém pelo menos uma letra A-Z
+                if (text.length > 3 && text === text.toUpperCase() && /[A-ZÀ-Ú]/.test(text)) {
+                    el.classList.add('atril-subheading');
+                }
+            });
+
+            // Marcadores de referência
+            bodyEl.querySelectorAll('span.referenced-text[data-ref-id]').forEach(span => {
+                const id = span.dataset.refId;
+                if (currentDocReferencesMap[id]) {
+                    if (currentDocReferencesMap[id].displayNumber === 0) 
+                        currentDocReferencesMap[id].displayNumber = counter++;
+                    
+                    const sup = document.createElement('sup');
+                    sup.className = 'ref-marker-popup';
+                    sup.dataset.refId = id;
+                    sup.innerHTML = `[<a>${currentDocReferencesMap[id].displayNumber}</a>]`;
+                    span.after(sup);
+                    span.style.color = 'inherit';
+                }
+            });
+
+            // Lista final
+            const listEl = document.getElementById('selected-doc-references-list');
+            const sorted = Object.values(currentDocReferencesMap).filter(r => r.displayNumber > 0).sort((a,b) => a.displayNumber - b.displayNumber);
+            
+            if (sorted.length === 0) {
+                document.getElementById('selected-doc-references-container').style.display = 'none';
+            } else {
+                sorted.forEach(ref => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>[${ref.displayNumber}] ${escapeHTML(ref.titulo)}</strong>`;
+                    ref.urls.forEach(u => {
+                        li.innerHTML += `<div class="ref-url-item-atril"><a href="${u}" target="_blank">${u}</a></div>`;
+                    });
+                    listEl.appendChild(li);
+                });
+            }
+        }
+
+        // Lógica do Popup
+        bodyEl.addEventListener('click', (e) => {
+            const targetSup = e.target.closest('sup.ref-marker-popup');
+            if (targetSup) {
+                const refId = targetSup.dataset.refId;
+                const refData = currentDocReferencesMap[refId];
+                
+                if (refData) {
+                    bodyEl.querySelectorAll('.atril-text-underlined').forEach(el => el.classList.remove('atril-text-underlined'));
+                    const associatedSpan = targetSup.previousElementSibling;
+                    if (associatedSpan && associatedSpan.classList.contains('referenced-text')) {
+                        associatedSpan.classList.add('atril-text-underlined');
+                    }
+
+                    document.getElementById('referencePopupTitle').innerHTML = `[${refData.displayNumber}] ${escapeHTML(refData.titulo)}`;
+                    const urlsDiv = document.getElementById('referencePopupUrls');
+                    urlsDiv.innerHTML = refData.urls.map(u => `<a href="${u}" target="_blank">${u}</a>`).join('');
+
+                    refPopup.style.display = 'block';
+
+                    const containerRect = containerEl.getBoundingClientRect();
+                    const targetRect = targetSup.getBoundingClientRect();
+                    const popupRect = refPopup.getBoundingClientRect();
+                    const margin = 10;
+
+                    let left = targetRect.left - containerRect.left;
+                    if (left + popupRect.width > containerRect.width - margin) {
+                        left = containerRect.width - popupRect.width - margin;
+                    }
+                    if (left < margin) left = margin;
+
+                    let top = targetRect.bottom - containerRect.top + 8;
+                    if (targetRect.bottom + popupRect.height > window.innerHeight - margin) {
+                        top = (targetRect.top - containerRect.top) - popupRect.height - 8;
+                    }
+
+                    refPopup.style.top = `${top}px`;
+                    refPopup.style.left = `${left}px`;
+                }
+            }
+        });
+
+        document.getElementById('referencePopupCloseBtn').onclick = () => {
+            refPopup.style.display = 'none';
+            bodyEl.querySelectorAll('.atril-text-underlined').forEach(el => el.classList.remove('atril-text-underlined'));
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!refPopup.contains(e.target) && !e.target.closest('sup.ref-marker-popup')) {
+                refPopup.style.display = 'none';
+                bodyEl.querySelectorAll('.atril-text-underlined').forEach(el => el.classList.remove('atril-text-underlined'));
+            }
+        });
+
+        loadSharedDocument();
+    </script>
+</body>
+</html>

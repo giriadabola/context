@@ -1797,9 +1797,9 @@ chapterDiv.addEventListener('keydown', e => {
 }
 
 
-                function renderReferences(){
-    if(!referencesListUl||!editorsContainer)return;
-    referencesListUl.innerHTML="";
+           function renderReferences() {
+    if (!referencesListUl || !editorsContainer) return;
+    referencesListUl.innerHTML = "";
     const allRefs = currentDocumentData?.referencias || [];
 
     if (allRefs.length === 0) {
@@ -1807,14 +1807,10 @@ chapterDiv.addEventListener('keydown', e => {
         return;
     }
 
-    // --- NOVA LÓGICA DE ORDENAÇÃO ---
-    // 1. Obter todos os spans de referência na ordem em que aparecem no documento.
+    // Lógica de ordenação baseada na aparição no texto
     const spansInOrder = Array.from(editorsContainer.querySelectorAll('span.referenced-text[data-ref-id]'));
-
-    // 2. Criar uma lista de IDs únicos, preservando a ordem da primeira aparição.
     const orderedUniqueRefIds = [...new Set(spansInOrder.map(span => span.dataset.refId))];
     
-    // 3. Separar as referências que estão no texto das que não estão (órfãs).
     const linkedRefs = [];
     const unlinkedRefs = [];
     allRefs.forEach(ref => {
@@ -1825,27 +1821,23 @@ chapterDiv.addEventListener('keydown', e => {
         }
     });
 
-    // 4. Ordenar a lista de referências ativas com base na sua posição no texto.
     linkedRefs.sort((a, b) => orderedUniqueRefIds.indexOf(a.id) - orderedUniqueRefIds.indexOf(b.id));
-
-    // 5. Juntar as referências ordenadas com as órfãs (que ficarão no final).
     const finalSortedRefs = [...linkedRefs, ...unlinkedRefs];
     const idsInText = new Set(orderedUniqueRefIds);
-    // --- FIM DA LÓGICA DE ORDENAÇÃO ---
 
     finalSortedRefs.forEach(r => {
         const li = document.createElement('li');
         li.className = 'reference-item';
-        // A classe 'reference-item-unlinked' é aplicada se o ID da referência não foi encontrado no texto.
         li.classList.toggle('reference-item-unlinked', !idsInText.has(r.id));
         li.dataset.refId = r.id;
 
-        // --- MUDANÇA PARA LINKS EM NOVA ABA ---
-        // Adicionado href, target="_blank", e rel="noopener noreferrer"
-        const urlsHTML = (r.urls || []).map(u => 
-            `<a href="${escapeHTML(u)}" target="_blank" rel="noopener noreferrer">${escapeHTML(u)}</a>`
-        ).join('<br>');
-        // --- FIM DA MUDANÇA PARA LINKS ---
+        // --- CORREÇÃO AQUI: TRATAR LINK COMO OBJETO OU STRING ---
+        const urlsHTML = (r.urls || []).map(uObj => {
+            // Se uObj for uma string simples (dados antigos), usa ela. 
+            // Se for um objeto {url: "...", ...}, extrai a propriedade .url
+            const urlStr = typeof uObj === 'string' ? uObj : uObj.url;
+            return `<a href="${escapeHTML(urlStr)}" target="_blank" rel="noopener noreferrer">${escapeHTML(urlStr)}</a>`;
+        }).join('<br>');
 
         li.innerHTML = `
             <div class="ref-content">
@@ -1855,7 +1847,7 @@ chapterDiv.addEventListener('keydown', e => {
             <button class="edit-ref-btn" data-ref-id="${r.id}">✎</button>`;
         referencesListUl.appendChild(li);
     });
-}        
+}
 
 function openEditReferencePopup(id) {
     const r = currentDocumentData?.referencias.find(ref => ref.id === id);

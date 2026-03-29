@@ -1884,31 +1884,47 @@ async function saveEditedReference() {
     if (refIndex === -1) return;
 
     const oldUrls = currentDocumentData.referencias[refIndex].urls || [];
+    const agora = Date.now(); // Captura o momento exato uma única vez
     
     // Mapeamos os inputs do popup
     const newUrls = Array.from(document.querySelectorAll('#editRefUrlsContainer .ref-url-input'))
         .map(i => i.value.trim())
         .filter(Boolean)
         .map(u => {
-            // Verifica se este URL já existia na referência
+            // Procura se este URL exato já existia na lista antiga
             const existing = oldUrls.find(old => (typeof old === 'string' ? old === u : old.url === u));
+            
             return {
                 url: u,
-                adicionadoEm: existing ? (existing.adicionadoEm || Date.now()) : Date.now()
+                // LÓGICA CORRIGIDA:
+                // 1. Se existia e tem data, mantém a data.
+                // 2. Se existia mas não tem data, mantém nulo (não atualiza para agora).
+                // 3. Se não existia (é novo), coloca a data de agora.
+                adicionadoEm: existing ? (existing.adicionadoEm || null) : agora
             };
         });
 
-    if (newUrls.length === 0) return alert("Pelo menos uma URL.");
+    if (newUrls.length === 0) return alert("Pelo menos uma URL é necessária.");
 
     currentDocumentData.referencias[refIndex].tituloReferencia = title;
     currentDocumentData.referencias[refIndex].urls = newUrls;
 
-    await updateDoc(doc(db, "documentos", currentDocId), { referencias: currentDocumentData.referencias });
-    
-    renderReferences();
-    hidePopup(editReferencePopup);
-    if (document.getElementById('refInspectorPanel').classList.contains('active')) {
-        updateRefInspectorUI(id);
+    try {
+        await updateDoc(doc(db, "documentos", currentDocId), { 
+            referencias: currentDocumentData.referencias,
+            atualizadoEm: serverTimestamp() 
+        });
+        
+        renderReferences();
+        hidePopup(editReferencePopup);
+        
+        // Atualiza o painel de inspeção se ele estiver aberto
+        if (document.getElementById('refInspectorPanel').classList.contains('active')) {
+            updateRefInspectorUI(id);
+        }
+    } catch (e) {
+        console.error("Erro ao salvar edição:", e);
+        alert("Erro ao salvar alterações.");
     }
 }
 

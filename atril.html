@@ -321,7 +321,8 @@ sup.ref-marker-popup:hover a {
             <button id="closeMenuBtn" title="Fechar Menu">&times;</button>
         </h2>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px;">
-             <span id="settingsGearBtn" title="Configurações de Leitura">⚙️ Configurações</span>
+             <span id="settingsGearBtn" title="Configurações de Leitura">⚙️ Config</span>
+             <button id="shareDocBtn" title="Partilhar" style="display: none; font-size: 1.2em; margin-right: 10px; background: none; border: none; cursor: pointer; color: #d4d4d4;">🔗</button>
              <button id="downloadPdfBtn" title="Baixar como PDF" style="display: none; font-size: 1.2em; margin-right: 5px;">📥</button>
         </div>
         <ul id="document-titles-list">
@@ -375,7 +376,7 @@ sup.ref-marker-popup:hover a {
     </div>
     <div id="settingsPopup" style="visibility: hidden; opacity: 0; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1030; transition: opacity 0.3s ease, visibility 0s linear 0.3s;">
         <div style="background: #333; color: #d4d4d4; padding: 20px 25px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 300px; max-width: 90%;">
-            <h3 style="margin-top: 0; color: #e0e0e0; border-bottom: 1px solid #444; padding-bottom: 10px;">Configurações</h3>
+            <h3 style="margin-top: 0; color: #e0e0e0; border-bottom: 1px solid #444; padding-bottom: 10px;">Config</h3>
             <div style="margin-bottom: 20px;">
                 <label for="fontSizeControl" style="display: block; margin-bottom: 8px;">Tamanho da Fonte do Conteúdo:</label>
                 <div style="display: flex; align-items: center;">
@@ -727,154 +728,173 @@ sup.ref-marker-popup:hover a {
             } catch (error) { console.error("Erro ao carregar lista:", error); loadingDocsMsgEl.textContent = "Erro."; }
         }
 
-        function updateDisplayedDocument(docData) {
-            const titleSpan = selectedDocTitleEl.querySelector('span:not(.status-indicator)');
-            if (!docData) {
-                noDocSelectedMsgEl.style.display = 'block';
-                if(titleSpan) titleSpan.textContent = "Selecione um Documento";
-                selectedDocBodyEl.innerHTML = '<p id="no-doc-selected">Nenhum documento para exibir.</p>';
-                referencesContainerEl.style.display = 'none';
-                downloadPdfBtn.style.display = 'none';
-                hideReferencePopup();
-                return;
+     function updateDisplayedDocument(docData) {
+    const titleSpan = selectedDocTitleEl.querySelector('span:not(.status-indicator)');
+    const shareBtn = document.getElementById('shareDocBtn'); // Referência ao novo botão
+
+    // Se não houver dados (nenhum doc selecionado ou erro)
+    if (!docData) {
+        noDocSelectedMsgEl.style.display = 'block';
+        if (titleSpan) titleSpan.textContent = "Selecione um Documento";
+        selectedDocBodyEl.innerHTML = '<p id="no-doc-selected">Nenhum documento para exibir.</p>';
+        referencesContainerEl.style.display = 'none';
+        downloadPdfBtn.style.display = 'none';
+        if (shareBtn) shareBtn.style.display = 'none'; // Esconde botão partilhar
+        hideReferencePopup();
+        return;
+    }
+
+    // Ativa os botões de ação
+    downloadPdfBtn.style.display = 'inline-block';
+    if (shareBtn) {
+        shareBtn.style.display = 'inline-block';
+        // Configura o clique para redirecionar para a página de partilha
+        shareBtn.onclick = () => {
+            window.location.href = `share.html?id=${docData.id}`;
+        };
+    }
+
+    const currentScrollTop = selectedDocBodyEl.scrollTop;
+    noDocSelectedMsgEl.style.display = 'none';
+    
+    if (titleSpan) titleSpan.textContent = escapeHTML(docData.titulo) || "Documento Sem Título";
+    
+    // Reset e Mapeamento de Referências
+    currentDocReferencesMap = {};
+    let referenceDisplayCounter = 1;
+    const encounteredRefIdsForNumbering = {};
+
+    if (docData.referencias && Array.isArray(docData.referencias)) {
+        docData.referencias.forEach(ref => {
+            if (ref && ref.id) {
+                currentDocReferencesMap[ref.id] = {
+                    titulo: ref.tituloReferencia || "Referência sem título",
+                    urls: (ref.urls && Array.isArray(ref.urls)) ? ref.urls.filter(u => typeof u === 'string' && u.trim() !== '')
+                          : (ref.urlReferencia && typeof ref.urlReferencia === 'string' && ref.urlReferencia.trim() !== '' ? [ref.urlReferencia] : []),
+                    displayNumber: 0
+                };
             }
-            downloadPdfBtn.style.display = 'inline-block';
-            const currentScrollTop = selectedDocBodyEl.scrollTop;
-            noDocSelectedMsgEl.style.display = 'none';
-            if(titleSpan) titleSpan.textContent = escapeHTML(docData.titulo) || "Documento Sem Título";
-            
-            currentDocReferencesMap = {};
-            let referenceDisplayCounter = 1;
-            const encounteredRefIdsForNumbering = {};
-            if (docData.referencias && Array.isArray(docData.referencias)) {
-                docData.referencias.forEach(ref => {
-                    if (ref && ref.id) {
-                        currentDocReferencesMap[ref.id] = {
-                            titulo: ref.tituloReferencia || "Referência sem título",
-                            urls: (ref.urls && Array.isArray(ref.urls)) ? ref.urls.filter(u => typeof u === 'string' && u.trim() !== '')
-                                  : (ref.urlReferencia && typeof ref.urlReferencia === 'string' && ref.urlReferencia.trim() !== '' ? [ref.urlReferencia] : []),
-                            displayNumber: 0
-                        };
-                    }
-                });
-            }
-            let fullBodyHtml = "";
-            const docIdentifier = escapeHTML(docData.titulo || (docData.id ? `ID: ${docData.id}` : 'Desconhecido'));
-            if (typeof docData.corpo === 'string') {
-                fullBodyHtml = docData.corpo;
-            } else if (Array.isArray(docData.corpo)) {
-                if (docData.corpo.length > 0) {
-                    docData.corpo.forEach((item, index) => {
-                        let itemHtml = "";
-                        if (typeof item === 'string') {
-                            itemHtml = item;
-                        } else if (typeof item === 'object' && item !== null) {
-                            const commonTextProperties = ['text', 'texto', 'content', 'html', 'body', 'value', 'textContent', 'innerHTML', 'paragraph', 'paragraphText'];
-                            let foundTextInObject = null;
-                            for (const prop of commonTextProperties) {
-                                if (typeof item[prop] === 'string') {
-                                    foundTextInObject = item[prop];
-                                    break;
-                                }
-                            }
-                            if (foundTextInObject) {
-                                if ((item.hasOwnProperty('html') && typeof item.html === 'string') || (item.hasOwnProperty('innerHTML') && typeof item.innerHTML === 'string')) {
-                                     itemHtml = foundTextInObject;
-                                } else {
-                                     itemHtml = `<p>${escapeHTML(foundTextInObject)}</p>`;
-                                }
-                            } else {
-                                if (item.tipo === 'imagem' && item.url) {
-                                    itemHtml = `<figure><img src="${escapeHTML(item.url)}" alt="${escapeHTML(item.legenda || 'Imagem')}" style="max-width:100%; height:auto;"><figcaption>${escapeHTML(item.legenda || '')}</figcaption></figure>`;
-                                } else if (item.tipo === 'titulo' && item.texto) {
-                                    const level = parseInt(item.nivel) || 2;
-                                    itemHtml = `<h${level}>${escapeHTML(item.texto)}</h${level}>`;
-                                } else {
-                                    itemHtml = `<div style="border:1px dashed red;padding:5px;color:orange;margin-bottom:10px;">[Bloco(obj)${index} Chaves:${escapeHTML(Object.keys(item).join(','))}]</div>`;
-                                    console.warn(` Objeto corpo[${index}] não processado:`, item);
-                                }
-                            }
-                        } else {
-                             itemHtml = `<p style="color:yellow;">[Conteúdo tipo ${typeof item} corpo[${index}]]</p>`;
-                             console.warn(` corpo[${index}] tipo ${typeof item}:`, item);
+        });
+    }
+
+    // Renderização do Corpo (String ou Array)
+    let fullBodyHtml = "";
+    const docIdentifier = escapeHTML(docData.titulo || (docData.id ? `ID: ${docData.id}` : 'Desconhecido'));
+    
+    if (typeof docData.corpo === 'string') {
+        fullBodyHtml = docData.corpo;
+    } else if (Array.isArray(docData.corpo)) {
+        if (docData.corpo.length > 0) {
+            docData.corpo.forEach((item, index) => {
+                let itemHtml = "";
+                if (typeof item === 'string') {
+                    itemHtml = item;
+                } else if (typeof item === 'object' && item !== null) {
+                    const commonTextProperties = ['text', 'texto', 'content', 'html', 'body', 'value', 'textContent', 'innerHTML', 'paragraph', 'paragraphText'];
+                    let foundTextInObject = null;
+                    for (const prop of commonTextProperties) {
+                        if (typeof item[prop] === 'string') {
+                            foundTextInObject = item[prop];
+                            break;
                         }
-                        fullBodyHtml += itemHtml;
-                    });
-                } else {
-                    fullBodyHtml = `<p>Conteúdo vazio para '${docIdentifier}' (array 'corpo' vazio).</p>`;
+                    }
+                    if (foundTextInObject) {
+                        if ((item.hasOwnProperty('html')) || (item.hasOwnProperty('innerHTML'))) {
+                             itemHtml = foundTextInObject;
+                        } else {
+                             itemHtml = `<p>${escapeHTML(foundTextInObject)}</p>`;
+                        }
+                    } else if (item.tipo === 'imagem' && item.url) {
+                        itemHtml = `<figure><img src="${escapeHTML(item.url)}" style="max-width:100%;"><figcaption>${escapeHTML(item.legenda || '')}</figcaption></figure>`;
+                    }
                 }
-            } else if (docData.corpo === null || docData.corpo === undefined) {
-                fullBodyHtml = `<p>Conteúdo não disponível para '${docIdentifier}'.</p>`;
-            } else {
-                console.warn(`'${docIdentifier}' tipo inesperado 'corpo': ${typeof docData.corpo}`, docData.corpo);
-                fullBodyHtml = `<p>Formato inesperado para '${docIdentifier}'.</p>`;
-            }
-            if (typeof fullBodyHtml === 'string') {
-                 fullBodyHtml = fullBodyHtml.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
-            }
-            selectedDocBodyEl.innerHTML = fullBodyHtml;
-            const refTextSpans = Array.from(selectedDocBodyEl.querySelectorAll('span.referenced-text[data-ref-id]'));
-            refTextSpans.forEach(span => {
-                const refId = span.dataset.refId;
-                if (currentDocReferencesMap[refId]) {
-                    if (!encounteredRefIdsForNumbering[refId]) {
-                        encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
-                        currentDocReferencesMap[refId].displayNumber = encounteredRefIdsForNumbering[refId];
-                    }
-                    const displayNumber = encounteredRefIdsForNumbering[refId];
-                    const supElement = document.createElement('sup');
-                    supElement.className = 'ref-marker-popup'; supElement.dataset.refId = refId;
-                    supElement.innerHTML = `[<a>${displayNumber}</a>]`;
-                    span.parentNode.insertBefore(supElement, span.nextSibling);
-                    span.style.backgroundColor='transparent'; span.style.padding='0'; span.style.borderRadius='0'; span.style.color='inherit'; span.style.cursor='default';
-                } else { console.warn(`Ref ID '${refId}' (span) não encontrada.`); }
+                fullBodyHtml += itemHtml;
             });
-            const placeholderRefTags = Array.from(selectedDocBodyEl.querySelectorAll('ref[data-ref-id]'));
-            placeholderRefTags.forEach(tag => {
-                const refId = tag.dataset.refId;
-                if (currentDocReferencesMap[refId]) {
-                    if (!encounteredRefIdsForNumbering[refId]) {
-                        encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
-                        currentDocReferencesMap[refId].displayNumber = encounteredRefIdsForNumbering[refId];
-                    }
-                    const displayNumber = encounteredRefIdsForNumbering[refId];
-                    const supElement = document.createElement('sup');
-                    supElement.className = 'ref-marker-popup'; supElement.dataset.refId = refId;
-                    supElement.innerHTML = `[<a>${displayNumber}</a>]`;
-                    tag.parentNode.replaceChild(supElement, tag);
-                } else { console.warn(`Ref ID '${refId}' (tag) não encontrada.`); tag.remove(); }
-            });
-            cursorIndicatorEl = null;
-            selectedDocBodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
-            
-            const references = docData.referencias || [];
-            if (references.length === 0 || Object.values(currentDocReferencesMap).every(ref => ref.displayNumber === 0)) {
-                referencesContainerEl.style.display = 'none'; referencesListEl.innerHTML = '';
-            } else {
-                referencesContainerEl.style.display = 'block'; referencesListEl.innerHTML = "";
-                const sortedRefs = references
-                    .filter(ref => ref && ref.id && currentDocReferencesMap[ref.id] && currentDocReferencesMap[ref.id].displayNumber > 0)
-                    .sort((a,b) => currentDocReferencesMap[a.id].displayNumber - currentDocReferencesMap[b.id].displayNumber);
-                sortedRefs.forEach(ref => {
-                    const refDetails = currentDocReferencesMap[ref.id];
-                    const li = document.createElement('li'); li.className = 'reference-item-atril';
-                    li.setAttribute('data-ref-id', escapeHTML(ref.id));
-                    const titleSpan = document.createElement('span'); titleSpan.className = 'ref-title-atril';
-                    titleSpan.innerHTML = `<sup>[${refDetails.displayNumber}]</sup> ${escapeHTML(refDetails.titulo)}`;
-                    li.appendChild(titleSpan);
-                    if (refDetails.urls && refDetails.urls.length > 0) {
-                        refDetails.urls.forEach(url => {
-                            const div = document.createElement('div'); div.className = 'ref-url-item-atril';
-                            const a = document.createElement('a'); a.href = url; a.textContent = escapeHTML(url); a.target = "_blank";
-                            div.appendChild(a); li.appendChild(div);
-                        });
-                    }
-                    referencesListEl.appendChild(li);
-                });
-            }
-            applyFontSize(currentFontSizePercent);
-            selectedDocBodyEl.scrollTop = currentScrollTop;
         }
+    }
+
+    // Processa delimitadores de capítulos
+    if (typeof fullBodyHtml === 'string') {
+         fullBodyHtml = fullBodyHtml.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
+    }
+    
+    selectedDocBodyEl.innerHTML = fullBodyHtml;
+
+    // Inserção de Marcadores [n] nos Spans de Texto Referenciado
+    const refTextSpans = Array.from(selectedDocBodyEl.querySelectorAll('span.referenced-text[data-ref-id]'));
+    refTextSpans.forEach(span => {
+        const refId = span.dataset.refId;
+        if (currentDocReferencesMap[refId]) {
+            if (!encounteredRefIdsForNumbering[refId]) {
+                encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
+                currentDocReferencesMap[refId].displayNumber = encounteredRefIdsForNumbering[refId];
+            }
+            const displayNumber = encounteredRefIdsForNumbering[refId];
+            const supElement = document.createElement('sup');
+            supElement.className = 'ref-marker-popup'; 
+            supElement.dataset.refId = refId;
+            supElement.innerHTML = `[<a>${displayNumber}</a>]`;
+            span.parentNode.insertBefore(supElement, span.nextSibling);
+            
+            // Limpa estilos vindos do editor para manter a leitura limpa
+            span.style.backgroundColor='transparent'; 
+            span.style.color='inherit';
+        }
+    });
+
+    // Inserção de Marcadores em tags <ref> vazias
+    const placeholderRefTags = Array.from(selectedDocBodyEl.querySelectorAll('ref[data-ref-id]'));
+    placeholderRefTags.forEach(tag => {
+        const refId = tag.dataset.refId;
+        if (currentDocReferencesMap[refId]) {
+            if (!encounteredRefIdsForNumbering[refId]) {
+                encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
+                currentDocReferencesMap[refId].displayNumber = encounteredRefIdsForNumbering[refId];
+            }
+            const displayNumber = encounteredRefIdsForNumbering[refId];
+            const supElement = document.createElement('sup');
+            supElement.className = 'ref-marker-popup'; 
+            supElement.dataset.refId = refId;
+            supElement.innerHTML = `[<a>${displayNumber}</a>]`;
+            tag.parentNode.replaceChild(supElement, tag);
+        } else { tag.remove(); }
+    });
+
+    // Limpeza de cursores e estados de edição
+    cursorIndicatorEl = null;
+    selectedDocBodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
+    
+    // Renderização da Lista de Referências no Final
+    const references = docData.referencias || [];
+    if (references.length === 0 || Object.values(currentDocReferencesMap).every(ref => ref.displayNumber === 0)) {
+        referencesContainerEl.style.display = 'none'; 
+        referencesListEl.innerHTML = '';
+    } else {
+        referencesContainerEl.style.display = 'block'; 
+        referencesListEl.innerHTML = "";
+        const sortedRefs = references
+            .filter(ref => ref && ref.id && currentDocReferencesMap[ref.id] && currentDocReferencesMap[ref.id].displayNumber > 0)
+            .sort((a,b) => currentDocReferencesMap[a.id].displayNumber - currentDocReferencesMap[b.id].displayNumber);
+            
+        sortedRefs.forEach(ref => {
+            const refDetails = currentDocReferencesMap[ref.id];
+            const li = document.createElement('li'); 
+            li.className = 'reference-item-atril';
+            li.setAttribute('data-ref-id', escapeHTML(ref.id));
+            
+            li.innerHTML = `
+                <span class="ref-title-atril"><sup>[${refDetails.displayNumber}]</sup> ${escapeHTML(refDetails.titulo)}</span>
+                ${refDetails.urls.map(url => `
+                    <div class="ref-url-item-atril"><a href="${url}" target="_blank">${escapeHTML(url)}</a></div>
+                `).join('')}
+            `;
+            referencesListEl.appendChild(li);
+        });
+    }
+
+    applyFontSize(currentFontSizePercent);
+    selectedDocBodyEl.scrollTop = currentScrollTop;
+}
 
         function listenToDocumentContent(docId) {
             if (currentDocContentListenerUnsubscribe) currentDocContentListenerUnsubscribe();
@@ -1256,6 +1276,16 @@ sup.ref-marker-popup:hover a {
                 menuOverlay.classList.add('visible');
             }
         });
+
+// Lógica para o botão de Partilhar
+document.getElementById('shareDocBtn').addEventListener('click', () => {
+    if (displayedDocId) {
+        // Redireciona para share.html passando o ID do documento atual
+        window.location.href = `share.html?id=${displayedDocId}`;
+    }
+});
+
+
     </script>
 </body>
 </html>

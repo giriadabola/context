@@ -20,15 +20,16 @@
             width: 100%;
             max-width: 800px;
             padding: 40px 20px;
-            position: relative; /* Necessário para o popup se posicionar em relação ao container */
+            position: relative;
             box-sizing: border-box;
         }
         #selected-doc-title {
             font-size: 2.2em;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             color: #e0e0e0;
             border-bottom: 2px solid #3a7ca5;
             padding-bottom: 15px;
+            font-weight: bold;
         }
         #selected-doc-body {
             line-height: 1.8;
@@ -37,15 +38,20 @@
             text-align: justify;
             white-space: pre-wrap; 
         }
-        
+
+        /* --- ESTILO DO SUBTEMA (CAPS LOCK) --- */
         .atril-subheading {
             display: block;
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #3a7ca5;
-            margin-top: 30px;
-            margin-bottom: 10px;
+            font-size: 1.45em; /* Bem maior que o texto normal (17px) */
+            font-weight: bold; /* Negrito */
+            color: #e0e0e0; /* Cor quase branca */
+            margin-top: 45px; /* Espaço maior antes do subtema */
+            margin-bottom: 15px;
             text-align: left;
+            border-left: 5px solid #3a7ca5; /* Borda lateral azul de destaque */
+            padding-left: 15px;
+            letter-spacing: 0.5px; /* Espaçamento leve entre letras */
+            line-height: 1.3;
         }
 
         sup.ref-marker-popup {
@@ -58,6 +64,7 @@
             border-radius: 3px;
             margin: 0 2px;
             display: inline-block;
+            vertical-align: super;
         }
 
         #referencePopup {
@@ -70,35 +77,35 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             z-index: 1000;
             padding: 15px;
-            width: 300px; /* Largura fixa para facilitar o cálculo */
-            font-size: 0.9em;
+            width: 320px;
+            font-size: 0.95em;
             box-sizing: border-box;
         }
-        #referencePopupTitle { font-weight: bold; margin-bottom: 8px; color: #b0c4de; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        #referencePopupTitle { font-weight: bold; margin-bottom: 10px; color: #b0c4de; border-bottom: 1px solid #444; padding-bottom: 8px; }
         #referencePopupUrls a {
             display: block;
             color: #87cefa;
             text-decoration: none;
             margin-top: 8px;
             word-break: break-all;
-            border-bottom: 1px dotted #444;
-            padding-bottom: 4px;
+            border-bottom: 1px dotted #555;
+            padding-bottom: 5px;
         }
 
         #selected-doc-references-container {
-            margin-top: 50px;
+            margin-top: 60px;
             border-top: 1px solid #444;
             padding-top: 20px;
         }
         #selected-doc-references-list { list-style: none; padding: 0; }
         #selected-doc-references-list li {
             background: #252525;
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 6px;
+            padding: 18px;
+            margin-bottom: 15px;
+            border-radius: 8px;
             border: 1px solid #333;
         }
-        .ref-num-list { color: #3a7ca5; font-weight: bold; margin-right: 8px; }
+        .ref-num-list { color: #3a7ca5; font-weight: bold; margin-right: 10px; font-size: 1.1em; }
     </style>
 </head>
 <body>
@@ -129,7 +136,7 @@
                 const data = await response.json();
                 renderDocument(data);
             } catch (error) {
-                console.error("Erro ao carregar o JSON:", error);
+                console.error("Erro:", error);
                 document.getElementById('selected-doc-title').textContent = "Erro ao carregar js/ep1.json";
             }
         }
@@ -138,22 +145,28 @@
             document.getElementById('selected-doc-title').textContent = data.titulo;
             data.referencias.forEach(ref => { referencesMap[ref.numero] = ref; });
 
-            let texto = data.corpo;
-            texto = texto.replace(/\[(\d+)\]/g, (match, numero) => {
-                return `<sup class="ref-marker-popup" data-ref-num="${numero}">[${numero}]</sup>`;
-            });
-            bodyEl.innerHTML = texto;
-
-            const lines = bodyEl.innerHTML.split('\n');
+            // 1. Divide o corpo em linhas para analisar os subtemas
+            const lines = data.corpo.split('\n');
             const processedLines = lines.map(line => {
                 const trimmed = line.trim();
-                if (trimmed.length > 4 && trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed)) {
+                
+                // Regra para SUBTEMA:
+                // - Mais de 4 caracteres
+                // - Igual a ele mesmo em maiúsculas
+                // - Contém letras de A a Z (incluindo acentos portugueses)
+                if (trimmed.length > 4 && trimmed === trimmed.toUpperCase() && /[A-ZÀ-Ú]/.test(trimmed)) {
                     return `<span class="atril-subheading">${trimmed}</span>`;
                 }
-                return line;
+                
+                // Se não for subtema, processa os marcadores [n]
+                return line.replace(/\[(\d+)\]/g, (match, numero) => {
+                    return `<sup class="ref-marker-popup" data-ref-num="${numero}">[${numero}]</sup>`;
+                });
             });
+
             bodyEl.innerHTML = processedLines.join('\n');
 
+            // 2. Renderiza a lista de referências ao final
             if (data.referencias && data.referencias.length > 0) {
                 const listContainer = document.getElementById('selected-doc-references-container');
                 const listUl = document.getElementById('selected-doc-references-list');
@@ -167,19 +180,15 @@
             }
         }
 
-        // --- LÓGICA DE POSICIONAMENTO DO POPUP ---
         document.addEventListener('click', (e) => {
             const marker = e.target.closest('.ref-marker-popup');
-            
             if (marker) {
                 const num = marker.dataset.refNum;
                 const ref = referencesMap[num];
-                
                 if (ref) {
                     document.getElementById('referencePopupTitle').textContent = `[${ref.numero}] ${ref.titulo}`;
                     document.getElementById('referencePopupUrls').innerHTML = ref.links.map(l => `<a href="${l}" target="_blank">${l}</a>`).join('');
                     
-                    // 1. Mostra o popup para conseguir medir o seu tamanho
                     refPopup.style.display = 'block';
                     
                     const popupWidth = refPopup.offsetWidth;
@@ -187,24 +196,14 @@
                     const markerRect = marker.getBoundingClientRect();
                     const containerRect = containerEl.getBoundingClientRect();
                     
-                    // 2. Cálculo da posição Horizontal (Left)
-                    // Tenta alinhar o popup com o marcador
                     let left = markerRect.left - containerRect.left;
-                    
-                    // Se o popup sair pela direita do container, empurra-o para a esquerda
-                    const padding = 20; // Margem de segurança
+                    const padding = 20;
                     if (left + popupWidth > containerRect.width - padding) {
                         left = containerRect.width - popupWidth - padding;
                     }
-                    
-                    // Se o popup sair pela esquerda (marcador muito à esquerda), empurra-o para a direita
                     if (left < padding) left = padding;
 
-                    // 3. Cálculo da posição Vertical (Top)
-                    // Tenta colocar abaixo do marcador
                     let top = markerRect.bottom - containerRect.top + 10;
-                    
-                    // Se o popup sair pelo fundo da janela (viewport), coloca-o ACIMA do marcador
                     if (markerRect.bottom + popupHeight + padding > window.innerHeight) {
                         top = (markerRect.top - containerRect.top) - popupHeight - 10;
                     }

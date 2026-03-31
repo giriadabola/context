@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atril - Visualizador JSON</title>
+    <style>
+        :root { color-scheme: dark light; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            position: relative;
+        }
+        #doc-title {
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            color: #e0e0e0;
+            border-bottom: 2px solid #3a7ca5;
+            padding-bottom: 15px;
+        }
+        #doc-body {
+            line-height: 1.8;
+            font-size: 18px;
+            text-align: justify;
+            white-space: pre-wrap; /* Mantém as quebras de linha do JSON */
+        }
+        
+        /* Subtemas detetados automaticamente */
+        .subheading {
+            display: block;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #3a7ca5;
+            margin-top: 40px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        /* Marcadores [n] */
+        .ref-marker {
+            cursor: pointer;
+            color: #7aa0c7;
+            font-size: 0.85em;
+            font-weight: bold;
+            vertical-align: super;
+            margin: 0 3px;
+            transition: color 0.2s;
+        }
+        .ref-marker:hover { color: #fff; }
+
+        /* Popup */
+        #referencePopup {
+            position: absolute;
+            display: none;
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            z-index: 1000;
+            padding: 15px;
+            width: 300px;
+            font-size: 0.9em;
+        }
+        #referencePopup Title { font-weight: bold; color: #b0c4de; margin-bottom: 10px; display: block; }
+        .popup-link {
+            display: block;
+            color: #87cefa;
+            text-decoration: none;
+            margin-top: 8px;
+            word-break: break-all;
+            border-bottom: 1px dotted #555;
+            padding-bottom: 4px;
+        }
+
+        #references-list {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            list-style: none;
+            padding-left: 0;
+        }
+        .ref-item {
+            background: #252525;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <h1 id="doc-title"></h1>
+    <div id="doc-body"></div>
+    
+    <div id="references-container">
+        <h3>Referências</h3>
+        <ul id="references-list"></ul>
+    </div>
+</div>
+
+<div id="referencePopup">
+    <span id="popup-title"></span>
+    <div id="popup-links"></div>
+</div>
+
+<script>
+    // --- O SEU JSON COPIADO (EP1) ---
+    const ep1 = {
+        "titulo": "Exemplo de Título",
+        "corpo": "ESTE É UM SUBTEMA\nEste é o texto inicial que contém uma referência [1]. Aqui temos outra parte do texto que fala sobre algo diferente [2].\n\nOUTRO SUBTEMA EM CAPS\nMais texto aqui para demonstrar o visual.",
+        "referencias": [
+            { "numero": 1, "titulo": "Primeira Fonte", "links": ["https://wol.jw.org/pt/..."] },
+            { "numero": 2, "titulo": "Segunda Fonte Única", "links": ["https://www.jw.org/..."] }
+        ]
+    };
+
+    const docBody = document.getElementById('doc-body');
+    const docTitle = document.getElementById('doc-title');
+    const refPopup = document.getElementById('referencePopup');
+
+    function render() {
+        docTitle.textContent = ep1.titulo;
+
+        // 1. Processar o Corpo
+        let htmlCorpo = ep1.corpo;
+
+        // Detetar Subtemas (Linhas apenas com CAPS LOCK)
+        htmlCorpo = htmlCorpo.split('\n').map(linha => {
+            const trimmed = linha.trim();
+            if (trimmed.length > 3 && trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed)) {
+                return `<span class="subheading">${trimmed}</span>`;
+            }
+            return linha;
+        }).join('\n');
+
+        // Transformar [n] em spans clicáveis
+        htmlCorpo = htmlCorpo.replace(/\[(\d+)\]/g, (match, numero) => {
+            return `<span class="ref-marker" data-num="${numero}">[${numero}]</span>`;
+        });
+
+        docBody.innerHTML = htmlCorpo;
+
+        // 2. Renderizar Lista de Referências no Fim
+        const listEl = document.getElementById('references-list');
+        ep1.referencias.forEach(ref => {
+            const li = document.createElement('li');
+            li.className = 'ref-item';
+            li.innerHTML = `<strong>[${ref.numero}] ${ref.titulo}</strong>`;
+            ref.links.forEach(link => {
+                li.innerHTML += `<br><a href="${link}" target="_blank" style="color:#7aa0c7; font-size:0.8em; word-break:break-all;">${link}</a>`;
+            });
+            listEl.appendChild(li);
+        });
+    }
+
+    // Lógica do Popup
+    docBody.addEventListener('click', (e) => {
+        if (e.target.classList.contains('ref-marker')) {
+            const num = parseInt(e.target.dataset.num);
+            const refData = ep1.referencias.find(r => r.numero === num);
+
+            if (refData) {
+                document.getElementById('popup-title').textContent = `[${refData.numero}] ${refData.titulo}`;
+                const linksDiv = document.getElementById('popup-links');
+                linksDiv.innerHTML = refData.links.map(l => `<a href="${l}" target="_blank" class="popup-link">${l}</a>`).join('');
+
+                // Posicionamento
+                refPopup.style.display = 'block';
+                const rect = e.target.getBoundingClientRect();
+                refPopup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+                refPopup.style.left = Math.min(rect.left, window.innerWidth - 320) + 'px';
+            }
+        }
+    });
+
+    // Fechar popup ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!refPopup.contains(e.target) && !e.target.classList.contains('ref-marker')) {
+            refPopup.style.display = 'none';
+        }
+    });
+
+    render();
+</script>
+
+</body>
+</html>

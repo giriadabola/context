@@ -338,10 +338,10 @@ sup.ref-marker-popup:hover a {
         <div id="selected-doc-body">
             <p id="no-doc-selected">Nenhum documento selecionado para visualização.</p>
         </div>
-        <div id="selected-doc-references-container" style="display: none;">
-            <h3>Referências</h3>
-            <ul id="selected-doc-references-list"></ul>
-        </div>
+     <div id="selected-doc-references-container" style="display: none;">
+    <h3>Referências <span id="total-refs-count" style="font-size: 0.8em; color: #888;"></span></h3>
+    <ul id="selected-doc-references-list"></ul>
+</div>
     </div>
 
     <!-- Popups e outros elementos invisíveis -->
@@ -384,10 +384,13 @@ sup.ref-marker-popup:hover a {
                     <span id="currentFontSizeDisplay" style="font-size: 1em; min-width: 50px; text-align: center; color: #c0c0c0;">100%</span>
                     <button id="increaseFontBtn" title="Aumentar Fonte" style="padding: 8px 12px; font-size: 1em; background-color: #4a4a4a; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer; margin-left: 10px;">+</button>
                 </div>
-            </div>
-            <div style="text-align: right;">
-                <button id="closeSettingsPopupBtn" style="padding: 10px 15px; background-color: #5a6268; color: white; border: none; border-radius: 4px; cursor: pointer;">Fechar</button>
-            </div>
+         <div style="margin-bottom: 20px; border-top: 1px solid #444; padding-top: 15px;">
+    <button id="copyJsonBtn" style="width: 100%; padding: 10px; background-color: #3a7ca5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copiar JSON do Documento</button>
+</div>
+
+<div style="text-align: right;">
+    <button id="closeSettingsPopupBtn" style="padding: 10px 15px; background-color: #5a6268; color: white; border: none; border-radius: 4px; cursor: pointer;">Fechar</button>
+</div>
         </div>
     </div>
 
@@ -728,102 +731,81 @@ sup.ref-marker-popup:hover a {
             } catch (error) { console.error("Erro ao carregar lista:", error); loadingDocsMsgEl.textContent = "Erro."; }
         }
 
-     function updateDisplayedDocument(docData) {
+function updateDisplayedDocument(docData) {
     const titleSpan = selectedDocTitleEl.querySelector('span:not(.status-indicator)');
-    const shareBtn = document.getElementById('shareDocBtn'); // Referência ao novo botão
+    const shareBtn = document.getElementById('shareDocBtn');
 
-    // Se não houver dados (nenhum doc selecionado ou erro)
     if (!docData) {
         noDocSelectedMsgEl.style.display = 'block';
         if (titleSpan) titleSpan.textContent = "Selecione um Documento";
         selectedDocBodyEl.innerHTML = '<p id="no-doc-selected">Nenhum documento para exibir.</p>';
         referencesContainerEl.style.display = 'none';
         downloadPdfBtn.style.display = 'none';
-        if (shareBtn) shareBtn.style.display = 'none'; // Esconde botão partilhar
+        if (shareBtn) shareBtn.style.display = 'none';
         hideReferencePopup();
         return;
     }
 
-    // Ativa os botões de ação
     downloadPdfBtn.style.display = 'inline-block';
     if (shareBtn) {
         shareBtn.style.display = 'inline-block';
-        // Configura o clique para redirecionar para a página de partilha
-        shareBtn.onclick = () => {
-            window.location.href = `share.html?id=${docData.id}`;
-        };
+        shareBtn.onclick = () => { window.location.href = `share.html?id=${docData.id}`; };
     }
 
     const currentScrollTop = selectedDocBodyEl.scrollTop;
     noDocSelectedMsgEl.style.display = 'none';
-    
     if (titleSpan) titleSpan.textContent = escapeHTML(docData.titulo) || "Documento Sem Título";
     
-    // Reset e Mapeamento de Referências
     currentDocReferencesMap = {};
     let referenceDisplayCounter = 1;
     const encounteredRefIdsForNumbering = {};
 
-    if (docData.referencias && Array.isArray(docData.referencias)) {
-        docData.referencias.forEach(ref => {
-            if (ref && ref.id) {
-                currentDocReferencesMap[ref.id] = {
-                    titulo: ref.tituloReferencia || "Referência sem título",
-                    urls: (ref.urls && Array.isArray(ref.urls)) ? ref.urls.filter(u => typeof u === 'string' && u.trim() !== '')
-                          : (ref.urlReferencia && typeof ref.urlReferencia === 'string' && ref.urlReferencia.trim() !== '' ? [ref.urlReferencia] : []),
-                    displayNumber: 0
-                };
+  if (docData.referencias && Array.isArray(docData.referencias)) {
+    docData.referencias.forEach(ref => {
+        if (ref && ref.id) {
+            // Lógica para extrair a URL independentemente do formato (Objeto ou String)
+            let rawUrls = [];
+            if (Array.isArray(ref.urls)) {
+                rawUrls = ref.urls.map(u => (typeof u === 'object' && u !== null) ? u.url : u);
+            } else if (ref.urlReferencia) {
+                rawUrls = [ref.urlReferencia];
             }
-        });
-    }
 
-    // Renderização do Corpo (String ou Array)
+            currentDocReferencesMap[ref.id] = {
+                titulo: ref.tituloReferencia || "Referência sem título",
+                urls: rawUrls.filter(u => typeof u === 'string' && u.trim() !== ''),
+                displayNumber: 0
+            };
+        }
+    });
+}
+
     let fullBodyHtml = "";
-    const docIdentifier = escapeHTML(docData.titulo || (docData.id ? `ID: ${docData.id}` : 'Desconhecido'));
-    
     if (typeof docData.corpo === 'string') {
         fullBodyHtml = docData.corpo;
     } else if (Array.isArray(docData.corpo)) {
-        if (docData.corpo.length > 0) {
-            docData.corpo.forEach((item, index) => {
-                let itemHtml = "";
-                if (typeof item === 'string') {
-                    itemHtml = item;
-                } else if (typeof item === 'object' && item !== null) {
-                    const commonTextProperties = ['text', 'texto', 'content', 'html', 'body', 'value', 'textContent', 'innerHTML', 'paragraph', 'paragraphText'];
-                    let foundTextInObject = null;
-                    for (const prop of commonTextProperties) {
-                        if (typeof item[prop] === 'string') {
-                            foundTextInObject = item[prop];
-                            break;
-                        }
-                    }
-                    if (foundTextInObject) {
-                        if ((item.hasOwnProperty('html')) || (item.hasOwnProperty('innerHTML'))) {
-                             itemHtml = foundTextInObject;
-                        } else {
-                             itemHtml = `<p>${escapeHTML(foundTextInObject)}</p>`;
-                        }
-                    } else if (item.tipo === 'imagem' && item.url) {
-                        itemHtml = `<figure><img src="${escapeHTML(item.url)}" style="max-width:100%;"><figcaption>${escapeHTML(item.legenda || '')}</figcaption></figure>`;
-                    }
-                }
-                fullBodyHtml += itemHtml;
-            });
-        }
+        docData.corpo.forEach((item) => {
+            let itemHtml = "";
+            if (typeof item === 'string') { itemHtml = item; } 
+            else if (typeof item === 'object' && item !== null) {
+                const commonTextProperties = ['text', 'texto', 'content', 'html', 'body'];
+                let foundTextInObject = null;
+                for (const prop of commonTextProperties) { if (typeof item[prop] === 'string') { foundTextInObject = item[prop]; break; } }
+                if (foundTextInObject) { itemHtml = (item.html || item.innerHTML) ? foundTextInObject : `<p>${escapeHTML(foundTextInObject)}</p>`; }
+                else if (item.tipo === 'imagem' && item.url) { itemHtml = `<figure><img src="${escapeHTML(item.url)}" style="max-width:100%;"><figcaption>${escapeHTML(item.legenda || '')}</figcaption></figure>`; }
+            }
+            fullBodyHtml += itemHtml;
+        });
     }
 
-    // Processa delimitadores de capítulos
     if (typeof fullBodyHtml === 'string') {
          fullBodyHtml = fullBodyHtml.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);
     }
-    
     selectedDocBodyEl.innerHTML = fullBodyHtml;
 
-    // Inserção de Marcadores [n] nos Spans de Texto Referenciado
-    const refTextSpans = Array.from(selectedDocBodyEl.querySelectorAll('span.referenced-text[data-ref-id]'));
-    refTextSpans.forEach(span => {
-        const refId = span.dataset.refId;
+    const refElements = Array.from(selectedDocBodyEl.querySelectorAll('span.referenced-text[data-ref-id], ref[data-ref-id]'));
+    refElements.forEach(el => {
+        const refId = el.dataset.refId;
         if (currentDocReferencesMap[refId]) {
             if (!encounteredRefIdsForNumbering[refId]) {
                 encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
@@ -834,62 +816,99 @@ sup.ref-marker-popup:hover a {
             supElement.className = 'ref-marker-popup'; 
             supElement.dataset.refId = refId;
             supElement.innerHTML = `[<a>${displayNumber}</a>]`;
-            span.parentNode.insertBefore(supElement, span.nextSibling);
-            
-            // Limpa estilos vindos do editor para manter a leitura limpa
-            span.style.backgroundColor='transparent'; 
-            span.style.color='inherit';
+            if (el.tagName.toLowerCase() === 'ref') {
+                el.parentNode.replaceChild(supElement, el);
+            } else {
+                el.parentNode.insertBefore(supElement, el.nextSibling);
+                el.style.backgroundColor='transparent'; el.style.color='inherit';
+            }
         }
     });
 
-    // Inserção de Marcadores em tags <ref> vazias
-    const placeholderRefTags = Array.from(selectedDocBodyEl.querySelectorAll('ref[data-ref-id]'));
-    placeholderRefTags.forEach(tag => {
-        const refId = tag.dataset.refId;
-        if (currentDocReferencesMap[refId]) {
-            if (!encounteredRefIdsForNumbering[refId]) {
-                encounteredRefIdsForNumbering[refId] = referenceDisplayCounter++;
-                currentDocReferencesMap[refId].displayNumber = encounteredRefIdsForNumbering[refId];
+    // --- LÓGICA DE CONTAGEM MELHORADA ---
+    const totalRefsInList = referenceDisplayCounter - 1; 
+    const uniquePublications = new Set();
+
+    const getPublicationKey = (url) => {
+        try {
+            // Remove espaços em branco
+            url = url.trim();
+            const urlObj = new URL(url);
+
+            // TIPO 1: JW.ORG FINDER (Baseado em docid + wtlocale conforme solicitado)
+            if (urlObj.hostname.includes('jw.org') && urlObj.searchParams.has('docid')) {
+                const docid = urlObj.searchParams.get('docid');
+                const locale = urlObj.searchParams.get('wtlocale') || 'default';
+                return `finder-${locale}-${docid}`;
             }
-            const displayNumber = encounteredRefIdsForNumbering[refId];
-            const supElement = document.createElement('sup');
-            supElement.className = 'ref-marker-popup'; 
-            supElement.dataset.refId = refId;
-            supElement.innerHTML = `[<a>${displayNumber}</a>]`;
-            tag.parentNode.replaceChild(supElement, tag);
-        } else { tag.remove(); }
+
+            // TIPO 2: WOL.JW.ORG 
+            // O pathname extrai: /pt/wol/d/r5/lp-t/202023419
+            // Ele ignora automaticamente o "?" e o "#"
+            if (urlObj.hostname.includes('wol.jw.org')) {
+                let cleanPath = urlObj.pathname;
+                if (cleanPath.endsWith('/')) cleanPath = cleanPath.slice(0, -1);
+                return `wol-${cleanPath}`;
+            }
+
+            // TIPO 3: OUTROS LINKS
+            // Remove apenas fragmentos e queries genéricas
+            return url.split('#')[0].split('?')[0];
+        } catch (e) { 
+            // Fallback caso não seja uma URL válida: remove o que vier após ? ou # manualmente
+            return url.split('#')[0].split('?')[0].trim(); 
+        }
+    };
+
+    // Processa os links das referências que foram numeradas no texto
+    Object.keys(encounteredRefIdsForNumbering).forEach(refId => {
+        const refData = currentDocReferencesMap[refId];
+        if (refData && refData.urls) {
+            refData.urls.forEach(url => {
+                const key = getPublicationKey(url);
+                if (key) uniquePublications.add(key);
+            });
+        }
     });
 
-    // Limpeza de cursores e estados de edição
-    cursorIndicatorEl = null;
-    selectedDocBodyEl.querySelectorAll('[contenteditable="true"]').forEach(el => el.removeAttribute('contenteditable'));
-    
-    // Renderização da Lista de Referências no Final
+    const uniqueCount = uniquePublications.size;
+
     const references = docData.referencias || [];
-    if (references.length === 0 || Object.values(currentDocReferencesMap).every(ref => ref.displayNumber === 0)) {
+    if (references.length === 0 || totalRefsInList === 0) {
         referencesContainerEl.style.display = 'none'; 
-        referencesListEl.innerHTML = '';
     } else {
         referencesContainerEl.style.display = 'block'; 
+        const h3Header = referencesContainerEl.querySelector('h3');
+        if (h3Header) {
+            h3Header.innerHTML = `Referências 
+                <span style="font-size: 0.75em; color: #888; font-weight: normal; margin-left: 10px;">
+                    (${totalRefsInList} total) ; (${uniqueCount} únicas)
+                </span>`;
+        }
+
         referencesListEl.innerHTML = "";
         const sortedRefs = references
             .filter(ref => ref && ref.id && currentDocReferencesMap[ref.id] && currentDocReferencesMap[ref.id].displayNumber > 0)
             .sort((a,b) => currentDocReferencesMap[a.id].displayNumber - currentDocReferencesMap[b.id].displayNumber);
             
-        sortedRefs.forEach(ref => {
-            const refDetails = currentDocReferencesMap[ref.id];
-            const li = document.createElement('li'); 
-            li.className = 'reference-item-atril';
-            li.setAttribute('data-ref-id', escapeHTML(ref.id));
-            
-            li.innerHTML = `
-                <span class="ref-title-atril"><sup>[${refDetails.displayNumber}]</sup> ${escapeHTML(refDetails.titulo)}</span>
-                ${refDetails.urls.map(url => `
-                    <div class="ref-url-item-atril"><a href="${url}" target="_blank">${escapeHTML(url)}</a></div>
-                `).join('')}
-            `;
-            referencesListEl.appendChild(li);
-        });
+    sortedRefs.forEach(ref => {
+    const refDetails = currentDocReferencesMap[ref.id];
+    const li = document.createElement('li'); 
+    li.className = 'reference-item-atril';
+    li.setAttribute('data-ref-id', escapeHTML(ref.id));
+    
+    // Aqui garantimos que pegamos o texto da URL
+    const linksHtml = refDetails.urls.map(url => {
+        const urlStr = typeof url === 'string' ? url : url.url; // Segurança extra
+        return `<div class="ref-url-item-atril"><a href="${urlStr}" target="_blank">${escapeHTML(urlStr)}</a></div>`;
+    }).join('');
+
+    li.innerHTML = `
+        <span class="ref-title-atril"><sup>[${refDetails.displayNumber}]</sup> ${escapeHTML(refDetails.titulo)}</span>
+        ${linksHtml}
+    `;
+    referencesListEl.appendChild(li);
+});
     }
 
     applyFontSize(currentFontSizePercent);
@@ -1100,24 +1119,36 @@ sup.ref-marker-popup:hover a {
         
         if(referencePopupCloseBtn) { referencePopupCloseBtn.addEventListener('click', (e) => { e.stopPropagation(); hideReferencePopup(); }); }
         
-        referencesListEl.addEventListener('click', (event) => {
-            const clickedListItem = event.target.closest('li.reference-item-atril[data-ref-id]');
-            if (clickedListItem) {
-                const refIdToFind = clickedListItem.dataset.refId;
-                const firstMarkerInBody = selectedDocBodyEl.querySelector(`sup.ref-marker-popup[data-ref-id="${refIdToFind}"]`);
-                if (firstMarkerInBody) {
-                    selectedDocBodyEl.querySelectorAll('.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll'));
-                    referencesListEl.querySelectorAll('li.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll'));
-                    firstMarkerInBody.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    firstMarkerInBody.classList.add('atril-highlight-scroll'); clickedListItem.classList.add('atril-highlight-scroll');
-                    firstMarkerInBody.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                    setTimeout(() => {
-                        if (firstMarkerInBody) firstMarkerInBody.classList.remove('atril-highlight-scroll');
-                        if (clickedListItem) clickedListItem.classList.remove('atril-highlight-scroll');
-                    }, 3000);
-                }
-            }
-        });
+    referencesListEl.addEventListener('click', (event) => {
+    // SE CLICOU NO LINK (URL), não faz scroll, deixa o navegador abrir a aba nova.
+    if (event.target.tagName.toLowerCase() === 'a') {
+        return; 
+    }
+
+    // Se clicou no título ou no fundo do item, aí sim faz o scroll para o texto
+    const clickedListItem = event.target.closest('li.reference-item-atril[data-ref-id]');
+    if (clickedListItem) {
+        const refIdToFind = clickedListItem.dataset.refId;
+        const firstMarkerInBody = selectedDocBodyEl.querySelector(`sup.ref-marker-popup[data-ref-id="${refIdToFind}"]`);
+        
+        if (firstMarkerInBody) {
+            selectedDocBodyEl.querySelectorAll('.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll'));
+            referencesListEl.querySelectorAll('li.atril-highlight-scroll').forEach(el => el.classList.remove('atril-highlight-scroll'));
+            
+            firstMarkerInBody.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstMarkerInBody.classList.add('atril-highlight-scroll'); 
+            clickedListItem.classList.add('atril-highlight-scroll');
+            
+            // Simula clique para abrir o popup de referência no local do texto
+            firstMarkerInBody.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            
+            setTimeout(() => {
+                if (firstMarkerInBody) firstMarkerInBody.classList.remove('atril-highlight-scroll');
+                if (clickedListItem) clickedListItem.classList.remove('atril-highlight-scroll');
+            }, 3000);
+        }
+    }
+});
         
         function showSettingsPopup() { settingsPopup.style.visibility = 'visible'; settingsPopup.style.opacity = '1'; }
         function hideSettingsPopup() { settingsPopup.style.opacity = '0'; settingsPopup.style.visibility = 'hidden'; }
@@ -1285,6 +1316,67 @@ document.getElementById('shareDocBtn').addEventListener('click', () => {
     }
 });
 
+// --- LÓGICA PARA COPIAR JSON ---
+const copyJsonBtn = document.getElementById('copyJsonBtn');
+
+copyJsonBtn.addEventListener('click', async () => {
+    if (!displayedDocId || !allDocumentsData[displayedDocId]) {
+        alert("Por favor, selecione um documento primeiro.");
+        return;
+    }
+
+    const docData = allDocumentsData[displayedDocId];
+    
+    // 1. Pega o corpo do texto exatamente como o usuário vê (incluindo os números [1], [2], etc)
+    // Usamos innerText porque ele respeita quebras de linha e captura o conteúdo dos <sup>
+    const corpoTextoFormatado = selectedDocBodyEl.innerText;
+
+    // 2. Coleta apenas as referências que estão sendo usadas (com displayNumber > 0)
+    const exportRefs = [];
+    for (const refId in currentDocReferencesMap) {
+        const ref = currentDocReferencesMap[refId];
+        if (ref.displayNumber > 0) {
+            exportRefs.push({
+                numero: ref.displayNumber,
+                titulo: ref.titulo,
+                links: ref.urls.map(u => (typeof u === 'string' ? u : u.url))
+            });
+        }
+    }
+
+    // Ordena as referências por número para ficar organizado
+    exportRefs.sort((a, b) => a.numero - b.numero);
+
+    // 3. Monta o objeto final
+    const exportObj = {
+        titulo: docData.titulo,
+        corpo: corpoTextoFormatado,
+        referencias: exportRefs,
+        exportadoEm: new Date().toLocaleString()
+    };
+
+    // 4. Converte para texto JSON e copia para a área de transferência
+    try {
+        const jsonStr = JSON.stringify(exportObj, null, 4); // Indentação de 4 espaços
+        await navigator.clipboard.writeText(jsonStr);
+        
+        // Feedback visual no botão
+        const originalText = copyJsonBtn.textContent;
+        const originalBg = copyJsonBtn.style.backgroundColor;
+        
+        copyJsonBtn.textContent = "✅ JSON Copiado!";
+        copyJsonBtn.style.backgroundColor = "#4CAF50";
+        
+        setTimeout(() => {
+            copyJsonBtn.textContent = originalText;
+            copyJsonBtn.style.backgroundColor = originalBg;
+        }, 2000);
+        
+    } catch (err) {
+        console.error('Erro ao copiar JSON:', err);
+        alert("Falha ao copiar para a área de transferência. Verifique as permissões do navegador.");
+    }
+});
 
     </script>
 </body>

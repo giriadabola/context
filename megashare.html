@@ -25,14 +25,13 @@
         }
         #selected-doc-title {
             font-size: 2.2em;
-            margin-bottom: 10px; /* Reduzi para dar espaço aos botões */
+            margin-bottom: 10px;
             color: #e0e0e0;
             border-bottom: 2px solid #3a7ca5;
             padding-bottom: 15px;
             font-weight: bold;
         }
 
-        /* --- CONTROLES DE FONTE --- */
         #font-controls {
             display: flex;
             align-items: center;
@@ -52,27 +51,26 @@
             transition: background 0.2s;
         }
         .font-btn:hover { background: #444; }
-        .font-btn:active { background: #3a7ca5; }
 
-        /* --- CORPO DO DOCUMENTO (FONT DINÂMICA) --- */
         #selected-doc-body {
-            font-size: 17px; /* Tamanho Base */
+            font-size: 17px;
         }
         #selected-doc-body p {
             margin-top: 0;
             margin-bottom: 12px; 
             line-height: 1.8;
-            font-size: 1em; /* Herda do pai e escala */
+            font-size: 1em;
             text-align: justify;
         }
 
+        /* --- ESTILO DO SUBTEMA COM GAP VISUAL AUMENTADO --- */
         .atril-subheading {
             display: block;
-            font-size: 1.4em; /* Escala baseada no tamanho do pai */
+            font-size: 1.4em;
             font-weight: bold;
             color: #e0e0e0;
-            margin-top: 25px;    
-            margin-bottom: 10px;  
+            margin-top: 45px;    /* Espaço maior para separar do parágrafo anterior */
+            margin-bottom: 12px;  /* Espaço normal para o texto seguinte */
             text-align: left;
             border-left: 5px solid #3a7ca5;
             padding-left: 15px;
@@ -121,7 +119,7 @@
         #referencePopupUrls a:last-child { border-bottom: none; }
 
         #selected-doc-references-container {
-            margin-top: 40px;
+            margin-top: 50px;
             border-top: 1px solid #444;
             padding-top: 20px;
         }
@@ -140,7 +138,6 @@
     <div id="container">
         <h1 id="selected-doc-title">Carregando...</h1>
         
-        <!-- BOTOES DE CONTROLE DE FONTE -->
         <div id="font-controls">
             <span>Tamanho do texto:</span>
             <button class="font-btn" id="decFont">A -</button>
@@ -167,22 +164,14 @@
         const refPopup = document.getElementById('referencePopup');
         let referencesMap = {};
         
-        // LÓGICA DE TAMANHO DE FONTE
         let baseFontSize = 17;
         let currentPercent = 100;
 
         document.getElementById('incFont').onclick = () => {
-            if (currentPercent < 200) {
-                currentPercent += 10;
-                updateFontSize();
-            }
+            if (currentPercent < 200) { currentPercent += 10; updateFontSize(); }
         };
-
         document.getElementById('decFont').onclick = () => {
-            if (currentPercent > 70) {
-                currentPercent -= 10;
-                updateFontSize();
-            }
+            if (currentPercent > 70) { currentPercent -= 10; updateFontSize(); }
         };
 
         function updateFontSize() {
@@ -196,7 +185,6 @@
                 const data = await response.json();
                 renderDocument(data);
             } catch (error) {
-                console.error("Erro:", error);
                 document.getElementById('selected-doc-title').textContent = "Erro ao carregar js/ep1.json";
             }
         }
@@ -247,11 +235,10 @@
                     const markerRect = marker.getBoundingClientRect();
                     const containerRect = containerEl.getBoundingClientRect();
                     let left = markerRect.left - containerRect.left;
-                    const padding = 20;
-                    if (left + popupWidth > containerRect.width - padding) { left = containerRect.width - popupWidth - padding; }
-                    if (left < padding) left = padding;
+                    if (left + popupWidth > containerRect.width - 20) { left = containerRect.width - popupWidth - 20; }
+                    if (left < 20) left = 20;
                     let top = markerRect.bottom - containerRect.top + 10;
-                    if (markerRect.bottom + popupHeight + padding > window.innerHeight) { top = (markerRect.top - containerRect.top) - popupHeight - 10; }
+                    if (markerRect.bottom + popupHeight + 20 > window.innerHeight) { top = (markerRect.top - containerRect.top) - popupHeight - 10; }
                     refPopup.style.left = left + 'px';
                     refPopup.style.top = top + 'px';
                 }

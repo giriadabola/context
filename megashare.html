@@ -35,7 +35,7 @@
         /* --- CONTROLE DE ESPAÇAMENTO DOS PARÁGRAFOS --- */
         #selected-doc-body p {
             margin-top: 0;
-            margin-bottom: 12px; /* Espaço pequeno e fixo entre parágrafos */
+            margin-bottom: 12px; 
             line-height: 1.8;
             font-size: 17px;
             text-align: justify;
@@ -47,8 +47,8 @@
             font-size: 1.4em;
             font-weight: bold;
             color: #e0e0e0;
-            margin-top: 25px;    /* Espaço reduzido antes do subtema */
-            margin-bottom: 10px;  /* Espaço reduzido depois do subtema */
+            margin-top: 25px;    
+            margin-bottom: 10px;  
             text-align: left;
             border-left: 5px solid #3a7ca5;
             padding-left: 15px;
@@ -68,6 +68,7 @@
             vertical-align: super;
         }
 
+        /* --- POPUP CORRIGIDO --- */
         #referencePopup {
             position: absolute;
             display: none;
@@ -81,9 +82,33 @@
             width: 320px;
             font-size: 0.95em;
             box-sizing: border-box;
+            overflow-wrap: break-word; /* Garante que o texto quebre */
         }
-        #referencePopupTitle { font-weight: bold; margin-bottom: 10px; color: #b0c4de; border-bottom: 1px solid #444; padding-bottom: 8px; }
+        #referencePopupTitle { 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            color: #b0c4de; 
+            border-bottom: 1px solid #444; 
+            padding-bottom: 8px;
+            line-height: 1.3;
+        }
         
+        #referencePopupUrls a {
+            display: block;
+            color: #87cefa;
+            text-decoration: none;
+            margin-top: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px dotted #555;
+            
+            /* Lógica para quebrar links longos */
+            word-break: break-all;     /* Quebra em qualquer caractere */
+            overflow-wrap: break-word; /* Quebra apenas se necessário */
+            white-space: normal;       /* Permite múltiplas linhas */
+            line-height: 1.4;
+        }
+        #referencePopupUrls a:last-child { border-bottom: none; }
+
         #selected-doc-references-container {
             margin-top: 40px;
             border-top: 1px solid #444;
@@ -96,6 +121,7 @@
             margin-bottom: 12px;
             border-radius: 8px;
             border: 1px solid #333;
+            overflow-wrap: break-word; /* Também protege a lista final */
         }
     </style>
 </head>
@@ -136,44 +162,37 @@
             document.getElementById('selected-doc-title').textContent = data.titulo;
             data.referencias.forEach(ref => { referencesMap[ref.numero] = ref; });
 
-            // 1. Limpeza de espaços: remove white-space: pre-wrap e processa linhas individualmente
             const lines = data.corpo.split('\n');
             const processedHtml = lines.map(line => {
                 const trimmed = line.trim();
-                
-                // Ignora linhas totalmente vazias para evitar buracos no texto
                 if (!trimmed) return ""; 
 
-                // Deteta SUBTEMA
                 if (trimmed.length > 4 && trimmed === trimmed.toUpperCase() && /[A-ZÀ-Ú]/.test(trimmed)) {
                     return `<div class="atril-subheading">${trimmed}</div>`;
                 }
                 
-                // Texto normal (Parágrafo) + Processa Marcadores [n]
                 const content = trimmed.replace(/\[(\d+)\]/g, (match, numero) => {
                     return `<sup class="ref-marker-popup" data-ref-num="${numero}">[${numero}]</sup>`;
                 });
                 
                 return `<p>${content}</p>`;
-            }).filter(html => html !== "").join(''); // Remove os itens vazios do array antes de juntar
+            }).filter(html => html !== "").join('');
 
             bodyEl.innerHTML = processedHtml;
 
-            // 2. Renderiza a lista de referências ao final
             if (data.referencias && data.referencias.length > 0) {
                 const listContainer = document.getElementById('selected-doc-references-container');
                 const listUl = document.getElementById('selected-doc-references-list');
                 listContainer.style.display = 'block';
                 data.referencias.forEach(ref => {
                     const li = document.createElement('li');
-                    let urlsHtml = ref.links.map(link => `<div><a href="${link}" target="_blank" style="color:#87cefa; text-decoration:none;">${link}</a></div>`).join('');
+                    let urlsHtml = ref.links.map(link => `<div><a href="${link}" target="_blank" style="color:#87cefa; text-decoration:none; word-break: break-all;">${link}</a></div>`).join('');
                     li.innerHTML = `<span style="color:#3a7ca5; font-weight:bold;">[${ref.numero}]</span> <strong>${ref.titulo}</strong><div style="margin-top:8px;">${urlsHtml}</div>`;
                     listUl.appendChild(li);
                 });
             }
         }
 
-        // Lógica de Popup (mantida a mesma que ajusta à extremidade da página)
         document.addEventListener('click', (e) => {
             const marker = e.target.closest('.ref-marker-popup');
             if (marker) {
@@ -181,7 +200,7 @@
                 const ref = referencesMap[num];
                 if (ref) {
                     document.getElementById('referencePopupTitle').textContent = `[${ref.numero}] ${ref.titulo}`;
-                    document.getElementById('referencePopupUrls').innerHTML = ref.links.map(l => `<a href="${l}" target="_blank" style="color:#87cefa; text-decoration:none; display:block; margin-top:5px;">${l}</a>`).join('');
+                    document.getElementById('referencePopupUrls').innerHTML = ref.links.map(l => `<a href="${l}" target="_blank">${l}</a>`).join('');
                     
                     refPopup.style.display = 'block';
                     

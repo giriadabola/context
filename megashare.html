@@ -20,7 +20,8 @@
             width: 100%;
             max-width: 800px;
             padding: 40px 20px;
-            position: relative;
+            position: relative; /* Necessário para o popup se posicionar em relação ao container */
+            box-sizing: border-box;
         }
         #selected-doc-title {
             font-size: 2.2em;
@@ -34,10 +35,9 @@
             font-size: 17px;
             margin-bottom: 40px;
             text-align: justify;
-            white-space: pre-wrap; /* Mantém as quebras de linha do JSON */
+            white-space: pre-wrap; 
         }
         
-        /* Estilo para Subtítulos detetados automaticamente */
         .atril-subheading {
             display: block;
             font-size: 1.3em;
@@ -48,7 +48,6 @@
             text-align: left;
         }
 
-        /* Estilo para os Marcadores [n] transformados em botões */
         sup.ref-marker-popup {
             cursor: pointer;
             color: #7aa0c7;
@@ -58,11 +57,7 @@
             padding: 0 4px;
             border-radius: 3px;
             margin: 0 2px;
-            transition: background 0.2s;
-        }
-        sup.ref-marker-popup:hover {
-            background: rgba(58, 124, 165, 0.3);
-            color: #fff;
+            display: inline-block;
         }
 
         #referencePopup {
@@ -75,10 +70,11 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             z-index: 1000;
             padding: 15px;
-            width: 300px;
+            width: 300px; /* Largura fixa para facilitar o cálculo */
             font-size: 0.9em;
+            box-sizing: border-box;
         }
-        #referencePopupTitle { font-weight: bold; margin-bottom: 8px; color: #b0c4de; }
+        #referencePopupTitle { font-weight: bold; margin-bottom: 8px; color: #b0c4de; border-bottom: 1px solid #444; padding-bottom: 5px; }
         #referencePopupUrls a {
             display: block;
             color: #87cefa;
@@ -123,12 +119,12 @@
 
     <script>
         const bodyEl = document.getElementById('selected-doc-body');
+        const containerEl = document.getElementById('container');
         const refPopup = document.getElementById('referencePopup');
         let referencesMap = {};
 
         async function loadLocalJson() {
             try {
-                // PUXA O ARQUIVO ESPECIFICADO
                 const response = await fetch('js/ep1.json');
                 const data = await response.json();
                 renderDocument(data);
@@ -140,29 +136,17 @@
 
         function renderDocument(data) {
             document.getElementById('selected-doc-title').textContent = data.titulo;
-            
-            // 1. Mapeia as referências para busca rápida
-            data.referencias.forEach(ref => {
-                referencesMap[ref.numero] = ref;
-            });
+            data.referencias.forEach(ref => { referencesMap[ref.numero] = ref; });
 
-            // 2. Processa o corpo do texto
             let texto = data.corpo;
-
-            // Transforma padrões [n] em elementos HTML clicáveis
-            // O Regex procura por colchetes com números: [1], [22], etc.
             texto = texto.replace(/\[(\d+)\]/g, (match, numero) => {
                 return `<sup class="ref-marker-popup" data-ref-num="${numero}">[${numero}]</sup>`;
             });
-
             bodyEl.innerHTML = texto;
 
-            // 3. Deteta Subtítulos (Linhas em CAPS LOCK)
-            // Como usamos white-space: pre-wrap, vamos processar os nós de texto
             const lines = bodyEl.innerHTML.split('\n');
             const processedLines = lines.map(line => {
                 const trimmed = line.trim();
-                // Se a linha for toda maiúscula e tiver mais de 4 caracteres
                 if (trimmed.length > 4 && trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed)) {
                     return `<span class="atril-subheading">${trimmed}</span>`;
                 }
@@ -170,24 +154,23 @@
             });
             bodyEl.innerHTML = processedLines.join('\n');
 
-            // 4. Renderiza a lista de referências ao final
             if (data.referencias && data.referencias.length > 0) {
                 const listContainer = document.getElementById('selected-doc-references-container');
                 const listUl = document.getElementById('selected-doc-references-list');
                 listContainer.style.display = 'block';
-                
                 data.referencias.forEach(ref => {
                     const li = document.createElement('li');
-                    let urlsHtml = ref.links.map(link => `<div><a href="${link}" target="_blank" style="color:#87cefa; text-decoration:none; font-size:0.9em;">${link}</a></div>`).join('');
+                    let urlsHtml = ref.links.map(link => `<div><a href="${link}" target="_blank">${link}</a></div>`).join('');
                     li.innerHTML = `<span class="ref-num-list">[${ref.numero}]</span> <strong>${ref.titulo}</strong><div style="margin-top:8px;">${urlsHtml}</div>`;
                     listUl.appendChild(li);
                 });
             }
         }
 
-        // Evento para abrir o Popup ao clicar no [n]
+        // --- LÓGICA DE POSICIONAMENTO DO POPUP ---
         document.addEventListener('click', (e) => {
             const marker = e.target.closest('.ref-marker-popup');
+            
             if (marker) {
                 const num = marker.dataset.refNum;
                 const ref = referencesMap[num];
@@ -196,12 +179,38 @@
                     document.getElementById('referencePopupTitle').textContent = `[${ref.numero}] ${ref.titulo}`;
                     document.getElementById('referencePopupUrls').innerHTML = ref.links.map(l => `<a href="${l}" target="_blank">${l}</a>`).join('');
                     
+                    // 1. Mostra o popup para conseguir medir o seu tamanho
                     refPopup.style.display = 'block';
                     
-                    // Posicionamento básico do popup
-                    const rect = marker.getBoundingClientRect();
-                    refPopup.style.top = (window.scrollY + rect.bottom + 10) + 'px';
-                    refPopup.style.left = Math.min(rect.left, window.innerWidth - 320) + 'px';
+                    const popupWidth = refPopup.offsetWidth;
+                    const popupHeight = refPopup.offsetHeight;
+                    const markerRect = marker.getBoundingClientRect();
+                    const containerRect = containerEl.getBoundingClientRect();
+                    
+                    // 2. Cálculo da posição Horizontal (Left)
+                    // Tenta alinhar o popup com o marcador
+                    let left = markerRect.left - containerRect.left;
+                    
+                    // Se o popup sair pela direita do container, empurra-o para a esquerda
+                    const padding = 20; // Margem de segurança
+                    if (left + popupWidth > containerRect.width - padding) {
+                        left = containerRect.width - popupWidth - padding;
+                    }
+                    
+                    // Se o popup sair pela esquerda (marcador muito à esquerda), empurra-o para a direita
+                    if (left < padding) left = padding;
+
+                    // 3. Cálculo da posição Vertical (Top)
+                    // Tenta colocar abaixo do marcador
+                    let top = markerRect.bottom - containerRect.top + 10;
+                    
+                    // Se o popup sair pelo fundo da janela (viewport), coloca-o ACIMA do marcador
+                    if (markerRect.bottom + popupHeight + padding > window.innerHeight) {
+                        top = (markerRect.top - containerRect.top) - popupHeight - 10;
+                    }
+
+                    refPopup.style.left = left + 'px';
+                    refPopup.style.top = top + 'px';
                 }
             } else if (!e.target.closest('#referencePopup')) {
                 refPopup.style.display = 'none';

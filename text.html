@@ -825,14 +825,20 @@ body {
     </div>
 
     <!-- Formulário para nova mídia (escondido) -->
-    <div id="mediaForm" style="display: none; background: var(--tertiary-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--accent-color); margin-bottom: 20px;">
-        <h4 id="mediaFormTitle" style="margin: 0 0 10px 0; font-size: 0.9em;">Adicionar</h4>
-        <input type="url" id="mediaUrlInput" placeholder="Cole a URL aqui..." style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box;">
-        <div style="display: flex; gap: 5px; margin-top: 10px;">
-            <button id="saveMediaBtn" style="flex:1; background: #4CAF50; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Salvar</button>
-            <button id="cancelMediaBtn" style="flex:1; background: #555; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Cancelar</button>
-        </div>
+   <div id="mediaForm" style="display: none; background: var(--tertiary-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--accent-color); margin-bottom: 20px;">
+    <h4 id="mediaFormTitle" style="margin: 0 0 10px 0; font-size: 0.9em;">Adicionar</h4>
+    
+    <label style="font-size: 0.7em; color: #888;">URL da Imagem/Vídeo:</label>
+    <input type="url" id="mediaUrlInput" placeholder="https://..." style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;">
+    
+    <label style="font-size: 0.7em; color: #888;">Link da Fonte (Página Original):</label>
+    <input type="url" id="mediaSourceUrlInput" placeholder="https://site-original.com/pagina" style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box;">
+    
+    <div style="display: flex; gap: 5px; margin-top: 10px;">
+        <button id="saveMediaBtn" style="flex:1; background: #4CAF50; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Salvar</button>
+        <button id="cancelMediaBtn" style="flex:1; background: #555; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Cancelar</button>
     </div>
+</div>
 
     <!-- Container das Mídias -->
     <div id="mediaGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
@@ -1358,13 +1364,15 @@ let editingMediaId = null;
 document.getElementById('addVideoBtn').onclick = () => openMediaForm('video');
 document.getElementById('addPhotoBtn').onclick = () => openMediaForm('foto');
 
-function openMediaForm(type, existingId = null, existingUrl = '') {
+function openMediaForm(type, existingId = null, existingUrl = '', existingSourceUrl = '') {
     currentMediaType = type;
     editingMediaId = existingId;
     mediaForm.style.display = 'block';
     document.getElementById('mediaFormTitle').textContent = (existingId ? 'Editar ' : 'Adicionar ') + (type === 'video' ? 'Vídeo' : 'Foto');
-    mediaUrlInput.value = existingUrl;
-    mediaUrlInput.focus();
+    
+    document.getElementById('mediaUrlInput').value = existingUrl;
+    document.getElementById('mediaSourceUrlInput').value = existingSourceUrl; // Novo campo
+    document.getElementById('mediaUrlInput').focus();
 }
 
 document.getElementById('cancelMediaBtn').onclick = () => {
@@ -1374,20 +1382,29 @@ document.getElementById('cancelMediaBtn').onclick = () => {
 
 // Salvar Mídia (Novo ou Editado)
 document.getElementById('saveMediaBtn').onclick = async () => {
-    const url = mediaUrlInput.value.trim();
+    const url = document.getElementById('mediaUrlInput').value.trim();
+    const sourceUrl = document.getElementById('mediaSourceUrlInput').value.trim(); // Novo valor
+
     if (!url) return alert("Insira uma URL válida.");
 
     try {
+        const mediaData = {
+            idpagina: currentDocId,
+            url: url,
+            linkFonte: sourceUrl, // Salvando no Firestore
+            tipo: currentMediaType,
+            criadoEm: serverTimestamp()
+        };
+
         if (editingMediaId) {
-            await updateDoc(doc(db, "multimedia", editingMediaId), { url: url });
-        } else {
-            await addDoc(collection(db, "multimedia"), {
-                idpagina: currentDocId,
-                url: url,
-                tipo: currentMediaType,
-                criadoEm: serverTimestamp()
+            await updateDoc(doc(db, "multimedia", editingMediaId), { 
+                url: url, 
+                linkFonte: sourceUrl 
             });
+        } else {
+            await addDoc(collection(db, "multimedia"), mediaData);
         }
+        
         mediaForm.style.display = 'none';
         editingMediaId = null;
         fetchMultimedia();
@@ -1418,28 +1435,41 @@ async function fetchMultimedia() {
             const data = d.data();
             const id = d.id;
             const card = document.createElement('div');
-            card.style = "background: #2a2a2a; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid #444;";
+            card.style = "background: #2a2a2a; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid #444; display: flex; flex-direction: column;";
 
-            // Define a imagem da miniatura
             let thumbUrl = data.url;
             if (data.tipo === 'video') {
                 const ytThumb = getYoutubeThumb(data.url);
                 thumbUrl = ytThumb || 'https://via.placeholder.com/150/000000/FFFFFF?text=Video';
             }
 
+            // Lógica para o botão de fonte (só aparece se houver linkFonte)
+            const sourceBtnHtml = data.linkFonte 
+                ? `<button class="visit-source-btn" onclick="window.open('${data.linkFonte}', '_blank')" title="Ver Fonte Original" style="background:none; border:none; color:#3a7ca5; cursor:pointer; font-size:0.9em;">🌐</button>`
+                : `<span style="width:20px;"></span>`; // Espaçador caso não tenha fonte
+
             card.innerHTML = `
                 <div style="width:100%; aspect-ratio: 16/9; overflow:hidden; background:#000; cursor:pointer;" onclick="window.open('${data.url}', '_blank')">
                     <img src="${thumbUrl}" style="width:100%; height:100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/150/000000/FFFFFF?text=Erro+Imagem'">
                     ${data.tipo === 'video' ? '<div style="position:absolute; top:35%; left:40%; font-size:20px; text-shadow: 0 0 10px black;">▶️</div>' : ''}
                 </div>
-                <div style="padding: 5px; display: flex; justify-content: space-between; background: #222;">
-                    <button class="edit-media-btn" style="background:none; border:none; color:#aaa; cursor:pointer; font-size:0.8em;">✏️</button>
-                    <button class="delete-media-btn" style="background:none; border:none; color:#d9534f; cursor:pointer; font-size:0.8em;">🗑️</button>
+                <div style="padding: 6px; display: flex; justify-content: space-between; align-items: center; background: #222; border-top: 1px solid #333;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="edit-media-btn" style="background:none; border:none; color:#aaa; cursor:pointer; font-size:0.9em;">✏️</button>
+                        ${sourceBtnHtml}
+                    </div>
+                    <button class="delete-media-btn" style="background:none; border:none; color:#d9534f; cursor:pointer; font-size:0.9em;">🗑️</button>
                 </div>
             `;
 
-            card.querySelector('.edit-media-btn').onclick = () => openMediaForm(data.tipo, id, data.url);
-            card.querySelector('.delete-media-btn').onclick = async () => {
+            // Configura os botões
+            card.querySelector('.edit-media-btn').onclick = (e) => {
+                e.stopPropagation();
+                openMediaForm(data.tipo, id, data.url, data.linkFonte || '');
+            };
+            
+            card.querySelector('.delete-media-btn').onclick = async (e) => {
+                e.stopPropagation();
                 if(confirm("Excluir mídia?")) {
                     await deleteDoc(doc(db, "multimedia", id));
                     fetchMultimedia();

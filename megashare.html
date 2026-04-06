@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atril - Visualizador JSON</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { color-scheme: dark light; }
         body {
@@ -31,7 +32,6 @@
             padding-bottom: 15px;
             font-weight: bold;
         }
-
         #font-controls {
             display: flex;
             align-items: center;
@@ -49,109 +49,78 @@
             cursor: pointer;
             font-weight: bold;
             transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .font-btn:hover { background: #444; }
 
-        #selected-doc-body {
-            font-size: 17px;
-        }
-        #selected-doc-body p {
-            margin-top: 0;
-            margin-bottom: 12px; 
-            line-height: 1.8;
-            font-size: 1em;
-            text-align: justify;
-        }
+        #selected-doc-body { font-size: 19px; }
+        #selected-doc-body p { margin-top: 0; margin-bottom: 15px; line-height: 1.8; text-align: justify; }
 
-        /* --- ESTILO DO SUBTEMA COM GAP VISUAL AUMENTADO --- */
         .atril-subheading {
             display: block;
-            font-size: 1.4em;
+            font-size: 1.8em;
             font-weight: bold;
             color: #e0e0e0;
-            margin-top: 45px;    /* Espaço maior para separar do parágrafo anterior */
-            margin-bottom: 12px;  /* Espaço normal para o texto seguinte */
+            margin-top: 70px;
+            margin-bottom: 15px;
             text-align: left;
-            border-left: 5px solid #3a7ca5;
-            padding-left: 15px;
-            line-height: 1.3;
+            border-left: 6px solid #3a7ca5;
+            padding-left: 18px;
+            line-height: 1.2;
+        }
+        /* Ajuste para referências dentro de subtítulos */
+        .atril-subheading sup.ref-marker-popup {
+            font-size: 0.6em;
+            color: #3a7ca5;
+            vertical-align: top;
+            margin-left: 4px;
         }
 
+        .atril-text-segment { transition: all 0.2s ease; border-bottom: 2px solid transparent; }
+        .atril-text-segment.active-underlined { background-color: rgba(58, 124, 165, 0.15); border-bottom: 2px solid #3a7ca5; color: #fff; }
+
         sup.ref-marker-popup {
-            cursor: pointer;
-            color: #7aa0c7;
-            font-size: 0.8em;
-            font-weight: bold;
-            background: rgba(58, 124, 165, 0.1);
-            padding: 0 4px;
-            border-radius: 3px;
-            margin: 0 2px;
-            display: inline-block;
-            vertical-align: super;
+            cursor: pointer; color: #7aa0c7; font-size: 0.7em; font-weight: normal; 
+            background: none; padding: 0; margin: 0 2px; display: inline-block; vertical-align: super;
         }
 
         #referencePopup {
-            position: absolute;
-            display: none;
-            background: #333;
-            color: #e0e0e0;
-            border: 1px solid #555;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-            z-index: 1000;
-            padding: 15px;
-            width: 320px;
-            font-size: 0.95em;
-            box-sizing: border-box;
-            overflow-wrap: break-word;
+            position: absolute; display: none; background: #333; color: #e0e0e0; border: 1px solid #555;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000; padding: 12px;
+            width: 280px; font-size: 0.7em; box-sizing: border-box; overflow-wrap: break-all;
         }
         #referencePopupTitle { font-weight: bold; margin-bottom: 10px; color: #b0c4de; border-bottom: 1px solid #444; padding-bottom: 8px; }
-        #referencePopupUrls a {
-            display: block;
-            color: #87cefa;
-            text-decoration: none;
-            margin-top: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px dotted #555;
-            word-break: break-all;
-            line-height: 1.4;
-        }
-        #referencePopupUrls a:last-child { border-bottom: none; }
+        #referencePopupUrls a { display: block; color: #87cefa; text-decoration: none; margin-top: 8px; word-break: break-all; }
 
-        #selected-doc-references-container {
-            margin-top: 50px;
-            border-top: 1px solid #444;
-            padding-top: 20px;
-        }
+        #selected-doc-references-container { margin-top: 50px; border-top: 1px solid #444; padding-top: 20px; }
         #selected-doc-references-list { list-style: none; padding: 0; }
-        #selected-doc-references-list li {
-            background: #252525;
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            overflow-wrap: break-word;
-        }
+        #selected-doc-references-list li { background: #252525; padding: 15px; margin-bottom: 12px; border-radius: 8px; font-size: 0.85em; }
     </style>
 </head>
 <body>
     <div id="container">
         <h1 id="selected-doc-title">Carregando...</h1>
-        
         <div id="font-controls">
             <span>Tamanho do texto:</span>
             <button class="font-btn" id="decFont">A -</button>
             <span id="fontPercent">100%</span>
             <button class="font-btn" id="incFont">A +</button>
+           <button class="font-btn" id="btnPdf" style="margin-left: auto; border-color: #3a7ca5;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+    <span>PDF</span>
+</button>
         </div>
-
         <div id="selected-doc-body"></div>
-        
         <div id="selected-doc-references-container" style="display:none;">
             <h3>Referências</h3>
             <ul id="selected-doc-references-list"></ul>
         </div>
-
         <div id="referencePopup">
             <div id="referencePopupTitle"></div>
             <div id="referencePopupUrls"></div>
@@ -163,15 +132,202 @@
         const containerEl = document.getElementById('container');
         const refPopup = document.getElementById('referencePopup');
         let referencesMap = {};
-        
-        let baseFontSize = 17;
+        let originalData = null;
+        let baseFontSize = 19; 
         let currentPercent = 100;
 
-        document.getElementById('incFont').onclick = () => {
-            if (currentPercent < 200) { currentPercent += 10; updateFontSize(); }
-        };
-        document.getElementById('decFont').onclick = () => {
-            if (currentPercent > 70) { currentPercent -= 10; updateFontSize(); }
+        document.getElementById('incFont').onclick = () => { if (currentPercent < 200) { currentPercent += 10; updateFontSize(); } };
+        document.getElementById('decFont').onclick = () => { if (currentPercent > 70) { currentPercent -= 10; updateFontSize(); } };
+
+        // --- GERADOR DE PDF ---
+ document.getElementById('btnPdf').onclick = async () => {
+            if (!originalData) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 20;
+            const maxLineWidth = pageWidth - (margin * 2);
+            let cursorY = 25;
+
+            const bodyFontSize = 14;
+            const superFontSize = 9; 
+            const superOffset = 3;   
+
+            const markersInBody = [];    
+            const refTargets = {};       
+            const refReturnTargets = {}; 
+
+            const drawWordWithStyle = (word, x, y) => {
+                const parts = word.split(/(\[\d+\])/g);
+                let currentX = x;
+
+                parts.forEach(part => {
+                    if (!part) return;
+                    const isMarker = /^\[\d+\]$/.test(part);
+                    
+                    if (isMarker) {
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(superFontSize);
+                        const num = part.match(/\d+/)[0];
+                        const w = doc.getTextWidth(part);
+                        const superY = y - superOffset;
+
+                        markersInBody.push({ 
+                            num, 
+                            page: doc.internal.getNumberOfPages(), 
+                            x: currentX, 
+                            y: superY - 4, 
+                            w, 
+                            h: 6 
+                        });
+                        if (!refReturnTargets[num]) {
+                            refReturnTargets[num] = { page: doc.internal.getNumberOfPages(), y: y - 7 };
+                        }
+                        
+                        doc.text(part, currentX, superY);
+                        currentX += w;
+                        doc.setFontSize(bodyFontSize);
+                    } else {
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(bodyFontSize);
+                        doc.text(part, currentX, y);
+                        currentX += doc.getTextWidth(part);
+                    }
+                });
+                return currentX - x;
+            };
+
+            const renderJustifiedLine = (text, x, y, width, isLastLine = false) => {
+                const words = text.split(/\s+/);
+                let currentX = x;
+
+                if (words.length <= 1 || isLastLine) {
+                    words.forEach((word, i) => {
+                        currentX += drawWordWithStyle(word, currentX, y);
+                        if (i < words.length - 1) currentX += 1.5;
+                    });
+                    return;
+                }
+
+                let totalWordsWidth = 0;
+                words.forEach(word => {
+                    const parts = word.split(/(\[\d+\])/g);
+                    parts.forEach(part => {
+                        if (!part) return;
+                        const isMarker = /^\[\d+\]$/.test(part);
+                        doc.setFont("helvetica", isMarker ? "bold" : "normal");
+                        doc.setFontSize(isMarker ? superFontSize : bodyFontSize);
+                        totalWordsWidth += doc.getTextWidth(part);
+                    });
+                });
+
+                const spaceWidth = (width - totalWordsWidth) / (words.length - 1);
+
+                words.forEach((word) => {
+                    const wordW = drawWordWithStyle(word, currentX, y);
+                    currentX += wordW + spaceWidth;
+                });
+            };
+
+            // 1. Título na Primeira Página
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            const titleLines = doc.splitTextToSize(originalData.titulo, maxLineWidth);
+            titleLines.forEach(l => {
+                doc.text(l, margin, cursorY);
+                cursorY += 10;
+            });
+            cursorY += 10;
+
+            // 2. Corpo do Texto
+            const paragraphs = originalData.corpo.split('\n');
+            paragraphs.forEach((p) => {
+                let content = p.trim();
+                if (!content) return;
+
+                const textOnly = content.replace(/\[\[|\]\]|\[\d+\]/g, "");
+                const isSub = textOnly.length > 4 && textOnly === textOnly.toUpperCase() && /[A-ZÀ-Ú]/.test(textOnly);
+
+                if (isSub) {
+                    // CADA SUBTEMA EM NOVA PÁGINA
+                    doc.addPage(); 
+                    cursorY = 25; // Reset para o topo da folha
+                    
+                    doc.setTextColor(58, 124, 165);
+                    doc.setFontSize(16);
+                    const cleanSub = content.replace(/\[\[(.*?)\]\]/g, '$1');
+                    renderJustifiedLine(cleanSub, margin, cursorY, maxLineWidth, true);
+                    cursorY += 12;
+                } else {
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(bodyFontSize);
+                    const cleanContent = content.replace(/\[\[(.*?)\]\]/g, '$1');
+                    const lines = doc.splitTextToSize(cleanContent, maxLineWidth);
+                    lines.forEach((line, index) => {
+                        if (cursorY > 275) { doc.addPage(); cursorY = 25; }
+                        renderJustifiedLine(line, margin, cursorY, maxLineWidth, index === lines.length - 1);
+                        cursorY += 8;
+                    });
+                    cursorY += 4;
+                }
+            });
+
+            // 3. Referências em Nova Página
+            doc.addPage();
+            cursorY = 25;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(0, 0, 0);
+            doc.text("Referências", margin, cursorY);
+            cursorY += 15;
+
+            originalData.referencias.forEach(ref => {
+                if (cursorY > 250) { doc.addPage(); cursorY = 25; }
+                refTargets[ref.numero] = { page: doc.internal.getNumberOfPages(), y: cursorY - 5 };
+
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(58, 124, 165);
+                const refTitle = `[${ref.numero}] ${ref.titulo}`;
+                doc.text(refTitle, margin, cursorY);
+
+                const backPos = refReturnTargets[ref.numero];
+                if (backPos) {
+                    doc.link(margin, cursorY - 5, maxLineWidth, 7, { 
+                        pageNumber: backPos.page, 
+                        top: backPos.y 
+                    });
+                }
+
+                cursorY += 7;
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(0, 0, 255);
+                ref.links.forEach(l => {
+                    const linkLines = doc.splitTextToSize(l, maxLineWidth - 10);
+                    linkLines.forEach(ll => {
+                        if (cursorY > 280) { doc.addPage(); cursorY = 25; }
+                        doc.text(ll, margin + 5, cursorY);
+                        doc.link(margin + 5, cursorY - 4, doc.getTextWidth(ll), 5, { url: l });
+                        cursorY += 6;
+                    });
+                });
+                doc.setTextColor(0, 0, 0);
+                cursorY += 6;
+            });
+
+            // 4. Aplicar Links de IDA
+            markersInBody.forEach(marker => {
+                const target = refTargets[marker.num];
+                if (target) {
+                    doc.setPage(marker.page);
+                    doc.link(marker.x, marker.y, marker.w, marker.h, { 
+                        pageNumber: target.page, 
+                        top: target.y 
+                    });
+                }
+            });
+
+            doc.save(`${originalData.titulo}.pdf`);
         };
 
         function updateFontSize() {
@@ -183,68 +339,59 @@
             try {
                 const response = await fetch('js/ep1.json');
                 const data = await response.json();
+                originalData = data;
                 renderDocument(data);
-            } catch (error) {
-                document.getElementById('selected-doc-title').textContent = "Erro ao carregar js/ep1.json";
-            }
+            } catch (e) { document.getElementById('selected-doc-title').textContent = "Erro ao carregar JSON"; }
         }
 
         function renderDocument(data) {
             document.getElementById('selected-doc-title').textContent = data.titulo;
             data.referencias.forEach(ref => { referencesMap[ref.numero] = ref; });
-
             const lines = data.corpo.split('\n');
-            const processedHtml = lines.map(line => {
-                const trimmed = line.trim();
-                if (!trimmed) return ""; 
-                if (trimmed.length > 4 && trimmed === trimmed.toUpperCase() && /[A-ZÀ-Ú]/.test(trimmed)) {
-                    return `<div class="atril-subheading">${trimmed}</div>`;
-                }
-                const content = trimmed.replace(/\[(\d+)\]/g, (match, numero) => {
-                    return `<sup class="ref-marker-popup" data-ref-num="${numero}">[${numero}]</sup>`;
-                });
-                return `<p>${content}</p>`;
-            }).filter(html => html !== "").join('');
-
-            bodyEl.innerHTML = processedHtml;
+            
+            bodyEl.innerHTML = lines.map(line => {
+                let content = line.trim();
+                if (!content) return "";
+                
+                // Primeiro identifica se é subtítulo (limpando tags temporariamente para o teste)
+                const textOnly = content.replace(/\[\[|\]\]|\[\d+\]/g, "");
+                const isSub = textOnly.length > 4 && textOnly === textOnly.toUpperCase() && /[A-ZÀ-Ú]/.test(textOnly);
+                
+                // Processa a formatação de referências ([[Texto]][Num] ou apenas [Num])
+                content = content.replace(/\[\[(.*?)\]\]\[(\d+)\]/g, `<span class="atril-text-segment" data-ref-link="$2">$1</span><sup class="ref-marker-popup" data-ref-num="$2">[$2]</sup>`);
+                content = content.replace(/(?<!<\/span>)\[(\d+)\]/g, `<sup class="ref-marker-popup" data-ref-num="$1">[$1]</sup>`);
+                
+                return isSub ? `<div class="atril-subheading">${content}</div>` : `<p>${content}</p>`;
+            }).filter(h => h !== "").join('');
 
             if (data.referencias && data.referencias.length > 0) {
-                const listContainer = document.getElementById('selected-doc-references-container');
+                document.getElementById('selected-doc-references-container').style.display = 'block';
                 const listUl = document.getElementById('selected-doc-references-list');
-                listContainer.style.display = 'block';
-                data.referencias.forEach(ref => {
-                    const li = document.createElement('li');
-                    let urlsHtml = ref.links.map(link => `<div><a href="${link}" target="_blank" style="color:#87cefa; text-decoration:none; word-break: break-all;">${link}</a></div>`).join('');
-                    li.innerHTML = `<span style="color:#3a7ca5; font-weight:bold;">[${ref.numero}]</span> <strong>${ref.titulo}</strong><div style="margin-top:8px;">${urlsHtml}</div>`;
-                    listUl.appendChild(li);
-                });
+                listUl.innerHTML = data.referencias.map(ref => `<li><span style="color:#3a7ca5; font-weight:bold;">[${ref.numero}]</span> <strong>${ref.titulo}</strong>${ref.links.map(l => `<div style="margin-top:5px;"><a href="${l}" target="_blank" style="color:#87cefa; text-decoration:none; word-break:break-all;">${l}</a></div>`).join('')}</li>`).join('');
             }
         }
 
         document.addEventListener('click', (e) => {
             const marker = e.target.closest('.ref-marker-popup');
+            document.querySelectorAll('.atril-text-segment').forEach(el => el.classList.remove('active-underlined'));
             if (marker) {
                 const num = marker.dataset.refNum;
+                const linkedText = document.querySelector(`.atril-text-segment[data-ref-link="${num}"]`);
+                if (linkedText) linkedText.classList.add('active-underlined');
                 const ref = referencesMap[num];
                 if (ref) {
                     document.getElementById('referencePopupTitle').textContent = `[${ref.numero}] ${ref.titulo}`;
                     document.getElementById('referencePopupUrls').innerHTML = ref.links.map(l => `<a href="${l}" target="_blank" style="color:#87cefa; text-decoration:none; display:block; margin-top:5px;">${l}</a>`).join('');
                     refPopup.style.display = 'block';
-                    const popupWidth = refPopup.offsetWidth;
-                    const popupHeight = refPopup.offsetHeight;
-                    const markerRect = marker.getBoundingClientRect();
-                    const containerRect = containerEl.getBoundingClientRect();
-                    let left = markerRect.left - containerRect.left;
-                    if (left + popupWidth > containerRect.width - 20) { left = containerRect.width - popupWidth - 20; }
-                    if (left < 20) left = 20;
-                    let top = markerRect.bottom - containerRect.top + 10;
-                    if (markerRect.bottom + popupHeight + 20 > window.innerHeight) { top = (markerRect.top - containerRect.top) - popupHeight - 10; }
-                    refPopup.style.left = left + 'px';
-                    refPopup.style.top = top + 'px';
+                    const rect = marker.getBoundingClientRect();
+                    const crect = containerEl.getBoundingClientRect();
+                    let left = rect.left - crect.left;
+                    if (left + 280 > crect.width) left = crect.width - 300;
+                    refPopup.style.left = Math.max(20, left) + 'px';
+                    refPopup.style.top = (rect.bottom - crect.top + 10) + 'px';
                 }
             } else if (!e.target.closest('#referencePopup')) { refPopup.style.display = 'none'; }
         });
-
         loadLocalJson();
     </script>
 </body>

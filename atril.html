@@ -788,19 +788,33 @@ function updateDisplayedDocument(docData) {
     if (typeof docData.corpo === 'string') {
         fullBodyHtml = docData.corpo;
     } else if (Array.isArray(docData.corpo)) {
-        docData.corpo.forEach((item) => {
-            let itemHtml = "";
-            if (typeof item === 'string') { itemHtml = item; } 
-            else if (typeof item === 'object' && item !== null) {
-                const commonTextProperties = ['text', 'texto', 'content', 'html', 'body'];
-                let foundTextInObject = null;
-                for (const prop of commonTextProperties) { if (typeof item[prop] === 'string') { foundTextInObject = item[prop]; break; } }
-                if (foundTextInObject) { itemHtml = (item.html || item.innerHTML) ? foundTextInObject : `<p>${escapeHTML(foundTextInObject)}</p>`; }
-                else if (item.tipo === 'imagem' && item.url) { itemHtml = `<figure><img src="${escapeHTML(item.url)}" style="max-width:100%;"><figcaption>${escapeHTML(item.legenda || '')}</figcaption></figure>`; }
+    docData.corpo.forEach((item) => {
+        // --- ADICIONE ESTA LINHA ABAIXO ---
+        if (item && item.isHidden === true) return; // Pula este item se estiver oculto
+        
+        let itemHtml = "";
+        if (typeof item === 'string') { 
+            itemHtml = item; 
+        } 
+        else if (typeof item === 'object' && item !== null) {
+            const commonTextProperties = ['text', 'texto', 'content', 'html', 'body'];
+            let foundTextInObject = null;
+            for (const prop of commonTextProperties) { 
+                if (typeof item[prop] === 'string') { 
+                    foundTextInObject = item[prop]; 
+                    break; 
+                } 
             }
-            fullBodyHtml += itemHtml;
-        });
-    }
+            if (foundTextInObject) { 
+                itemHtml = (item.html || item.innerHTML) ? foundTextInObject : `<p>${escapeHTML(foundTextInObject)}</p>`; 
+            }
+            else if (item.tipo === 'imagem' && item.url) { 
+                itemHtml = `<figure><img src="${escapeHTML(item.url)}" style="max-width:100%;"><figcaption>${escapeHTML(item.legenda || '')}</figcaption></figure>`; 
+            }
+        }
+        fullBodyHtml += itemHtml;
+    });
+}
 
     if (typeof fullBodyHtml === 'string') {
          fullBodyHtml = fullBodyHtml.split(CHAPTER_DELIMITER_STORAGE).join(CHAPTER_DELIMITER_VIEW);

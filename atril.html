@@ -760,25 +760,24 @@ function updateDisplayedDocument(docData) {
     let referenceDisplayCounter = 1;
     const encounteredRefIdsForNumbering = {};
 
-  if (docData.referencias && Array.isArray(docData.referencias)) {
-    docData.referencias.forEach(ref => {
-        if (ref && ref.id) {
-            // Lógica para extrair a URL independentemente do formato (Objeto ou String)
-            let rawUrls = [];
-            if (Array.isArray(ref.urls)) {
-                rawUrls = ref.urls.map(u => (typeof u === 'object' && u !== null) ? u.url : u);
-            } else if (ref.urlReferencia) {
-                rawUrls = [ref.urlReferencia];
-            }
+    if (docData.referencias && Array.isArray(docData.referencias)) {
+        docData.referencias.forEach(ref => {
+            if (ref && ref.id) {
+                let rawUrls = [];
+                if (Array.isArray(ref.urls)) {
+                    rawUrls = ref.urls.map(u => (typeof u === 'object' && u !== null) ? u.url : u);
+                } else if (ref.urlReferencia) {
+                    rawUrls = [ref.urlReferencia];
+                }
 
-            currentDocReferencesMap[ref.id] = {
-                titulo: ref.tituloReferencia || "Referência sem título",
-                urls: rawUrls.filter(u => typeof u === 'string' && u.trim() !== ''),
-                displayNumber: 0
-            };
-        }
-    });
-}
+                currentDocReferencesMap[ref.id] = {
+                    titulo: ref.tituloReferencia || "Referência sem título",
+                    urls: rawUrls.filter(u => typeof u === 'string' && u.trim() !== ''),
+                    displayNumber: 0
+                };
+            }
+        });
+    }
 
     let fullBodyHtml = "";
     if (typeof docData.corpo === 'string') {
@@ -825,42 +824,29 @@ function updateDisplayedDocument(docData) {
         }
     });
 
-    // --- LÓGICA DE CONTAGEM MELHORADA ---
     const totalRefsInList = referenceDisplayCounter - 1; 
     const uniquePublications = new Set();
 
     const getPublicationKey = (url) => {
         try {
-            // Remove espaços em branco
             url = url.trim();
             const urlObj = new URL(url);
-
-            // TIPO 1: JW.ORG FINDER (Baseado em docid + wtlocale conforme solicitado)
             if (urlObj.hostname.includes('jw.org') && urlObj.searchParams.has('docid')) {
                 const docid = urlObj.searchParams.get('docid');
                 const locale = urlObj.searchParams.get('wtlocale') || 'default';
                 return `finder-${locale}-${docid}`;
             }
-
-            // TIPO 2: WOL.JW.ORG 
-            // O pathname extrai: /pt/wol/d/r5/lp-t/202023419
-            // Ele ignora automaticamente o "?" e o "#"
             if (urlObj.hostname.includes('wol.jw.org')) {
                 let cleanPath = urlObj.pathname;
                 if (cleanPath.endsWith('/')) cleanPath = cleanPath.slice(0, -1);
                 return `wol-${cleanPath}`;
             }
-
-            // TIPO 3: OUTROS LINKS
-            // Remove apenas fragmentos e queries genéricas
             return url.split('#')[0].split('?')[0];
         } catch (e) { 
-            // Fallback caso não seja uma URL válida: remove o que vier após ? ou # manualmente
             return url.split('#')[0].split('?')[0].trim(); 
         }
     };
 
-    // Processa os links das referências que foram numeradas no texto
     Object.keys(encounteredRefIdsForNumbering).forEach(refId => {
         const refData = currentDocReferencesMap[refId];
         if (refData && refData.urls) {
@@ -872,7 +858,6 @@ function updateDisplayedDocument(docData) {
     });
 
     const uniqueCount = uniquePublications.size;
-
     const references = docData.referencias || [];
     if (references.length === 0 || totalRefsInList === 0) {
         referencesContainerEl.style.display = 'none'; 
@@ -885,31 +870,46 @@ function updateDisplayedDocument(docData) {
                     (${totalRefsInList} total) ; (${uniqueCount} únicas)
                 </span>`;
         }
-
         referencesListEl.innerHTML = "";
         const sortedRefs = references
             .filter(ref => ref && ref.id && currentDocReferencesMap[ref.id] && currentDocReferencesMap[ref.id].displayNumber > 0)
             .sort((a,b) => currentDocReferencesMap[a.id].displayNumber - currentDocReferencesMap[b.id].displayNumber);
             
-    sortedRefs.forEach(ref => {
-    const refDetails = currentDocReferencesMap[ref.id];
-    const li = document.createElement('li'); 
-    li.className = 'reference-item-atril';
-    li.setAttribute('data-ref-id', escapeHTML(ref.id));
-    
-    // Aqui garantimos que pegamos o texto da URL
-    const linksHtml = refDetails.urls.map(url => {
-        const urlStr = typeof url === 'string' ? url : url.url; // Segurança extra
-        return `<div class="ref-url-item-atril"><a href="${urlStr}" target="_blank">${escapeHTML(urlStr)}</a></div>`;
-    }).join('');
-
-    li.innerHTML = `
-        <span class="ref-title-atril"><sup>[${refDetails.displayNumber}]</sup> ${escapeHTML(refDetails.titulo)}</span>
-        ${linksHtml}
-    `;
-    referencesListEl.appendChild(li);
-});
+        sortedRefs.forEach(ref => {
+            const refDetails = currentDocReferencesMap[ref.id];
+            const li = document.createElement('li'); 
+            li.className = 'reference-item-atril';
+            li.setAttribute('data-ref-id', escapeHTML(ref.id));
+            const linksHtml = refDetails.urls.map(url => {
+                const urlStr = typeof url === 'string' ? url : url.url;
+                return `<div class="ref-url-item-atril"><a href="${urlStr}" target="_blank">${escapeHTML(urlStr)}</a></div>`;
+            }).join('');
+            li.innerHTML = `
+                <span class="ref-title-atril"><sup>[${refDetails.displayNumber}]</sup> ${escapeHTML(refDetails.titulo)}</span>
+                ${linksHtml}
+            `;
+            referencesListEl.appendChild(li);
+        });
     }
+
+    // --- LÓGICA DE ESTATÍSTICAS DO TEXTO (NOVO) ---
+    // Removemos os números de referência [n] da contagem para ser mais preciso
+    const cleanText = selectedDocBodyEl.innerText.replace(/\[\d+\]/g, '');
+    const words = cleanText.trim().split(/\s+/).filter(w => w.length > 0);
+    const wordCount = words.length;
+    // Média de 140 palavras por minuto (velocidade normal de fala humana)
+    const readingTime = Math.ceil(wordCount / 140);
+
+    const statsDiv = document.createElement('div');
+    statsDiv.style.marginTop = '30px';
+    statsDiv.style.paddingTop = '10px';
+    statsDiv.style.borderTop = '1px solid #333';
+    statsDiv.style.fontSize = '0.85em';
+    statsDiv.style.fontStyle = 'italic';
+    statsDiv.style.color = '#888';
+    statsDiv.innerHTML = `${wordCount} palavras | Tempo estimado de leitura: ~${readingTime} min`;
+    selectedDocBodyEl.appendChild(statsDiv);
+    // ----------------------------------------------
 
     applyFontSize(currentFontSizePercent);
     selectedDocBodyEl.scrollTop = currentScrollTop;
@@ -1327,11 +1327,33 @@ copyJsonBtn.addEventListener('click', async () => {
 
     const docData = allDocumentsData[displayedDocId];
     
-    // 1. Pega o corpo do texto exatamente como o usuário vê (incluindo os números [1], [2], etc)
-    // Usamos innerText porque ele respeita quebras de linha e captura o conteúdo dos <sup>
-    const corpoTextoFormatado = selectedDocBodyEl.innerText;
+    // Função auxiliar para processar o HTML e converter spans de referência em [[texto]][n]
+    const obterCorpoComMarcacao = (container) => {
+        let resultado = "";
+        // Percorre os nós para manter a ordem e identificar os spans de referência
+        container.childNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                resultado += node.textContent;
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.classList.contains('referenced-text')) {
+                    // Texto que deve ser sublinhado
+                    resultado += `[[${node.textContent}]]`;
+                } else if (node.classList.contains('ref-marker-popup')) {
+                    // O número da referência [n]
+                    resultado += node.innerText;
+                } else {
+                    // Se for parágrafo ou outra tag, processa o interior e add quebra de linha se necessário
+                    const prefixo = (node.tagName === 'P' || node.tagName === 'DIV') ? "" : "";
+                    const sufixo = (node.tagName === 'P' || node.tagName === 'DIV') ? "\n" : "";
+                    resultado += prefixo + obterCorpoComMarcacao(node) + sufixo;
+                }
+            }
+        });
+        return resultado.trim().replace(/\n\s*\n/g, '\n'); // Limpa quebras excessivas
+    };
 
-    // 2. Coleta apenas as referências que estão sendo usadas (com displayNumber > 0)
+    const corpoTextoFormatado = obterCorpoComMarcacao(selectedDocBodyEl);
+
     const exportRefs = [];
     for (const refId in currentDocReferencesMap) {
         const ref = currentDocReferencesMap[refId];
@@ -1343,11 +1365,8 @@ copyJsonBtn.addEventListener('click', async () => {
             });
         }
     }
-
-    // Ordena as referências por número para ficar organizado
     exportRefs.sort((a, b) => a.numero - b.numero);
 
-    // 3. Monta o objeto final
     const exportObj = {
         titulo: docData.titulo,
         corpo: corpoTextoFormatado,
@@ -1355,28 +1374,21 @@ copyJsonBtn.addEventListener('click', async () => {
         exportadoEm: new Date().toLocaleString()
     };
 
-    // 4. Converte para texto JSON e copia para a área de transferência
     try {
-        const jsonStr = JSON.stringify(exportObj, null, 4); // Indentação de 4 espaços
+        const jsonStr = JSON.stringify(exportObj, null, 4);
         await navigator.clipboard.writeText(jsonStr);
-        
-        // Feedback visual no botão
-        const originalText = copyJsonBtn.textContent;
-        const originalBg = copyJsonBtn.style.backgroundColor;
-        
-        copyJsonBtn.textContent = "✅ JSON Copiado!";
+        copyJsonBtn.textContent = "✅ JSON com Sublinhado Copiado!";
         copyJsonBtn.style.backgroundColor = "#4CAF50";
-        
         setTimeout(() => {
-            copyJsonBtn.textContent = originalText;
-            copyJsonBtn.style.backgroundColor = originalBg;
+            copyJsonBtn.textContent = "📋 Copiar JSON do Documento";
+            copyJsonBtn.style.backgroundColor = "";
         }, 2000);
-        
     } catch (err) {
-        console.error('Erro ao copiar JSON:', err);
-        alert("Falha ao copiar para a área de transferência. Verifique as permissões do navegador.");
+        alert("Erro ao copiar.");
     }
 });
+
+   
 
     </script>
 </body>

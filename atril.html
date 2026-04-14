@@ -742,6 +742,11 @@ function updateDisplayedDocument(docData) {
         referencesContainerEl.style.display = 'none';
         downloadPdfBtn.style.display = 'none';
         if (shareBtn) shareBtn.style.display = 'none';
+        
+        // Remove estatísticas se não houver documento
+        const oldStats = document.getElementById('doc-stats-header');
+        if (oldStats) oldStats.remove();
+        
         hideReferencePopup();
         return;
     }
@@ -892,23 +897,42 @@ function updateDisplayedDocument(docData) {
         });
     }
 
-    // --- LÓGICA DE ESTATÍSTICAS DO TEXTO (NOVO) ---
-    // Removemos os números de referência [n] da contagem para ser mais preciso
-    const cleanText = selectedDocBodyEl.innerText.replace(/\[\d+\]/g, '');
-    const words = cleanText.trim().split(/\s+/).filter(w => w.length > 0);
+    // --- LÓGICA DE ESTATÍSTICAS E CAPÍTULOS NO TOPO ---
+    const rawText = selectedDocBodyEl.innerText;
+    
+    // 1. Contagem de Palavras e Tempo
+    const textOnly = rawText.replace(/\[\d+\]/g, ''); 
+    const words = textOnly.trim().split(/\s+/).filter(w => w.length > 0);
     const wordCount = words.length;
-    // Média de 140 palavras por minuto (velocidade normal de fala humana)
     const readingTime = Math.ceil(wordCount / 140);
 
-    const statsDiv = document.createElement('div');
-    statsDiv.style.marginTop = '30px';
-    statsDiv.style.paddingTop = '10px';
-    statsDiv.style.borderTop = '1px solid #333';
-    statsDiv.style.fontSize = '0.85em';
-    statsDiv.style.fontStyle = 'italic';
-    statsDiv.style.color = '#888';
-    statsDiv.innerHTML = `${wordCount} palavras | Tempo estimado de leitura: ~${readingTime} min`;
-    selectedDocBodyEl.appendChild(statsDiv);
+    // 2. Contagem de Capítulos (CAPSLOCK)
+    const lines = rawText.split('\n');
+    let chapterCount = 0;
+    lines.forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed.length > 3 && /[A-Z]/.test(trimmed) && trimmed === trimmed.toUpperCase()) {
+            chapterCount++;
+        }
+    });
+
+    // 3. Renderização/Atualização do elemento de info (abaixo do título)
+    let statsHeader = document.getElementById('doc-stats-header');
+    if (!statsHeader) {
+        statsHeader = document.createElement('div');
+        statsHeader.id = 'doc-stats-header';
+        // Estilo: itálico, pequeno, margem negativa superior para colar no título
+        statsHeader.style.fontSize = '0.75em';
+        statsHeader.style.fontStyle = 'italic';
+        statsHeader.style.color = '#999';
+        statsHeader.style.marginTop = '-15px';
+        statsHeader.style.marginBottom = '20px';
+        // Insere logo após o elemento de título
+        selectedDocTitleEl.parentNode.insertBefore(statsHeader, selectedDocTitleEl.nextSibling);
+    }
+    
+    const capSuffix = chapterCount === 1 ? 'capítulo' : 'capítulos';
+    statsHeader.innerHTML = `${wordCount} palavras • ~${readingTime} min • ${chapterCount} ${capSuffix}`;
     // ----------------------------------------------
 
     applyFontSize(currentFontSizePercent);
